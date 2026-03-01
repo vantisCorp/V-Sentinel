@@ -1,0 +1,5 @@
+44K	sentinel_ai_native_architecture.md
+44K	sentinel_hardware_protection.md
+44K	sentinel_user_experience.md
+52K	sentinel_enterprise_integration.md
+52K	sentinel_mvp_development_plan.md
