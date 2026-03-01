@@ -1,0 +1,20 @@
+//! SENTINEL Cloud-Native Security Module
+//!
+//! This module provides cloud-native security capabilities for AWS, Azure,
+//! and GCP with container security, serverless security, and Kubernetes policies.
+
+use anyhow::Result;
+use tracing::{info, debug, warn, error};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+
+/// Cloud-Native Security Manager
+pub struct CloudSecurityManager {
+    initialized: Arc<RwLock<bool>>,
+    active: Arc<RwLock<bool>>,
+    cloud_providers: Arc<RwLock<HashMap<CloudProvider, CloudProviderIntegration>>>,
+    container_scanner: Arc<RwLock<ContainerScanner>>,
+    kubernetes_policy: Arc<RwLock<KubernetesSecurityPolicy>>,
+    serverless_scanner: Arc<RwLock<ServerlessScanner>>,

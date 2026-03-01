@@ -3,6 +3,8 @@
 //! This module provides IoT and edge security capabilities for protecting
 //! 10B+ devices with lightweight agents and edge computing security.
 
+pub mod agent;
+
 use anyhow::Result;
 use tracing::{info, debug, warn, error};
 use std::sync::Arc;

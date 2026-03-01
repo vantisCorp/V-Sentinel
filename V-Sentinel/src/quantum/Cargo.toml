@@ -1,0 +1,16 @@
+[package]
+name = "sentinel-quantum"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SENTINEL quantum module"
+
+[dependencies]
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+sha2 = "0.10"
+rand = { workspace = true }

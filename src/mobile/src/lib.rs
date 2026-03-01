@@ -3,6 +3,8 @@
 //! This module provides mobile security architecture for iOS and Android
 //! with battery optimization and cross-platform synchronization.
 
+pub mod agent;
+
 use anyhow::Result;
 use tracing::{info, debug, warn, error};
 use std::sync::Arc;

@@ -1,0 +1,17 @@
+[package]
+name = "sentinel-config"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SENTINEL config module"
+
+[dependencies]
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+toml = "0.8"
+serde_yaml = "0.9"
+notify = "6.0"

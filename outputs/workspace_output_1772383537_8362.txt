@@ -1,0 +1,35 @@
+On branch main
+
+No commits yet
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	Cargo.toml
+	PHASE_1_PROGRESS_REPORT.md
+	PHASE_2_FINAL_SUMMARY.md
+	PHASE_2_PROGRESS_REPORT.md
+	PHASE_3_FINAL_SUMMARY.md
+	PHASE_3_PROGRESS_REPORT.md
+	PHASE_4_FINAL_SUMMARY.md
+	PHASE_4_PROGRESS_REPORT.md
+	PHASE_5_FINAL_SUMMARY.md
+	PHASE_5_PROGRESS_REPORT.md
+	PHASE_6_FINAL_SUMMARY.md
+	PHASE_6_PROGRESS_REPORT.md
+	SENTINEL_COMPREHENSIVE_ANALYSIS_REPORT.md
+	SENTINEL_FINAL_PROJECT_SUMMARY_COMPLETE.md
+	V-Sentinel/
+	benches/
+	deploy/
+	docs/
+	outputs/
+	sentinel_competitive_analysis.md
+	sentinel_developer_documentation.md
+	sentinel_security_threat_model.md
+	sentinel_technical_architecture.md
+	src/
+	summarized_conversations/
+	tests/
+	todo.md
+
+nothing added to commit but untracked files present (use "git add" to track)

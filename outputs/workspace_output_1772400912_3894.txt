@@ -1,0 +1,20 @@
+//! SENTINEL Mobile Security Module
+//!
+//! This module provides mobile security architecture for iOS and Android
+//! with battery optimization and cross-platform synchronization.
+
+use anyhow::Result;
+use tracing::{info, debug, warn, error};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde::{Serialize, Deserialize};
+
+/// Mobile Security Manager
+pub struct MobileSecurityManager {
+    initialized: Arc<RwLock<bool>>,
+    active: Arc<RwLock<bool>>,
+    platform: MobilePlatform,
+    battery_optimizer: Arc<RwLock<BatteryOptimizer>>,
+    threat_detector: Arc<RwLock<MobileThreatDetector>>,
+    app_scanner: Arc<RwLock<AppScanner>>,
+    network_monitor: Arc<RwLock<NetworkMonitor>>,

@@ -1,0 +1,6 @@
+remote: 
+remote: Create a pull request for 'master' on GitHub by visiting:        
+remote:      https://github.com/vantisCorp/V-Sentinel/pull/new/master        
+remote: 
+To https://github.com/vantisCorp/V-Sentinel.git
+ * [new branch]      master -> master

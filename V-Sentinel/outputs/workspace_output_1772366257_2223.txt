@@ -1,0 +1,10 @@
+/workspace/sentinel_cloud_native_security.md
+/workspace/sentinel_metaverse_spatial_security.md
+/workspace/sentinel_user_experience.md
+/workspace/sentinel_mobile_crossplatform.md
+/workspace/sentinel_deployment_scaling_strategy.md
+/workspace/sentinel_quantum_cryptography.md
+/workspace/sentinel_ai_security_operations.md
+/workspace/sentinel_neural_interface_security.md
+/workspace/sentinel_dependency_matrix.md
+/workspace/sentinel_gaming_trusted_handshake.md
