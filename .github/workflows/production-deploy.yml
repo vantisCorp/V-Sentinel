@@ -1,0 +1,360 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: '1.1.0'
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: 123456789012.dkr.ecr.us-east-1.amazonaws.com/sentinel
+  CLUSTER_NAME: production-cluster
+
+jobs:
+  # Build and Test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+      
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      
+      - name: Run cargo test
+        run: cargo test --all-features --verbose
+      
+      - name: Run cargo build
+        run: cargo build --release --all-features
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-binaries
+          path: |
+            target/release/sentinel
+            target/release/sentinel-daemon
+          retention-days: 7
+
+  # Security Scan
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: Run cargo audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
+      
+      - name: Run cargo outdated
+        run: |
+          cargo install cargo-outdated
+          cargo outdated
+
+  # Build Docker Images
+  build-docker:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/sentinel
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+      
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.api
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-api:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-api:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+      
+      - name: Build and push Worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.worker
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-worker:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-worker:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode-max
+      
+      - name: Build and push Web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.web
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-web:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/sentinel-web:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode-max
+      
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-docker]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.sentinel.security
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Deploy to ECS
+        run: |
+          ./scripts/deploy.sh deploy
+        env:
+          ENVIRONMENT: staging
+          VERSION: ${{ github.sha }}
+      
+      - name: Run smoke tests
+        run: |
+          ./scripts/deploy.sh smoke-test
+        env:
+          ENVIRONMENT: staging
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-docker, deploy-staging]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://sentinel.security
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Create backup before deployment
+        run: |
+          aws rds create-db-snapshot \
+            --db-instance-identifier production-db \
+            --db-snapshot-identifier pre-deploy-${{ github.sha }} \
+            --region ${{ env.AWS_REGION }}
+      
+      - name: Deploy to ECS
+        run: |
+          ./scripts/deploy.sh deploy
+        env:
+          ENVIRONMENT: production
+          VERSION: ${{ github.ref_name }}
+      
+      - name: Wait for deployment
+        run: |
+          sleep 300
+      
+      - name: Run smoke tests
+        run: |
+          ./scripts/deploy.sh smoke-test
+        env:
+          ENVIRONMENT: production
+      
+      - name: Monitor deployment
+        run: |
+          # Monitor CloudWatch metrics for 10 minutes
+          for i in {1..20}; do
+            echo "Monitoring deployment... ($i/20)"
+            aws cloudwatch get-metric-statistics \
+              --namespace Sentinel \
+              --metric-name ErrorRate \
+              --start-time $(date -u -d '10 minutes ago' +%Y-%m-%dT%H:%M:%S) \
+              --end-time $(date -u +%Y-%m-%dT%H:%M:%S) \
+              --period 60 \
+              --statistics Average \
+              --region ${{ env.AWS_REGION }}
+            sleep 30
+          done
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          ./scripts/deploy.sh rollback
+        env:
+          ENVIRONMENT: production
+
+  # Post-Deployment
+  post-deployment:
+    name: Post-Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment ${{ job.status }}: ${{ github.ref }}
+            Environment: production
+            Version: ${{ github.ref_name }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
+      - name: Notify PagerDuty on failure
+        if: failure()
+        uses: pagerduty/pd-github-action@v1
+        with:
+          integration-key: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+          dedup-key: ${{ github.sha }}
+          event-action: trigger
+          summary: "Production deployment failed: ${{ github.ref }}"
+          severity: critical
+          source: github
+          custom-details: |
+            {
+              "repository": "${{ github.repository }}",
+              "branch": "${{ github.ref }}",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}"
+            }
