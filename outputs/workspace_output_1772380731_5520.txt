@@ -1,12 +1,7 @@
 //! SENTINEL Performance Optimization Module
-//!
+//! 
 //! This module provides performance optimization capabilities including
-//! caching, connection pooling, resource management, benchmarking,
-//! profiling, and bottleneck analysis.
-
-pub mod bottleneck_analyzer;
-pub mod profiler;
-pub mod dashboard;
+//! caching, connection pooling, and resource management.
 
 use anyhow::{Result, anyhow};
 use tracing::{info, debug, warn, error};
@@ -17,35 +12,6 @@ use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
 use lru::LruCache;
 use std::num::NonZeroUsize;
-
-// Re-export benchmarking and profiling modules
-pub use bottleneck_analyzer::{
-    BottleneckAnalyzer,
-    Bottleneck,
-    BottleneckSeverity,
-    BottleneckType,
-    PerformanceProfile,
-};
-
-pub use profiler::{
-    PerformanceProfiler,
-    ProfileEvent,
-    ProfileEventType,
-    FunctionStats,
-    MemoryStats,
-    profile,
-    profile_memory,
-    enable_profiling,
-    disable_profiling,
-    get_profiling_report,
-};
-
-pub use dashboard::{
-    PerformanceDashboard,
-    PerformanceMetrics,
-    PerformanceSummary,
-    ComponentSummary,
-};
 
 /// Performance Manager
 pub struct PerformanceManager {
