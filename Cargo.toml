@@ -21,6 +21,7 @@ members = [
     "src/audit",
     "src/performance",
     "src/error-handling",
+    "src/security"
 ]
 resolver = "2"
 
