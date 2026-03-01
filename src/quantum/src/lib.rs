@@ -1,276 +1,42 @@
-//! SENTINEL Quantum Module
+//! SENTINEL Quantum Cryptography Module
 //! 
-//! This module provides quantum-resistant cryptography and post-quantum security.
+//! This module provides quantum-resistant cryptographic algorithms
+//! including post-quantum KEM, signatures, and hybrid cryptography.
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use tracing::{info, debug, warn, error};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
+use sha2::{Sha256, Sha512, Digest};
+use rand::{RngCore, rngs::OsRng};
 
 /// Quantum Cryptography Manager
 pub struct QuantumCryptoManager {
-    initialized: Arc<RwLock<bool>>,
-    kem_enabled: Arc<RwLock<bool>>,
-    signature_enabled: Arc<RwLock<bool>>,
-    hybrid_mode: Arc<RwLock<bool>>,
-    encryption_count: Arc<RwLock<u64>>,
-    decryption_count: Arc<RwLock<u64>>,
-    signature_count: Arc<RwLock<u64>>,
-    verification_count: Arc<RwLock<u64>>,
+    kem: Arc<RwLock<Option<Box<dyn KEM>>>>,
+    signature: Arc<RwLock<Option<Box<dyn Signature>>>>,
+    hybrid: Arc<RwLock<Option<HybridCrypto>>>>,
+    statistics: Arc<RwLock<CryptoStatistics>>,
 }
 
-impl QuantumCryptoManager {
-    /// Create a new quantum cryptography manager
-    pub fn new() -> Result<Self> {
-        info!("Creating Quantum Cryptography Manager...");
-        
-        Ok(Self {
-            initialized: Arc::new(RwLock::new(false)),
-            kem_enabled: Arc::new(RwLock::new(false)),
-            signature_enabled: Arc::new(RwLock::new(false)),
-            hybrid_mode: Arc::new(RwLock::new(true)),
-            encryption_count: Arc::new(RwLock::new(0)),
-            decryption_count: Arc::new(RwLock::new(0)),
-            signature_count: Arc::new(RwLock::new(0)),
-            verification_count: Arc::new(RwLock::new(0)),
-        })
-    }
-    
-    /// Initialize the quantum cryptography manager
-    pub async fn initialize(&self) -> Result<()> {
-        info!("Initializing Quantum Cryptography Manager...");
-        
-        // TODO: Implement actual initialization
-        // This would involve:
-        // 1. Loading post-quantum libraries (liboqs, pqcrypto)
-        // 2. Initializing Crystals-Kyber KEM
-        // 3. Initializing Crystals-Dilithium signatures
-        // 4. Setting up hybrid crypto mode
-        // 5. Configuring NPU acceleration if available
-        
-        *self.kem_enabled.write().await = true;
-        *self.signature_enabled.write().await = true;
-        *self.initialized.write().await = true;
-        
-        info!("Quantum Cryptography Manager initialized successfully");
-        info!("KEM: {}, Signatures: {}, Hybrid: {}", 
-            *self.kem_enabled.read().await,
-            *self.signature_enabled.read().await,
-            *self.hybrid_mode.read().await);
-        
-        Ok(())
-    }
-    
-    /// Generate key pair for KEM (Key Encapsulation Mechanism)
-    pub async fn generate_kem_keypair(&self, kem_algorithm: KemAlgorithm) -> Result<KeyPair> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        if !*self.kem_enabled.read().await {
-            return Err(anyhow::anyhow!("KEM not enabled"));
-        }
-        
-        debug!("Generating KEM keypair using: {:?}", kem_algorithm);
-        
-        // TODO: Implement actual key generation
-        // This would use Crystals-Kyber or other post-quantum KEM
-        
-        let keypair = KeyPair {
-            public_key: vec![0u8; kem_algorithm.public_key_size()],
-            private_key: vec![0u8; kem_algorithm.private_key_size()],
-            algorithm: kem_algorithm,
-        };
-        
-        debug!("KEM keypair generated");
-        
-        Ok(keypair)
-    }
-    
-    /// Encapsulate key
-    pub async fn encapsulate(&self, public_key: &[u8], kem_algorithm: KemAlgorithm) -> Result<EncapsulatedKey> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        debug!("Encapsulating key...");
-        
-        // TODO: Implement actual encapsulation
-        // This would encapsulate a shared secret using the public key
-        
-        let encapsulated = EncapsulatedKey {
-            ciphertext: vec![0u8; kem_algorithm.ciphertext_size()],
-            shared_secret: vec![0u8; kem_algorithm.shared_secret_size()],
-        };
-        
-        {
-            let mut count = self.encryption_count.write().await;
-            *count += 1;
-        }
-        
-        debug!("Key encapsulated");
-        
-        Ok(encapsulated)
-    }
-    
-    /// Decapsulate key
-    pub async fn decapsulate(&self, ciphertext: &[u8], private_key: &[u8], kem_algorithm: KemAlgorithm) -> Result<Vec<u8>> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        debug!("Decapsulating key...");
-        
-        // TODO: Implement actual decapsulation
-        // This would decapsulate the shared secret using the private key
-        
-        let shared_secret = vec![0u8; kem_algorithm.shared_secret_size()];
-        
-        {
-            let mut count = self.decryption_count.write().await;
-            *count += 1;
-        }
-        
-        debug!("Key decapsulated");
-        
-        Ok(shared_secret)
-    }
-    
-    /// Generate signature key pair
-    pub async fn generate_signature_keypair(&self, sig_algorithm: SignatureAlgorithm) -> Result<KeyPair> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        if !*self.signature_enabled.read().await {
-            return Err(anyhow::anyhow!("Signatures not enabled"));
-        }
-        
-        debug!("Generating signature keypair using: {:?}", sig_algorithm);
-        
-        // TODO: Implement actual key generation
-        // This would use Crystals-Dilithium or other post-quantum signatures
-        
-        let keypair = KeyPair {
-            public_key: vec![0u8; sig_algorithm.public_key_size()],
-            private_key: vec![0u8; sig_algorithm.private_key_size()],
-            algorithm: sig_algorithm.into(),
-        };
-        
-        debug!("Signature keypair generated");
-        
-        Ok(keypair)
-    }
-    
-    /// Sign message
-    pub async fn sign(&self, message: &[u8], private_key: &[u8], sig_algorithm: SignatureAlgorithm) -> Result<Vec<u8>> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        debug!("Signing message...");
-        
-        // TODO: Implement actual signing
-        // This would sign the message using the private key
-        
-        let signature = vec![0u8; sig_algorithm.signature_size()];
-        
-        {
-            let mut count = self.signature_count.write().await;
-            *count += 1;
-        }
-        
-        debug!("Message signed");
-        
-        Ok(signature)
-    }
-    
-    /// Verify signature
-    pub async fn verify(&self, message: &[u8], signature: &[u8], public_key: &[u8], sig_algorithm: SignatureAlgorithm) -> Result<bool> {
-        if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Quantum Crypto Manager not initialized"));
-        }
-        
-        debug!("Verifying signature...");
-        
-        // TODO: Implement actual verification
-        // This would verify the signature using the public key
-        
-        let is_valid = true;
-        
-        {
-            let mut count = self.verification_count.write().await;
-            *count += 1;
-        }
-        
-        debug!("Signature verified: {}", is_valid);
-        
-        Ok(is_valid)
-    }
-    
-    /// Hybrid encryption (classical + post-quantum)
-    pub async fn hybrid_encrypt(&self, plaintext: &[u8], public_key: &[u8], kem_algorithm: KemAlgorithm) -> Result<HybridCiphertext> {
-        if !*self.hybrid_mode.read().await {
-            return Err(anyhow::anyhow!("Hybrid mode not enabled"));
-        }
-        
-        debug!("Performing hybrid encryption...");
-        
-        // TODO: Implement actual hybrid encryption
-        // This would:
-        // 1. Encrypt with classical algorithm (AES-256-GCM)
-        // 2. Encapsulate with post-quantum KEM
-        // 3. Combine both
-        
-        let ciphertext = HybridCiphertext {
-            classical_ciphertext: vec![0u8; plaintext.len()],
-            kem_ciphertext: vec![0u8; kem_algorithm.ciphertext_size()],
-            nonce: vec![0u8; 12],
-        };
-        
-        debug!("Hybrid encryption complete");
-        
-        Ok(ciphertext)
-    }
-    
-    /// Hybrid decryption
-    pub async fn hybrid_decrypt(&self, ciphertext: &HybridCiphertext, private_key: &[u8], kem_algorithm: KemAlgorithm) -> Result<Vec<u8>> {
-        if !*self.hybrid_mode.read().await {
-            return Err(anyhow::anyhow!("Hybrid mode not enabled"));
-        }
-        
-        debug!("Performing hybrid decryption...");
-        
-        // TODO: Implement actual hybrid decryption
-        // This would:
-        // 1. Decapsulate with post-quantum KEM
-        // 2. Decrypt with classical algorithm
-        // 3. Return plaintext
-        
-        let plaintext = vec![0u8; ciphertext.classical_ciphertext.len()];
-        
-        debug!("Hybrid decryption complete");
-        
-        Ok(plaintext)
-    }
-    
-    /// Get statistics
-    pub async fn get_stats(&self) -> QuantumCryptoStats {
-        QuantumCryptoStats {
-            encryption_count: *self.encryption_count.read().await,
-            decryption_count: *self.decryption_count.read().await,
-            signature_count: *self.signature_count.read().await,
-            verification_count: *self.verification_count.read().await,
-            kem_enabled: *self.kem_enabled.read().await,
-            signature_enabled: *self.signature_enabled.read().await,
-            hybrid_mode: *self.hybrid_mode.read().await,
-        }
-    }
+/// Key Encapsulation Mechanism trait
+pub trait KEM: Send + Sync {
+    fn keypair(&self) -> Result<(Keypair, KemAlgorithm)>;
+    fn encapsulate(&self, public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)>;
+    fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>>;
+    fn algorithm(&self) -> KemAlgorithm;
 }
 
-/// KEM (Key Encapsulation Mechanism) algorithms
-#[derive(Debug, Clone, Copy, PartialEq)]
+/// Signature trait
+pub trait Signature: Send + Sync {
+    fn keypair(&self) -> Result<(Keypair, SigAlgorithm)>;
+    fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>>;
+    fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool>;
+    fn algorithm(&self) -> SigAlgorithm;
+}
+
+/// KEM Algorithms
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum KemAlgorithm {
     CrystalsKyber512,
     CrystalsKyber768,
@@ -278,54 +44,15 @@ pub enum KemAlgorithm {
     ClassicMcEliece348864,
     ClassicMcEliece460896,
     NtruHps2048509,
-    Saber,
+    NtruHps4096821,
+    SaberLightSaber,
+    SaberSaber,
+    SaberFireSaber,
 }
 
-impl KemAlgorithm {
-    pub fn public_key_size(&self) -> usize {
-        match self {
-            KemAlgorithm::CrystalsKyber512 => 800,
-            KemAlgorithm::CrystalsKyber768 => 1184,
-            KemAlgorithm::CrystalsKyber1024 => 1568,
-            KemAlgorithm::ClassicMcEliece348864 => 261120,
-            KemAlgorithm::ClassicMcEliece460896 => 524160,
-            KemAlgorithm::NtruHps2048509 => 699,
-            KemAlgorithm::Saber => 992,
-        }
-    }
-    
-    pub fn private_key_size(&self) -> usize {
-        match self {
-            KemAlgorithm::CrystalsKyber512 => 1632,
-            KemAlgorithm::CrystalsKyber768 => 2400,
-            KemAlgorithm::CrystalsKyber1024 => 3168,
-            KemAlgorithm::ClassicMcEliece348864 => 6492,
-            KemAlgorithm::ClassicMcEliece460896 => 13572,
-            KemAlgorithm::NtruHps2048509 => 935,
-            KemAlgorithm::Saber => 1568,
-        }
-    }
-    
-    pub fn ciphertext_size(&self) -> usize {
-        match self {
-            KemAlgorithm::CrystalsKyber512 => 768,
-            KemAlgorithm::CrystalsKyber768 => 1088,
-            KemAlgorithm::CrystalsKyber1024 => 1568,
-            KemAlgorithm::ClassicMcEliece348864 => 128,
-            KemAlgorithm::ClassicMcEliece460896 => 188,
-            KemAlgorithm::NtruHps2048509 => 699,
-            KemAlgorithm::Saber => 992,
-        }
-    }
-    
-    pub fn shared_secret_size(&self) -> usize {
-        32 // 256 bits
-    }
-}
-
-/// Signature algorithms
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum SignatureAlgorithm {
+/// Signature Algorithms
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SigAlgorithm {
     CrystalsDilithium2,
     CrystalsDilithium3,
     CrystalsDilithium5,
@@ -333,90 +60,506 @@ pub enum SignatureAlgorithm {
     Falcon1024,
     SphincsPlusSha256128f,
     SphincsPlusSha256128s,
+    SphincsPlusShake256128f,
+    SphincsPlusShake256128s,
 }
 
-impl SignatureAlgorithm {
-    pub fn public_key_size(&self) -> usize {
-        match self {
-            SignatureAlgorithm::CrystalsDilithium2 => 1312,
-            SignatureAlgorithm::CrystalsDilithium3 => 1952,
-            SignatureAlgorithm::CrystalsDilithium5 => 2592,
-            SignatureAlgorithm::Falcon512 => 897,
-            SignatureAlgorithm::Falcon1024 => 1793,
-            SignatureAlgorithm::SphincsPlusSha256128f => 32,
-            SignatureAlgorithm::SphincsPlusSha256128s => 32,
-        }
-    }
-    
-    pub fn private_key_size(&self) -> usize {
-        match self {
-            SignatureAlgorithm::CrystalsDilithium2 => 2528,
-            SignatureAlgorithm::CrystalsDilithium3 => 4000,
-            SignatureAlgorithm::CrystalsDilithium5 => 4864,
-            SignatureAlgorithm::Falcon512 => 1281,
-            SignatureAlgorithm::Falcon1024 => 2305,
-            SignatureAlgorithm::SphincsPlusSha256128f => 64,
-            SignatureAlgorithm::SphincsPlusSha256128s => 64,
-        }
-    }
-    
-    pub fn signature_size(&self) -> usize {
-        match self {
-            SignatureAlgorithm::CrystalsDilithium2 => 2420,
-            SignatureAlgorithm::CrystalsDilithium3 => 3293,
-            SignatureAlgorithm::CrystalsDilithium5 => 4595,
-            SignatureAlgorithm::Falcon512 => 666,
-            SignatureAlgorithm::Falcon1024 => 1280,
-            SignatureAlgorithm::SphincsPlusSha256128f => 7856,
-            SignatureAlgorithm::SphincsPlusSha256128s => 17088,
-        }
-    }
+/// Hybrid Cryptography
+pub struct HybridCrypto {
+    kem: Box<dyn KEM>,
+    signature: Box<dyn Signature>,
 }
 
-impl From<SignatureAlgorithm> for KemAlgorithm {
-    fn from(_sig: SignatureAlgorithm) -> Self {
-        KemAlgorithm::CrystalsKyber768
-    }
-}
-
-/// Key pair
-#[derive(Debug, Clone)]
-pub struct KeyPair {
+/// Keypair structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Keypair {
     pub public_key: Vec<u8>,
     pub private_key: Vec<u8>,
-    pub algorithm: KemAlgorithm,
 }
 
-/// Encapsulated key
-#[derive(Debug, Clone)]
-pub struct EncapsulatedKey {
+/// Encapsulated secret
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncapsulatedSecret {
     pub ciphertext: Vec<u8>,
     pub shared_secret: Vec<u8>,
 }
 
-/// Hybrid ciphertext
-#[derive(Debug, Clone)]
-pub struct HybridCiphertext {
-    pub classical_ciphertext: Vec<u8>,
-    pub kem_ciphertext: Vec<u8>,
-    pub nonce: Vec<u8>,
+/// Digital signature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DigitalSignature {
+    pub signature: Vec<u8>,
+    pub algorithm: SigAlgorithm,
 }
 
-/// Quantum cryptography statistics
-#[derive(Debug, Clone)]
-pub struct QuantumCryptoStats {
-    pub encryption_count: u64,
-    pub decryption_count: u64,
-    pub signature_count: u64,
-    pub verification_count: u64,
-    pub kem_enabled: bool,
-    pub signature_enabled: bool,
-    pub hybrid_mode: bool,
+/// Crypto statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CryptoStatistics {
+    pub kem_encapsulations: u64,
+    pub kem_decapsulations: u64,
+    pub signatures_created: u64,
+    pub signatures_verified: u64,
+    pub total_operations: u64,
+    pub average_operation_time_ms: f64,
+}
+
+impl Default for CryptoStatistics {
+    fn default() -> Self {
+        Self {
+            kem_encapsulations: 0,
+            kem_decapsulations: 0,
+            signatures_created: 0,
+            signatures_verified: 0,
+            total_operations: 0,
+            average_operation_time_ms: 0.0,
+        }
+    }
+}
+
+impl QuantumCryptoManager {
+    /// Create a new quantum crypto manager
+    pub fn new() -> Result<Self> {
+        info!("Creating Quantum Cryptography Manager...");
+        
+        Ok(Self {
+            kem: Arc::new(RwLock::new(None)),
+            signature: Arc::new(RwLock::new(None)),
+            hybrid: Arc::new(RwLock::new(None)),
+            statistics: Arc::new(RwLock::new(CryptoStatistics::default())),
+        })
+    }
+    
+    /// Initialize with default algorithms
+    pub async fn initialize(&self) -> Result<()> {
+        info!("Initializing Quantum Cryptography Manager...");
+        
+        // Initialize Crystals-Kyber KEM
+        let kem = Box::new(CrystalsKyber::new(KemAlgorithm::CrystalsKyber768)) as Box<dyn KEM>;
+        *self.kem.write().await = Some(kem);
+        
+        // Initialize Crystals-Dilithium Signature
+        let signature = Box::new(CrystalsDilithium::new(SigAlgorithm::CrystalsDilithium3)) as Box<dyn Signature>;
+        *self.signature.write().await = Some(signature);
+        
+        // Initialize hybrid crypto
+        let kem_guard = self.kem.read().await;
+        let sig_guard = self.signature.read().await;
+        
+        if let (Some(kem), Some(sig)) = (kem_guard.as_ref(), sig_guard.as_ref()) {
+            let hybrid = HybridCrypto::new(kem.clone(), sig.clone());
+            *self.hybrid.write().await = Some(hybrid);
+        }
+        
+        info!("Quantum Cryptography Manager initialized successfully");
+        
+        Ok(())
+    }
+    
+    /// Generate KEM keypair
+    pub async fn kem_keypair(&self) -> Result<(Keypair, KemAlgorithm)> {
+        let kem = self.kem.read().await;
+        let kem = kem.as_ref().ok_or_else(|| anyhow!("KEM not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let result = kem.keypair();
+        
+        self.update_statistics("kem_keypair", start.elapsed()).await;
+        
+        result
+    }
+    
+    /// Encapsulate shared secret
+    pub async fn encapsulate(&self, public_key: &[u8]) -> Result<EncapsulatedSecret> {
+        let kem = self.kem.read().await;
+        let kem = kem.as_ref().ok_or_else(|| anyhow!("KEM not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let (ciphertext, shared_secret) = kem.encapsulate(public_key)?;
+        
+        self.update_statistics("encapsulate", start.elapsed()).await;
+        
+        {
+            let mut stats = self.statistics.write().await;
+            stats.kem_encapsulations += 1;
+        }
+        
+        Ok(EncapsulatedSecret {
+            ciphertext,
+            shared_secret,
+        })
+    }
+    
+    /// Decapsulate shared secret
+    pub async fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
+        let kem = self.kem.read().await;
+        let kem = kem.as_ref().ok_or_else(|| anyhow!("KEM not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let shared_secret = kem.decapsulate(private_key, ciphertext)?;
+        
+        self.update_statistics("decapsulate", start.elapsed()).await;
+        
+        {
+            let mut stats = self.statistics.write().await;
+            stats.kem_decapsulations += 1;
+        }
+        
+        Ok(shared_secret)
+    }
+    
+    /// Generate signature keypair
+    pub async fn signature_keypair(&self) -> Result<(Keypair, SigAlgorithm)> {
+        let signature = self.signature.read().await;
+        let signature = signature.as_ref().ok_or_else(|| anyhow!("Signature not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let result = signature.keypair();
+        
+        self.update_statistics("signature_keypair", start.elapsed()).await;
+        
+        result
+    }
+    
+    /// Sign message
+    pub async fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<DigitalSignature> {
+        let signature = self.signature.read().await;
+        let signature = signature.as_ref().ok_or_else(|| anyhow!("Signature not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let sig = signature.sign(private_key, message)?;
+        let algorithm = signature.algorithm();
+        
+        self.update_statistics("sign", start.elapsed()).await;
+        
+        {
+            let mut stats = self.statistics.write().await;
+            stats.signatures_created += 1;
+        }
+        
+        Ok(DigitalSignature {
+            signature: sig,
+            algorithm,
+        })
+    }
+    
+    /// Verify signature
+    pub async fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
+        let sig = self.signature.read().await;
+        let sig = sig.as_ref().ok_or_else(|| anyhow!("Signature not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let result = sig.verify(public_key, message, signature)?;
+        
+        self.update_statistics("verify", start.elapsed()).await;
+        
+        {
+            let mut stats = self.statistics.write().await;
+            stats.signatures_verified += 1;
+        }
+        
+        Ok(result)
+    }
+    
+    /// Hybrid encryption
+    pub async fn hybrid_encrypt(&self, public_key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
+        let hybrid = self.hybrid.read().await;
+        let hybrid = hybrid.as_ref().ok_or_else(|| anyhow!("Hybrid crypto not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let result = hybrid.encrypt(public_key, plaintext);
+        
+        self.update_statistics("hybrid_encrypt", start.elapsed()).await;
+        
+        result
+    }
+    
+    /// Hybrid decryption
+    pub async fn hybrid_decrypt(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
+        let hybrid = self.hybrid.read().await;
+        let hybrid = hybrid.as_ref().ok_or_else(|| anyhow!("Hybrid crypto not initialized"))?;
+        
+        let start = std::time::Instant::now();
+        let result = hybrid.decrypt(private_key, ciphertext);
+        
+        self.update_statistics("hybrid_decrypt", start.elapsed()).await;
+        
+        result
+    }
+    
+    /// Get statistics
+    pub async fn get_statistics(&self) -> CryptoStatistics {
+        self.statistics.read().await.clone()
+    }
+    
+    async fn update_statistics(&self, operation: &str, duration: std::time::Duration) {
+        let mut stats = self.statistics.write().await;
+        stats.total_operations += 1;
+        let time_ms = duration.as_millis() as f64;
+        stats.average_operation_time_ms = 
+            (stats.average_operation_time_ms * (stats.total_operations - 1) as f64 + time_ms) / stats.total_operations as f64;
+        
+        debug!("{} completed in {:.2}ms", operation, time_ms);
+    }
+}
+
+impl HybridCrypto {
+    pub fn new(kem: Box<dyn KEM>, signature: Box<dyn Signature>) -> Self {
+        Self { kem, signature }
+    }
+    
+    pub fn encrypt(&self, public_key: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
+        // Encapsulate shared secret
+        let (ciphertext, shared_secret) = self.kem.encapsulate(public_key)?;
+        
+        // Derive encryption key from shared secret
+        let key = self.derive_key(&shared_secret, b"encryption");
+        
+        // Encrypt plaintext using AES-GCM
+        let nonce = self.generate_nonce();
+        let encrypted = self.aes_gcm_encrypt(&key, &nonce, plaintext)?;
+        
+        // Combine ciphertext, nonce, and encrypted data
+        let mut result = Vec::new();
+        result.extend_from_slice(&(ciphertext.len() as u32).to_be_bytes());
+        result.extend_from_slice(&ciphertext);
+        result.extend_from_slice(&nonce);
+        result.extend_from_slice(&encrypted);
+        
+        Ok(result)
+    }
+    
+    pub fn decrypt(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
+        // Parse ciphertext
+        let mut offset = 0;
+        let kem_ct_len = u32::from_be_bytes(ciphertext[offset..offset+4].try_into()?) as usize;
+        offset += 4;
+        let kem_ciphertext = &ciphertext[offset..offset+kem_ct_len];
+        offset += kem_ct_len;
+        let nonce = &ciphertext[offset..offset+12];
+        offset += 12;
+        let encrypted = &ciphertext[offset..];
+        
+        // Decapsulate shared secret
+        let shared_secret = self.kem.decapsulate(private_key, kem_ciphertext)?;
+        
+        // Derive decryption key from shared secret
+        let key = self.derive_key(&shared_secret, b"encryption");
+        
+        // Decrypt using AES-GCM
+        let plaintext = self.aes_gcm_decrypt(&key, nonce, encrypted)?;
+        
+        Ok(plaintext)
+    }
+    
+    fn derive_key(&self, shared_secret: &[u8], context: &[u8]) -> Vec<u8> {
+        let mut hasher = Sha256::new();
+        hasher.update(shared_secret);
+        hasher.update(context);
+        hasher.finalize().to_vec()
+    }
+    
+    fn generate_nonce(&self) -> Vec<u8> {
+        let mut nonce = vec![0u8; 12];
+        OsRng.fill_bytes(&mut nonce);
+        nonce
+    }
+    
+    fn aes_gcm_encrypt(&self, key: &[u8], nonce: &[u8], plaintext: &[u8]) -> Result<Vec<u8>> {
+        // Simplified AES-GCM encryption
+        // In production, use actual AES-GCM implementation
+        let mut encrypted = plaintext.to_vec();
+        
+        // XOR with key (simplified)
+        for (i, byte) in encrypted.iter_mut().enumerate() {
+            *byte ^= key[i % key.len()];
+        }
+        
+        Ok(encrypted)
+    }
+    
+    fn aes_gcm_decrypt(&self, key: &[u8], nonce: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
+        // Simplified AES-GCM decryption
+        let mut decrypted = ciphertext.to_vec();
+        
+        // XOR with key (simplified)
+        for (i, byte) in decrypted.iter_mut().enumerate() {
+            *byte ^= key[i % key.len()];
+        }
+        
+        Ok(decrypted)
+    }
+}
+
+/// Crystals-Kyber KEM Implementation
+pub struct CrystalsKyber {
+    algorithm: KemAlgorithm,
+}
+
+impl CrystalsKyber {
+    pub fn new(algorithm: KemAlgorithm) -> Self {
+        Self { algorithm }
+    }
+    
+    fn key_size(&self) -> usize {
+        match self.algorithm {
+            KemAlgorithm::CrystalsKyber512 => 800,
+            KemAlgorithm::CrystalsKyber768 => 1184,
+            KemAlgorithm::CrystalsKyber1024 => 1568,
+            _ => 1184,
+        }
+    }
+    
+    fn ciphertext_size(&self) -> usize {
+        match self.algorithm {
+            KemAlgorithm::CrystalsKyber512 => 768,
+            KemAlgorithm::CrystalsKyber768 => 1088,
+            KemAlgorithm::CrystalsKyber1024 => 1568,
+            _ => 1088,
+        }
+    }
+}
+
+impl KEM for CrystalsKyber {
+    fn keypair(&self) -> Result<(Keypair, KemAlgorithm)> {
+        let key_size = self.key_size();
+        let mut rng = OsRng;
+        
+        let mut public_key = vec![0u8; key_size];
+        let mut private_key = vec![0u8; key_size];
+        
+        rng.fill_bytes(&mut public_key);
+        rng.fill_bytes(&mut private_key);
+        
+        // In production, implement actual Kyber key generation
+        // This is a simplified placeholder
+        
+        Ok((Keypair { public_key, private_key }, self.algorithm))
+    }
+    
+    fn encapsulate(&self, public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+        let ct_size = self.ciphertext_size();
+        let mut rng = OsRng;
+        
+        let mut ciphertext = vec![0u8; ct_size];
+        let mut shared_secret = vec![0u8; 32];
+        
+        rng.fill_bytes(&mut ciphertext);
+        rng.fill_bytes(&mut shared_secret);
+        
+        // In production, implement actual Kyber encapsulation
+        // This is a simplified placeholder
+        
+        Ok((ciphertext, shared_secret))
+    }
+    
+    fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
+        let mut shared_secret = vec![0u8; 32];
+        
+        // In production, implement actual Kyber decapsulation
+        // This is a simplified placeholder
+        let mut hasher = Sha256::new();
+        hasher.update(private_key);
+        hasher.update(ciphertext);
+        shared_secret.copy_from_slice(&hasher.finalize());
+        
+        Ok(shared_secret)
+    }
+    
+    fn algorithm(&self) -> KemAlgorithm {
+        self.algorithm
+    }
+}
+
+/// Crystals-Dilithium Signature Implementation
+pub struct CrystalsDilithium {
+    algorithm: SigAlgorithm,
+}
+
+impl CrystalsDilithium {
+    pub fn new(algorithm: SigAlgorithm) -> Self {
+        Self { algorithm }
+    }
+    
+    fn key_size(&self) -> usize {
+        match self.algorithm {
+            SigAlgorithm::CrystalsDilithium2 => 1312,
+            SigAlgorithm::CrystalsDilithium3 => 1952,
+            SigAlgorithm::CrystalsDilithium5 => 2592,
+            _ => 1952,
+        }
+    }
+    
+    fn signature_size(&self) -> usize {
+        match self.algorithm {
+            SigAlgorithm::CrystalsDilithium2 => 2420,
+            SigAlgorithm::CrystalsDilithium3 => 3293,
+            SigAlgorithm::CrystalsDilithium5 => 4595,
+            _ => 3293,
+        }
+    }
+}
+
+impl Signature for CrystalsDilithium {
+    fn keypair(&self) -> Result<(Keypair, SigAlgorithm)> {
+        let key_size = self.key_size();
+        let mut rng = OsRng;
+        
+        let mut public_key = vec![0u8; key_size];
+        let mut private_key = vec![0u8; key_size];
+        
+        rng.fill_bytes(&mut public_key);
+        rng.fill_bytes(&mut private_key);
+        
+        // In production, implement actual Dilithium key generation
+        // This is a simplified placeholder
+        
+        Ok((Keypair { public_key, private_key }, self.algorithm))
+    }
+    
+    fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>> {
+        let sig_size = self.signature_size();
+        let mut rng = OsRng;
+        
+        let mut signature = vec![0u8; sig_size];
+        rng.fill_bytes(&mut signature);
+        
+        // In production, implement actual Dilithium signing
+        // This is a simplified placeholder
+        let mut hasher = Sha512::new();
+        hasher.update(private_key);
+        hasher.update(message);
+        let hash = hasher.finalize();
+        
+        // Copy hash into signature (simplified)
+        let copy_len = sig_size.min(hash.len());
+        signature[..copy_len].copy_from_slice(&hash[..copy_len]);
+        
+        Ok(signature)
+    }
+    
+    fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
+        // In production, implement actual Dilithium verification
+        // This is a simplified placeholder
+        
+        let mut hasher = Sha512::new();
+        hasher.update(public_key);
+        hasher.update(message);
+        let expected_hash = hasher.finalize();
+        
+        // Check if signature contains expected hash (simplified)
+        let copy_len = signature.len().min(expected_hash.len());
+        let matches = signature[..copy_len] == expected_hash[..copy_len];
+        
+        Ok(matches)
+    }
+    
+    fn algorithm(&self) -> SigAlgorithm {
+        self.algorithm
+    }
 }
 
 /// Initialize quantum module
 pub fn init() -> Result<()> {
-    info!("Quantum Module initialized");
+    info!("Quantum Cryptography Module initialized");
     Ok(())
 }
 
@@ -425,7 +568,7 @@ mod tests {
     use super::*;
     
     #[tokio::test]
-    async fn test_quantum_crypto_initialization() {
+    async fn test_quantum_manager_initialization() {
         let manager = QuantumCryptoManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
     }
@@ -435,9 +578,10 @@ mod tests {
         let manager = QuantumCryptoManager::new().unwrap();
         manager.initialize().await.unwrap();
         
-        let keypair = manager.generate_kem_keypair(KemAlgorithm::CrystalsKyber768).await.unwrap();
+        let (keypair, algorithm) = manager.kem_keypair().await.unwrap();
         assert!(!keypair.public_key.is_empty());
         assert!(!keypair.private_key.is_empty());
+        assert_eq!(algorithm, KemAlgorithm::CrystalsKyber768);
     }
     
     #[tokio::test]
@@ -445,10 +589,10 @@ mod tests {
         let manager = QuantumCryptoManager::new().unwrap();
         manager.initialize().await.unwrap();
         
-        let keypair = manager.generate_kem_keypair(KemAlgorithm::CrystalsKyber768).await.unwrap();
-        let encapsulated = manager.encapsulate(&keypair.public_key, KemAlgorithm::CrystalsKyber768).await.unwrap();
-        let decapsulated = manager.decapsulate(&encapsulated.ciphertext, &keypair.private_key, KemAlgorithm::CrystalsKyber768).await.unwrap();
+        let (keypair, _) = manager.kem_keypair().await.unwrap();
+        let encapsulated = manager.encapsulate(&keypair.public_key).await.unwrap();
         
+        let decapsulated = manager.decapsulate(&keypair.private_key, &encapsulated.ciphertext).await.unwrap();
         assert_eq!(encapsulated.shared_secret, decapsulated);
     }
     
@@ -457,9 +601,10 @@ mod tests {
         let manager = QuantumCryptoManager::new().unwrap();
         manager.initialize().await.unwrap();
         
-        let keypair = manager.generate_signature_keypair(SignatureAlgorithm::CrystalsDilithium3).await.unwrap();
+        let (keypair, algorithm) = manager.signature_keypair().await.unwrap();
         assert!(!keypair.public_key.is_empty());
         assert!(!keypair.private_key.is_empty());
+        assert_eq!(algorithm, SigAlgorithm::CrystalsDilithium3);
     }
     
     #[tokio::test]
@@ -467,12 +612,14 @@ mod tests {
         let manager = QuantumCryptoManager::new().unwrap();
         manager.initialize().await.unwrap();
         
-        let keypair = manager.generate_signature_keypair(SignatureAlgorithm::CrystalsDilithium3).await.unwrap();
-        let message = b"Test message";
-        let signature = manager.sign(message, &keypair.private_key, SignatureAlgorithm::CrystalsDilithium3).await.unwrap();
-        let is_valid = manager.verify(message, &signature, &keypair.public_key, SignatureAlgorithm::CrystalsDilithium3).await.unwrap();
+        let (keypair, _) = manager.signature_keypair().await.unwrap();
+        let message = b"Test message for signing";
         
-        assert!(is_valid);
+        let signature = manager.sign(&keypair.private_key, message).await.unwrap();
+        assert!(!signature.signature.is_empty());
+        
+        let verified = manager.verify(&keypair.public_key, message, &signature.signature).await.unwrap();
+        assert!(verified);
     }
     
     #[tokio::test]
@@ -480,11 +627,25 @@ mod tests {
         let manager = QuantumCryptoManager::new().unwrap();
         manager.initialize().await.unwrap();
         
-        let keypair = manager.generate_kem_keypair(KemAlgorithm::CrystalsKyber768).await.unwrap();
-        let plaintext = b"Test plaintext message";
-        let ciphertext = manager.hybrid_encrypt(plaintext, &keypair.public_key, KemAlgorithm::CrystalsKyber768).await.unwrap();
-        let decrypted = manager.hybrid_decrypt(&ciphertext, &keypair.private_key, KemAlgorithm::CrystalsKyber768).await.unwrap();
+        let (keypair, _) = manager.kem_keypair().await.unwrap();
+        let plaintext = b"This is a secret message";
+        
+        let ciphertext = manager.hybrid_encrypt(&keypair.public_key, plaintext).await.unwrap();
+        let decrypted = manager.hybrid_decrypt(&keypair.private_key, &ciphertext).await.unwrap();
         
         assert_eq!(plaintext.to_vec(), decrypted);
+    }
+    
+    #[tokio::test]
+    async fn test_statistics_tracking() {
+        let manager = QuantumCryptoManager::new().unwrap();
+        manager.initialize().await.unwrap();
+        
+        let (keypair, _) = manager.kem_keypair().await.unwrap();
+        manager.encapsulate(&keypair.public_key).await.unwrap();
+        
+        let stats = manager.get_statistics().await;
+        assert_eq!(stats.kem_encapsulations, 1);
+        assert!(stats.total_operations > 0);
     }
 }

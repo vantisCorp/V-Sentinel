@@ -11,3 +11,7 @@ description = "SENTINEL ai module"
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true }
+ndarray = { workspace = true }
+ndarray-rand = { workspace = true }
+rand = { workspace = true }

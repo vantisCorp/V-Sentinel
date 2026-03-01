@@ -1,16 +1,15 @@
 [package]
-name = "sentinel-quantum"
+name = "sentinel-audit"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "SENTINEL quantum module"
+description = "SENTINEL audit module"
 
 [dependencies]
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
-sha2 = "0.10"
-rand = { workspace = true }
+uuid = { version = "1.0", features = ["v4"] }

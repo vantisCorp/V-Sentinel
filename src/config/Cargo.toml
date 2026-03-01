@@ -1,16 +1,17 @@
 [package]
-name = "sentinel-quantum"
+name = "sentinel-config"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "SENTINEL quantum module"
+description = "SENTINEL config module"
 
 [dependencies]
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
-sha2 = "0.10"
-rand = { workspace = true }
+toml = "0.8"
+serde_yaml = "0.9"
+notify = "6.0"
