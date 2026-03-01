@@ -7,11 +7,6 @@
 pub mod bottleneck_analyzer;
 pub mod profiler;
 pub mod dashboard;
-pub mod advanced_profiler;
-pub mod advanced_caching;
-pub mod connection_pool;
-pub mod query_optimizer;
-pub mod network_optimization;
 
 use anyhow::{Result, anyhow};
 use tracing::{info, debug, warn, error};
