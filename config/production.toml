@@ -1,0 +1,210 @@
+# SENTINEL Production Configuration
+# This file contains production environment settings
+
+[general]
+# Application settings
+app_name = "SENTINEL"
+version = "1.1.0"
+environment = "production"
+debug = false
+log_level = "info"
+log_format = "json"
+
+[server]
+# Server settings
+host = "0.0.0.0"
+port = 8080
+workers = 4
+max_connections = 10000
+keep_alive_timeout = 75
+
+[database]
+# PostgreSQL configuration
+url = "postgresql://{{POSTGRES_USER}}:{{POSTGRES_PASSWORD}}@{{POSTGRES_HOST}}:{{POSTGRES_PORT}}/{{POSTGRES_DB}}"
+pool_size = 20
+min_idle = 5
+max_lifetime = 3600
+connection_timeout = 10
+idle_timeout = 600
+
+[redis]
+# Redis configuration
+url = "redis://{{REDIS_HOST}}:{{REDIS_PORT}}"
+pool_size = 10
+connection_timeout = 5
+idle_timeout = 300
+
+[security]
+# Security settings
+jwt_secret = "{{JWT_SECRET}}"
+jwt_expiration = 86400
+jwt_refresh_expiration = 604800
+encryption_key = "{{ENCRYPTION_KEY}}"
+bcrypt_cost = 12
+session_timeout = 3600
+max_login_attempts = 5
+lockout_duration = 900
+
+[api]
+# API settings
+rate_limit_enabled = true
+rate_limit_requests = 1000
+rate_limit_window = 3600
+api_timeout = 30
+max_request_size = 10485760
+cors_enabled = true
+cors_origins = ["https://app.sentinel.ai"]
+cors_methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+cors_headers = ["Content-Type", "Authorization"]
+
+[ai]
+# AI/ML settings
+model_path = "/models/sentinel-model.pt"
+model_version = "1.2.0"
+device = "cuda"
+batch_size = 32
+confidence_threshold = 0.5
+risk_threshold = 0.7
+inference_timeout = 1000
+max_concurrent_predictions = 100
+
+[hypervisor]
+# Hypervisor settings
+enable_vmx = true
+enable_svm = true
+enable_ept = true
+enable_vpid = true
+max_vms = 10
+vm_memory_limit = 2048
+vm_cpu_limit = 4
+vm_creation_timeout = 10000
+vm_exit_handling_timeout = 1000
+
+[gaming]
+# Gaming settings
+trusted_handshake_enabled = true
+zero_scan_mode_enabled = true
+anti_cheat_compatibility = ["Vanguard", "EAC", "BattlEye", "PunkBuster", "VAC"]
+fps_optimization_enabled = true
+latency_reduction_enabled = true
+ram_defolding_enabled = true
+max_fps_improvement = 21
+max_latency_reduction = 77
+zero_scan_activation_timeout = 500
+
+[antiddos]
+# Anti-DDoS settings
+enabled = true
+monitoring_interval = 100
+detection_threshold = 10000
+mitigation_strategies = ["rate_limiting", "packet_filtering", "ip_blacklisting"]
+max_packets_per_second = 10000
+max_unique_sources = 1000
+attack_detection_timeout = 100
+mitigation_activation_timeout = 50
+
+[quantum]
+# Quantum cryptography settings
+kem_algorithm = "CrystalsKyber768"
+signature_algorithm = "CrystalsDilithium3"
+hybrid_encryption_enabled = true
+key_generation_timeout = 100
+encapsulation_timeout = 50
+decapsulation_timeout = 50
+signing_timeout = 100
+verification_timeout = 50
+
+[memory]
+# Memory management settings
+protection_enabled = true
+monitoring_enabled = true
+protected_regions_limit = 1000
+region_protection_timeout = 1
+memory_check_interval = 1000
+max_memory_per_region = 1048576
+
+[process]
+# Process management settings
+monitoring_enabled = true
+max_monitored_processes = 1000
+process_monitoring_interval = 1000
+suspension_timeout = 10000
+termination_timeout = 5000
+
+[monitoring]
+# Monitoring settings
+metrics_enabled = true
+metrics_port = 9090
+metrics_path = "/metrics"
+tracing_enabled = true
+tracing_sample_rate = 0.1
+health_check_enabled = true
+health_check_path = "/health"
+health_check_interval = 10
+
+[logging]
+# Logging settings
+level = "info"
+format = "json"
+output = "stdout"
+max_file_size = 104857600
+max_files = 10
+max_age = 30
+compress = true
+
+[performance]
+# Performance settings
+caching_enabled = true
+cache_ttl = 300
+cache_max_size = 10000
+connection_pool_enabled = true
+max_connections_per_host = 100
+idle_timeout = 600
+keep_alive_timeout = 75
+
+[compliance]
+# Compliance settings
+gdpr_enabled = true
+hipaa_enabled = true
+pci_dss_enabled = true
+soc2_enabled = true
+iso27001_enabled = true
+data_retention_days = 90
+audit_log_enabled = true
+audit_log_retention_days = 365
+
+[backup]
+# Backup settings
+enabled = true
+backup_interval = 86400
+backup_retention_days = 30
+backup_location = "s3://sentinel-backups"
+encryption_enabled = true
+compression_enabled = true
+
+[deployment]
+# Deployment settings
+environment = "production"
+region = "us-east-1"
+availability_zones = ["us-east-1a", "us-east-1b", "us-east-1c"]
+replicas = 3
+auto_scaling_enabled = true
+min_replicas = 2
+max_replicas = 10
+target_cpu_percent = 70
+target_memory_percent = 80
+
+[testing]
+# Testing settings
+integration_tests_enabled = false
+load_tests_enabled = false
+stress_tests_enabled = false
+performance_tests_enabled = false
+
+[features]
+# Feature flags
+new_features_enabled = false
+beta_features_enabled = false
+experimental_features_enabled = false
+maintenance_mode = false
+read_only_mode = false

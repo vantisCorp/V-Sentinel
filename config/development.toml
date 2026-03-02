@@ -1,0 +1,210 @@
+# SENTINEL Development Configuration
+# This file contains development environment settings
+
+[general]
+# Application settings
+app_name = "SENTINEL"
+version = "1.1.0"
+environment = "development"
+debug = true
+log_level = "debug"
+log_format = "pretty"
+
+[server]
+# Server settings
+host = "127.0.0.1"
+port = 8080
+workers = 2
+max_connections = 1000
+keep_alive_timeout = 75
+
+[database]
+# PostgreSQL configuration
+url = "postgresql://sentinel:sentinel@localhost:5432/sentinel"
+pool_size = 5
+min_idle = 1
+max_lifetime = 1800
+connection_timeout = 10
+idle_timeout = 300
+
+[redis]
+# Redis configuration
+url = "redis://localhost:6379"
+pool_size = 5
+connection_timeout = 5
+idle_timeout = 300
+
+[security]
+# Security settings
+jwt_secret = "dev_jwt_secret_change_in_production"
+jwt_expiration = 86400
+jwt_refresh_expiration = 604800
+encryption_key = "dev_encryption_key_change_in_production"
+bcrypt_cost = 4
+session_timeout = 3600
+max_login_attempts = 10
+lockout_duration = 300
+
+[api]
+# API settings
+rate_limit_enabled = false
+rate_limit_requests = 10000
+rate_limit_window = 3600
+api_timeout = 60
+max_request_size = 104857600
+cors_enabled = true
+cors_origins = ["*"]
+cors_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+cors_headers = ["Content-Type", "Authorization"]
+
+[ai]
+# AI/ML settings
+model_path = "./models/sentinel-model.pt"
+model_version = "1.2.0"
+device = "cpu"
+batch_size = 8
+confidence_threshold = 0.5
+risk_threshold = 0.7
+inference_timeout = 5000
+max_concurrent_predictions = 10
+
+[hypervisor]
+# Hypervisor settings
+enable_vmx = true
+enable_svm = true
+enable_ept = true
+enable_vpid = true
+max_vms = 5
+vm_memory_limit = 1024
+vm_cpu_limit = 2
+vm_creation_timeout = 30000
+vm_exit_handling_timeout = 5000
+
+[gaming]
+# Gaming settings
+trusted_handshake_enabled = true
+zero_scan_mode_enabled = true
+anti_cheat_compatibility = ["Vanguard", "EAC", "BattlEye"]
+fps_optimization_enabled = true
+latency_reduction_enabled = true
+ram_defolding_enabled = true
+max_fps_improvement = 21
+max_latency_reduction = 77
+zero_scan_activation_timeout = 1000
+
+[antiddos]
+# Anti-DDoS settings
+enabled = true
+monitoring_interval = 1000
+detection_threshold = 100000
+mitigation_strategies = ["rate_limiting", "packet_filtering"]
+max_packets_per_second = 100000
+max_unique_sources = 10000
+attack_detection_timeout = 1000
+mitigation_activation_timeout = 500
+
+[quantum]
+# Quantum cryptography settings
+kem_algorithm = "CrystalsKyber768"
+signature_algorithm = "CrystalsDilithium3"
+hybrid_encryption_enabled = true
+key_generation_timeout = 1000
+encapsulation_timeout = 500
+decapsulation_timeout = 500
+signing_timeout = 1000
+verification_timeout = 500
+
+[memory]
+# Memory management settings
+protection_enabled = true
+monitoring_enabled = true
+protected_regions_limit = 100
+region_protection_timeout = 10
+memory_check_interval = 5000
+max_memory_per_region = 1048576
+
+[process]
+# Process management settings
+monitoring_enabled = true
+max_monitored_processes = 100
+process_monitoring_interval = 5000
+suspension_timeout = 30000
+termination_timeout = 10000
+
+[monitoring]
+# Monitoring settings
+metrics_enabled = true
+metrics_port = 9090
+metrics_path = "/metrics"
+tracing_enabled = true
+tracing_sample_rate = 1.0
+health_check_enabled = true
+health_check_path = "/health"
+health_check_interval = 5
+
+[logging]
+# Logging settings
+level = "debug"
+format = "pretty"
+output = "stdout"
+max_file_size = 10485760
+max_files = 5
+max_age = 7
+compress = false
+
+[performance]
+# Performance settings
+caching_enabled = true
+cache_ttl = 60
+cache_max_size = 1000
+connection_pool_enabled = true
+max_connections_per_host = 10
+idle_timeout = 300
+keep_alive_timeout = 75
+
+[compliance]
+# Compliance settings
+gdpr_enabled = false
+hipaa_enabled = false
+pci_dss_enabled = false
+soc2_enabled = false
+iso27001_enabled = false
+data_retention_days = 7
+audit_log_enabled = true
+audit_log_retention_days = 30
+
+[backup]
+# Backup settings
+enabled = false
+backup_interval = 3600
+backup_retention_days = 7
+backup_location = "./backups"
+encryption_enabled = false
+compression_enabled = false
+
+[deployment]
+# Deployment settings
+environment = "development"
+region = "local"
+availability_zones = []
+replicas = 1
+auto_scaling_enabled = false
+min_replicas = 1
+max_replicas = 1
+target_cpu_percent = 80
+target_memory_percent = 80
+
+[testing]
+# Testing settings
+integration_tests_enabled = true
+load_tests_enabled = true
+stress_tests_enabled = true
+performance_tests_enabled = true
+
+[features]
+# Feature flags
+new_features_enabled = true
+beta_features_enabled = true
+experimental_features_enabled = true
+maintenance_mode = false
+read_only_mode = false
