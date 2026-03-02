@@ -5,6 +5,9 @@ pub mod hardening;
 pub mod penetration_testing;
 pub mod vulnerability_scanning;
 pub mod security_audit;
+pub mod enhanced_hardening;
+pub mod advanced_penetration_testing;
+pub mod advanced_security_audit;
 pub mod secure_coding;
 
 pub use hardening::{
