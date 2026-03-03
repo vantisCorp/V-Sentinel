@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL Developer Portal</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo">SENTINEL</span>
+                <span class="tagline">Developer Portal</span>
+            </div>
+            <div class="nav-links">
+                <a href="#quickstart">Quick Start</a>
+                <a href="#apis">APIs</a>
+                <a href="#sdks">SDKs</a>
+                <a href="#examples">Examples</a>
+                <a href="#support">Support</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Build with SENTINEL</h1>
+                <p class="hero-subtitle">Integrate AI-native security capabilities into your applications with our comprehensive SDKs and APIs</p>
+                <div class="hero-actions">
+                    <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                    <a href="https://github.com/vantisCorp/V-Sentinel" class="btn btn-secondary">View on GitHub</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">Programming Languages</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">10+</div>
+                        <div class="stat-label">Core APIs</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">200+</div>
+                        <div class="stat-label">API Endpoints</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="quickstart">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <p class="section-subtitle">Get up and running in minutes</p>
+            
+            <div class="quickstart-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Get API Key</h3>
+                    <p>Sign up at <a href="https://sentinel.ai/developers">sentinel.ai/developers</a> and get your free API key</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Install SDK</h3>
+                    <p>Install the SDK for your preferred programming language</p>
+                    <div class="code-block">
+                        <pre><code class="language-python">pip install sentinel-sdk</code></pre>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Make Your First Request</h3>
+                    <p>Predict your first threat with just a few lines of code</p>
+                    <div class="code-block">
+                        <pre><code class="language-python">from sentinel_sdk import SentinelClient
+
+client = SentinelClient(api_key="your-api-key")
+result = client.predict_threat(
+    features={
+        "process_name": "test.exe",
+        "file_hash": "sha256:abc123..."
+    }
+)
+print(f"Threat: {result['threat_level']}")</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- APIs Section -->
+    <section id="apis" class="apis">
+        <div class="container">
+            <h2 class="section-title">Core APIs</h2>
+            <p class="section-subtitle">Powerful security APIs at your fingertips</p>
+            
+            <div class="apis-grid">
+                <div class="api-card">
+                    <div class="api-icon">🔍</div>
+                    <h3>Threat Prediction</h3>
+                    <p>Predict whether files, processes, or network connections are malicious using AI</p>
+                    <code class="endpoint">POST /api/v1/predict</code>
+                    <a href="#threat-prediction" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">📁</div>
+                    <h3>File Scanning</h3>
+                    <p>Scan files for malware with deep analysis and cloud lookup</p>
+                    <code class="endpoint">POST /api/v1/scan</code>
+                    <a href="#file-scanning" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">⚙️</div>
+                    <h3>Process Monitoring</h3>
+                    <p>Monitor processes in real-time and detect suspicious behavior</p>
+                    <code class="endpoint">POST /api/v1/monitor/start</code>
+                    <a href="#process-monitoring" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">🌐</div>
+                    <h3>Network Protection</h3>
+                    <p>Protect network connections from malicious IPs and domains</p>
+                    <code class="endpoint">POST /api/v1/network/protect</code>
+                    <a href="#network-protection" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">🔐</div>
+                    <h3>Quantum Cryptography</h3>
+                    <p>Use quantum-resistant encryption for future-proof security</p>
+                    <code class="endpoint">POST /api/v1/quantum/encrypt</code>
+                    <a href="#quantum-cryptography" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">🎮</div>
+                    <h3>Gaming Mode</h3>
+                    <p>Enable gaming mode for optimal performance and anti-cheat compatibility</p>
+                    <code class="endpoint">POST /api/v1/gaming/enable</code>
+                    <a href="#gaming-mode" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">🧠</div>
+                    <h3>Threat Intelligence</h3>
+                    <p>Access global threat intelligence and report new threats</p>
+                    <code class="endpoint">GET /api/v1/threats/feed</code>
+                    <a href="#threat-intelligence" class="learn-more">Learn More →</a>
+                </div>
+                
+                <div class="api-card">
+                    <div class="api-icon">📊</div>
+                    <h3>SIEM Integration</h3>
+                    <p>Send security events to SIEM systems (Splunk, QRadar, etc.)</p>
+                    <code class="endpoint">POST /api/v1/siem/send</code>
+                    <a href="#siem-integration" class="learn-more">Learn More →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SDKs Section -->
+    <section id="sdks" class="sdks">
+        <div class="container">
+            <h2 class="section-title">SDKs</h2>
+            <p class="section-subtitle">Official SDKs for your favorite languages</p>
+            
+            <div class="sdks-grid">
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#3776AB"/>
+                            <text x="20" y="28" text-anchor="middle" fill="white" font-size="20" font-weight="bold">Py</text>
+                        </svg>
+                    </div>
+                    <h3>Python</h3>
+                    <p>Full-featured Python SDK with async support</p>
+                    <code class="install">pip install sentinel-sdk</code>
+                    <a href="#python-sdk" class="learn-more">Documentation →</a>
+                </div>
+                
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#F7DF1E"/>
+                            <text x="20" y="28" text-anchor="middle" fill="black" font-size="16" font-weight="bold">JS</text>
+                        </svg>
+                    </div>
+                    <h3>JavaScript/Node.js</h3>
+                    <p>Modern JavaScript SDK for Node.js and browsers</p>
+                    <code class="install">npm install @sentinel/sdk</code>
+                    <a href="#javascript-sdk" class="learn-more">Documentation →</a>
+                </div>
+                
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#00ADD8"/>
+                            <text x="20" y="28" text-anchor="middle" fill="white" font-size="18" font-weight="bold">Go</text>
+                        </svg>
+                    </div>
+                    <h3>Go</h3>
+                    <p>Efficient Go SDK with goroutine support</p>
+                    <code class="install">go get github.com/vantisCorp/sentinel-go</code>
+                    <a href="#go-sdk" class="learn-more">Documentation →</a>
+                </div>
+                
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#DEA584"/>
+                            <text x="20" y="28" text-anchor="middle" fill="white" font-size="18" font-weight="bold">Rs</text>
+                        </svg>
+                    </div>
+                    <h3>Rust</h3>
+                    <p>Safe and fast Rust SDK with async support</p>
+                    <code class="install">cargo add sentinel-rust</code>
+                    <a href="#rust-sdk" class="learn-more">Documentation →</a>
+                </div>
+                
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#007396"/>
+                            <text x="20" y="28" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Java</text>
+                        </svg>
+                    </div>
+                    <h3>Java</h3>
+                    <p>Enterprise-grade Java SDK</p>
+                    <code class="install">mvn install sentinel-java</code>
+                    <a href="#java-sdk" class="learn-more">Documentation →</a>
+                </div>
+                
+                <div class="sdk-card">
+                    <div class="sdk-logo">
+                        <svg height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" fill="#512BD4"/>
+                            <text x="20" y="28" text-anchor="middle" fill="white" font-size="14" font-weight="bold">C#</text>
+                        </svg>
+                    </div>
+                    <h3>C#</h3>
+                    <p>.NET SDK for Windows and cross-platform apps</p>
+                    <code class="install">dotnet add package Sentinel.SDK</code>
+                    <a href="#csharp-sdk" class="learn-more">Documentation →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Examples Section -->
+    <section id="examples" class="examples">
+        <div class="container">
+            <h2 class="section-title">Code Examples</h2>
+            <p class="section-subtitle">Practical examples to help you get started</p>
+            
+            <div class="examples-tabs">
+                <button class="tab-btn active" data-tab="file-scanner">File Scanner</button>
+                <button class="tab-btn" data-tab="process-monitor">Process Monitor</button>
+                <button class="tab-btn" data-tab="network-analyzer">Network Analyzer</button>
+                <button class="tab-btn" data-tab="gaming-mode">Gaming Mode</button>
+            </div>
+            
+            <div class="example-content active" id="file-scanner">
+                <h3>Real-time File Scanner</h3>
+                <p>Scan all files in a directory for threats</p>
+                <div class="code-block">
+                    <pre><code class="language-python">from sentinel_sdk import SentinelClient
+import os
+
+client = SentinelClient(api_key="your-api-key")
+
+def scan_directory(directory_path):
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            print(f"Scanning: {file_path}")
+            
+            result = client.scan_file(file_path)
+            if result['threats_found'] > 0:
+                print(f"  THREAT FOUND: {result['threats']}")
+            else:
+                print(f"  Clean")
+
+scan_directory("/path/to/directory")</code></pre>
+                </div>
+            </div>
+            
+            <div class="example-content" id="process-monitor">
+                <h3>Process Monitor</h3>
+                <p>Monitor running processes for suspicious behavior</p>
+                <div class="code-block">
+                    <pre><code class="language-python">from sentinel_sdk import SentinelClient
+import psutil
+
+client = SentinelClient(api_key="your-api-key")
+
+def monitor_processes():
+    for proc in psutil.process_iter(['pid', 'name', 'exe']):
+        try:
+            features = {
+                "process_name": proc.info['name'],
+                "file_path": proc.info['exe']
+            }
+            
+            result = client.predict_threat(features)
+            if result['threat_level'] in ['high', 'critical']:
+                print(f"THREAT: {proc.info['name']}")
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+
+monitor_processes()</code></pre>
+                </div>
+            </div>
+            
+            <div class="example-content" id="network-analyzer">
+                <h3>Network Traffic Analyzer</h3>
+                <p>Analyze network packets for threats</p>
+                <div class="code-block">
+                    <pre><code class="language-python">from sentinel_sdk import SentinelClient
+import scapy.all as scapy
+
+client = SentinelClient(api_key="your-api-key")
+
+def analyze_packet(packet):
+    if packet.haslayer(scapy.IP):
+        src_ip = packet[scapy.IP].src
+        dst_ip = packet[scapy.IP].dst
+        
+        threat = client.check_ip_reputation(src_ip)
+        if threat['is_malicious']:
+            print(f"MALICIOUS IP: {src_ip}")
+
+scapy.sniff(prn=analyze_packet, store=0)</code></pre>
+                </div>
+            </div>
+            
+            <div class="example-content" id="gaming-mode">
+                <h3>Gaming Mode Integration</h3>
+                <p>Enable gaming mode for optimal performance</p>
+                <div class="code-block">
+                    <pre><code class="language-python">from sentinel_sdk import SentinelClient
+import psutil
+
+client = SentinelClient(api_key="your-api-key")
+
+def enable_gaming_mode_for_game(game_name):
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'].lower() == game_name.lower():
+            client.enable_gaming_mode(
+                game_process=game_name,
+                anti_cheat="vanguard",
+                options={
+                    "zero_scan_mode": True,
+                    "ram_defolding": True,
+                    "ddos_protection": True
+                }
+            )
+            print("Gaming mode enabled!")
+            return
+
+enable_gaming_mode_for_game("valorant.exe")</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section id="support" class="support">
+        <div class="container">
+            <h2 class="section-title">Get Support</h2>
+            <p class="section-subtitle">We're here to help you succeed</p>
+            
+            <div class="support-grid">
+                <div class="support-card">
+                    <div class="support-icon">📚</div>
+                    <h3>Documentation</h3>
+                    <p>Comprehensive documentation for all SDKs and APIs</p>
+                    <a href="/docs" class="support-link">View Documentation</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="support-icon">💬</div>
+                    <h3>Community</h3>
+                    <p>Join our Discord community for help and discussions</p>
+                    <a href="https://discord.gg/sentinel" class="support-link">Join Discord</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="support-icon">📝</div>
+                    <h3>Forums</h3>
+                    <p>Ask questions and share knowledge in our forums</p>
+                    <a href="https://forum.sentinel.ai" class="support-link">Visit Forums</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="support-icon">🐛</div>
+                    <h3>Report Issues</h3>
+                    <p>Found a bug? Report it on GitHub</p>
+                    <a href="https://github.com/vantisCorp/V-Sentinel/issues" class="support-link">Report Issue</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="support-icon">📧</div>
+                    <h3>Email Support</h3>
+                    <p>Get direct support from our team</p>
+                    <a href="mailto:support@sentinel.ai" class="support-link">Email Us</a>
+                </div>
+                
+                <div class="support-card">
+                    <div class="support-icon">📊</div>
+                    <h3>Status Page</h3>
+                    <p>Check the status of our services</p>
+                    <a href="https://status.sentinel.ai" class="support-link">Check Status</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo">SENTINEL</span>
+                    <p>AI-Native Security Platform</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Resources</h4>
+                    <a href="/docs">Documentation</a>
+                    <a href="/api">API Reference</a>
+                    <a href="/examples">Examples</a>
+                    <a href="/tutorials">Tutorials</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Community</h4>
+                    <a href="https://discord.gg/sentinel">Discord</a>
+                    <a href="https://forum.sentinel.ai">Forums</a>
+                    <a href="https://github.com/vantisCorp/V-Sentinel">GitHub</a>
+                    <a href="https://twitter.com/sentinelsecurity">Twitter</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <a href="/terms">Terms of Service</a>
+                    <a href="/privacy">Privacy Policy</a>
+                    <a href="/api-terms">API Terms</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 SENTINEL. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
