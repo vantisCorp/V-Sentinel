@@ -1,0 +1,809 @@
+openapi: 3.0.3
+info:
+  title: SENTINEL Security API
+  description: |
+    The SENTINEL AI-Native Security Platform API provides comprehensive security capabilities including threat prediction, file scanning, process monitoring, network protection, quantum cryptography, gaming mode, threat intelligence, and SIEM integration.
+    
+    ## Authentication
+    
+    All API requests require authentication using an API key or JWT token.
+    
+    ## Rate Limits
+    
+    - Free Tier: 100 requests/minute
+    - Standard Tier: 1,000 requests/minute
+    - Enterprise Tier: Unlimited
+    
+    ## Base URL
+    
+    `https://api.sentinel.ai/v1`
+    
+    ## Support
+    
+    - Documentation: https://sentinel.ai/docs/api
+    - Support Email: support@sentinel.ai
+    - Discord: https://discord.gg/sentinel
+  version: 1.0.0
+  contact:
+    name: SENTINEL Support
+    email: support@sentinel.ai
+    url: https://sentinel.ai
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.sentinel.ai/v1
+    description: Production server
+  - url: https://staging-api.sentinel.ai/v1
+    description: Staging server
+  - url: https://dev-api.sentinel.ai/v1
+    description: Development server
+
+tags:
+  - name: Health
+    description: Health check and system status
+  - name: Threat Prediction
+    description: AI-powered threat prediction and analysis
+  - name: File Scanning
+    description: File scanning and malware detection
+  - name: Process Monitoring
+    description: Real-time process monitoring
+  - name: Network Protection
+    description: Network protection and traffic analysis
+  - name: Quantum Cryptography
+    description: Quantum-resistant encryption and decryption
+  - name: Gaming Mode
+    description: Gaming optimization and anti-cheat compatibility
+  - name: Threat Intelligence
+    description: Global threat intelligence feeds
+  - name: SIEM Integration
+    description: SIEM system integration
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check the health status of the API
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: 2025-03-03T12:00:00Z
+
+  /predict:
+    post:
+      tags:
+        - Threat Prediction
+      summary: Predict threat
+      description: Predict whether a file, process, or network connection is malicious using AI
+      operationId: predictThreat
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - features
+              properties:
+                features:
+                  type: object
+                  properties:
+                    process_name:
+                      type: string
+                      description: Name of the process
+                      example: suspicious.exe
+                    file_hash:
+                      type: string
+                      description: File hash (SHA-256)
+                      example: sha256:abc123...
+                    file_size:
+                      type: integer
+                      description: File size in bytes
+                      example: 1024000
+                    file_path:
+                      type: string
+                      description: File path
+                      example: C:\\Program Files\\test.exe
+                    network_connections:
+                      type: array
+                      items:
+                        type: string
+                      description: Network connections
+                      example: ["192.168.1.1:443", "10.0.0.1:80"]
+                    registry_keys:
+                      type: array
+                      items:
+                        type: string
+                      description: Registry keys accessed
+                      example: ["HKLM\\Software\\Suspicious"]
+                    command_line:
+                      type: string
+                      description: Command line arguments
+                      example: test.exe --malicious
+                    parent_process:
+                      type: string
+                      description: Parent process name
+                      example: explorer.exe
+      responses:
+        '200':
+          description: Prediction successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threat_level:
+                    type: string
+                    enum: [low, medium, high, critical]
+                    description: Threat level
+                    example: high
+                  confidence:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 1
+                    description: Confidence score (0-1)
+                    example: 0.95
+                  threat_type:
+                    type: string
+                    description: Type of threat detected
+                    example: malware
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+                    description: Recommended actions
+                    example: ["isolate", "quarantine"]
+                  prediction_id:
+                    type: string
+                    description: Unique prediction ID
+                    example: pred_12345
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: 2025-03-03T12:00:00Z
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /predict/batch:
+    post:
+      tags:
+        - Threat Prediction
+      summary: Batch predict threat
+      description: Predict threats for multiple items in a single request
+      operationId: batchPredictThreat
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  description: Array of items to predict
+                  items:
+                    type: object
+                    required:
+                      - features
+                    properties:
+                      features:
+                        type: object
+                        description: Features for prediction
+                        example:
+                          process_name: test.exe
+                          file_hash: sha256:abc123...
+      responses:
+        '200':
+          description: Batch prediction successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  predictions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Prediction'
+                  batch_id:
+                    type: string
+                    example: batch_12345
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scan/file:
+    post:
+      tags:
+        - File Scanning
+      summary: Scan file
+      description: Scan a file for malware and threats with deep analysis
+      operationId: scanFile
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to scan
+                deep_scan:
+                  type: boolean
+                  description: Enable deep scanning
+                  default: false
+                heuristics:
+                  type: boolean
+                  description: Enable heuristic analysis
+                  default: true
+                cloud_lookup:
+                  type: boolean
+                  description: Enable cloud threat intelligence lookup
+                  default: true
+      responses:
+        '200':
+          description: Scan completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scan_id:
+                    type: string
+                    example: scan_12345
+                  status:
+                    type: string
+                    enum: [completed, processing, queued]
+                    example: completed
+                  file_info:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: suspicious.exe
+                      size:
+                        type: integer
+                        example: 1024000
+                      hash:
+                        type: string
+                        example: sha256:abc123...
+                  threats_found:
+                    type: integer
+                    example: 2
+                  threats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: trojan
+                        name:
+                          type: string
+                          example: Trojan.GenericKD.123
+                        severity:
+                          type: string
+                          enum: [low, medium, high, critical]
+                          example: high
+                        description:
+                          type: string
+                          example: Generic trojan detected
+                  scan_duration:
+                    type: number
+                    format: float
+                    example: 2.5
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scan/file/{scan_id}:
+    get:
+      tags:
+        - File Scanning
+      summary: Get scan result
+      description: Get the result of a file scan by scan ID
+      operationId: getScanResult
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      parameters:
+        - name: scan_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Scan ID
+          example: scan_12345
+      responses:
+        '200':
+          description: Scan result retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scan_id:
+                    type: string
+                    example: scan_12345
+                  status:
+                    type: string
+                    enum: [completed, processing, queued]
+                    example: completed
+                  file_info:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      size:
+                        type: integer
+                      hash:
+                        type: string
+                  threats_found:
+                    type: integer
+                  threats:
+                    type: array
+                    items:
+                      type: object
+                  scan_duration:
+                    type: number
+                    format: float
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Scan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /monitor/start:
+    post:
+      tags:
+        - Process Monitoring
+      summary: Start process monitoring
+      description: Start real-time process monitoring with optional filters
+      operationId: startProcessMonitoring
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  type: object
+                  properties:
+                    process_names:
+                      type: array
+                      items:
+                        type: string
+                      description: Process names to monitor
+                      example: ["chrome.exe", "firefox.exe"]
+                    monitor_children:
+                      type: boolean
+                      description: Monitor child processes
+                      default: true
+                    pid_filter:
+                      type: array
+                      items:
+                        type: integer
+                      description: Specific PIDs to monitor
+                      example: [1234, 5678]
+                callback_url:
+                  type: string
+                  format: uri
+                  description: Webhook URL for process events
+                  example: https://your-server.com/webhook
+                event_types:
+                  type: array
+                  items:
+                    type: string
+                    enum: [process_start, process_end, suspicious_activity, threat_detected]
+                  description: Event types to monitor
+                  example: ["process_start", "threat_detected"]
+      responses:
+        '200':
+          description: Monitoring started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monitoring_id:
+                    type: string
+                    example: monitor_12345
+                  status:
+                    type: string
+                    enum: [started, running]
+                    example: started
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /monitor/stop/{monitoring_id}:
+    post:
+      tags:
+        - Process Monitoring
+      summary: Stop process monitoring
+      description: Stop a running process monitoring session
+      operationId: stopProcessMonitoring
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      parameters:
+        - name: monitoring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Monitoring ID
+          example: monitor_12345
+      responses:
+        '200':
+          description: Monitoring stopped
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  monitoring_id:
+                    type: string
+                    example: monitor_12345
+                  status:
+                    type: string
+                    enum: [stopped]
+                    example: stopped
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Monitoring session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /network/protect:
+    post:
+      tags:
+        - Network Protection
+      summary: Enable network protection
+      description: Enable network protection with configurable rules
+      operationId: enableNetworkProtection
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rules:
+                  type: object
+                  properties:
+                    block_malicious_ips:
+                      type: boolean
+                      description: Block known malicious IPs
+                      default: true
+                    block_suspicious_domains:
+                      type: boolean
+                      description: Block suspicious domains
+                      default: true
+                    ddos_protection:
+                      type: boolean
+                      description: Enable DDoS protection
+                      default: true
+                    rate_limit:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                          default: true
+                        requests_per_second:
+                          type: integer
+                          example: 1000
+                    firewall_rules:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          action:
+                            type: string
+                            enum: [allow, deny]
+                          source:
+                            type: string
+                          destination:
+                            type: string
+                          port:
+                            type: integer
+                          protocol:
+                            type: string
+                            enum: [tcp, udp, icmp]
+      responses:
+        '200':
+          description: Network protection enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  protection_id:
+                    type: string
+                    example: protect_12345
+                  status:
+                    type: string
+                    enum: [enabled, active]
+                    example: enabled
+                  rules:
+                    type: object
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /network/events:
+    get:
+      tags:
+        - Network Protection
+      summary: Get network events
+      description: Retrieve network protection events
+      operationId: getNetworkEvents
+      security:
+        - ApiKeyAuth: []
+        - JWTAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+          description: Maximum number of events to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Offset for pagination
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [blocked, allowed, suspicious, ddos]
+          description: Filter by event type
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start time filter
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End time filter
+      responses:
+        '200':
+          description: Network events retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event_id:
+                          type: string
+                        event_type:
+                          type: string
+                        source_ip:
+                          type: string
+                        destination_ip:
+                          type: string
+                        port:
+                          type: integer
+                        protocol:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: INVALID_REQUEST
+            message:
+              type: string
+              example: Invalid request parameters
+            details:
+              type: object
+              additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          example: 2025-03-03T12:00:00Z
+      required:
+        - error
+        - timestamp
+
+    Prediction:
+      type: object
+      properties:
+        threat_level:
+          type: string
+          enum: [low, medium, high, critical]
+        confidence:
+          type: number
+          format: float
+        threat_type:
+          type: string
+        recommendations:
+          type: array
+          items:
+            type: string
+        prediction_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
