@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL Web Protection Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e1b4b;
+            --darker: #0f0d24;
+            --light: #f3f4f6;
+            --gray: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Content */
+        .main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--dark) 0%, rgba(30, 27, 75, 0.5) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon.requests { background: rgba(99, 102, 241, 0.2); }
+        .stat-icon.blocked { background: rgba(239, 68, 68, 0.2); }
+        .stat-icon.scanned { background: rgba(16, 185, 129, 0.2); }
+        .stat-icon.threats { background: rgba(245, 158, 11, 0.2); }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        /* Action Cards */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: var(--dark);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .action-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            color: var(--gray);
+        }
+
+        .upload-text strong {
+            color: var(--primary);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            background: rgba(15, 13, 36, 0.5);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--light);
+            font-size: 0.875rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Results */
+        .result-box {
+            background: rgba(15, 13, 36, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .result-box.success { border-left: 3px solid var(--success); }
+        .result-box.warning { border-left: 3px solid var(--warning); }
+        .result-box.danger { border-left: 3px solid var(--danger); }
+
+        /* Events Table */
+        .events-section {
+            background: var(--dark);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .events-table th,
+        .events-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .events-table th {
+            color: var(--gray);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .severity-badge.low { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .severity-badge.medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .severity-badge.high { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .severity-badge.critical { background: rgba(220, 38, 38, 0.3); color: #fca5a5; }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            .main {
+                padding: 1rem;
+            }
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">S</div>
+            <span class="logo-text">SENTINEL</span>
+        </div>
+        <div class="status-badge">
+            <span class="status-dot"></span>
+            Protected
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon requests">📊</div>
+                <div class="stat-value">{{ total_requests }}</div>
+                <div class="stat-label">Total Requests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blocked">🛡️</div>
+                <div class="stat-value">{{ blocked_count }}</div>
+                <div class="stat-label">Threats Blocked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon scanned">🔍</div>
+                <div class="stat-value" id="scannedCount">0</div>
+                <div class="stat-label">Files Scanned</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon threats">⚡</div>
+                <div class="stat-value" id="avgResponseTime">23ms</div>
+                <div class="stat-label">Avg Response Time</div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="actions-grid">
+            <!-- File Scanner -->
+            <div class="action-card">
+                <h3>🔍 File Scanner</h3>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <p class="upload-text">
+                        Drop file here or <strong>browse</strong>
+                    </p>
+                    <p style="font-size: 0.75rem; color: var(--gray); margin-top: 0.5rem;">
+                        Max 16MB • txt, pdf, png, jpg, doc, docx
+                    </p>
+                    <input type="file" id="fileInput" accept=".txt,.pdf,.png,.jpg,.jpeg,.gif,.doc,.docx">
+                </div>
+                <button class="btn" id="scanBtn" disabled>
+                    <span id="scanBtnText">Select a file to scan</span>
+                </button>
+                <div class="result-box" id="scanResult" style="display: none;"></div>
+            </div>
+
+            <!-- Threat Score -->
+            <div class="action-card">
+                <h3>🎯 Threat Score Calculator</h3>
+                <div class="input-group">
+                    <input type="text" id="threatInput" placeholder="Enter process name, URL, or IP...">
+                </div>
+                <select id="threatType" style="background: rgba(15,13,36,0.5); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 0.75rem; color: var(--light); width: 100%; margin-bottom: 1rem;">
+                    <option value="process">Process Analysis</option>
+                    <option value="network">Network Traffic</option>
+                    <option value="url">URL Analysis</option>
+                </select>
+                <button class="btn" id="analyzeBtn">
+                    Analyze Threat
+                </button>
+                <div class="result-box" id="threatResult" style="display: none;"></div>
+            </div>
+
+            <!-- IP Blocker -->
+            <div class="action-card">
+                <h3>🚫 IP Blocker</h3>
+                <div class="input-group">
+                    <input type="text" id="blockIpInput" placeholder="Enter IP address...">
+                    <button class="btn btn-danger" id="blockIpBtn">Block</button>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="unblockIpInput" placeholder="Enter IP to unblock...">
+                    <button class="btn btn-success" id="unblockIpBtn">Unblock</button>
+                </div>
+                <div class="result-box" id="blockResult" style="display: none;"></div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="action-card">
+                <h3>⚡ Quick Actions</h3>
+                <div style="display: grid; gap: 0.5rem;">
+                    <button class="btn" id="exportLogsBtn">📥 Export Security Logs</button>
+                    <button class="btn" id="healthCheckBtn">❤️ Health Check</button>
+                    <button class="btn" id="clearEventsBtn">🗑️ Clear Event Log</button>
+                </div>
+                <div class="result-box" id="actionResult" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Events Table -->
+        <div class="events-section">
+            <div class="events-header">
+                <h3>📋 Recent Security Events</h3>
+                <button class="btn" id="refreshEventsBtn">🔄 Refresh</button>
+            </div>
+            <table class="events-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Event Type</th>
+                        <th>Severity</th>
+                        <th>Details</th>
+                        <th>Source IP</th>
+                    </tr>
+                </thead>
+                <tbody id="eventsBody">
+                    {% for event in recent_events %}
+                    <tr>
+                        <td>{{ event.timestamp[:19] }}</td>
+                        <td>{{ event.event_type }}</td>
+                        <td><span class="severity-badge {{ event.severity|lower }}">{{ event.severity }}</span></td>
+                        <td>{{ event.details[:50] }}...</td>
+                        <td>{{ event.source_ip }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // File Upload Handling
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const scanBtn = document.getElementById('scanBtn');
+        const scanBtnText = document.getElementById('scanBtnText');
+        const scanResult = document.getElementById('scanResult');
+        let selectedFile = null;
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            selectedFile = file;
+            scanBtn.disabled = false;
+            scanBtnText.textContent = `Scan: ${file.name}`;
+        }
+
+        scanBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            scanBtn.disabled = true;
+            scanBtnText.innerHTML = '<span class="spinner"></span> Scanning...';
+            scanResult.style.display = 'block';
+            scanResult.className = 'result-box';
+            scanResult.textContent = 'Scanning file...';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                const isClean = !data.is_malicious;
+                scanResult.className = `result-box ${isClean ? 'success' : 'danger'}`;
+                scanResult.textContent = JSON.stringify(data, null, 2);
+                
+                document.getElementById('scannedCount').textContent = 
+                    parseInt(document.getElementById('scannedCount').textContent) + 1;
+            } catch (error) {
+                scanResult.className = 'result-box danger';
+                scanResult.textContent = `Error: ${error.message}`;
+            }
+
+            scanBtn.disabled = false;
+            scanBtnText.textContent = `Scan: ${selectedFile.name}`;
+        });
+
+        // Threat Score
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            const input = document.getElementById('threatInput').value;
+            const type = document.getElementById('threatType').value;
+            const result = document.getElementById('threatResult');
+            
+            if (!input) {
+                alert('Please enter a value to analyze');
+                return;
+            }
+
+            result.style.display = 'block';
+            result.className = 'result-box';
+            result.textContent = 'Analyzing...';
+
+            try {
+                const response = await fetch('/api/threat-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input_type: type,
+                        data: type === 'process' ? { name: input } :
+                              type === 'network' ? { dest_ip: input } :
+                              { url: input }
+                    })
+                });
+                const data = await response.json();
+                
+                const severity = data.threat_score > 0.7 ? 'danger' : 
+                                data.threat_score > 0.3 ? 'warning' : 'success';
+                result.className = `result-box ${severity}`;
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'result-box danger';
+                result.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // IP Blocking
+        document.getElementById('blockIpBtn').addEventListener('click', async () => {
+            const ip = document.getElementById('blockIpInput').value;
+            if (!ip) return;
+
+            try {
+                const response = await fetch('/api/block-ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, reason: 'Manual block from dashboard' })
+                });
+                const data = await response.json();
+                showResult('blockResult', data, 'success');
+            } catch (error) {
+                showResult('blockResult', { error: error.message }, 'danger');
+            }
+        });
+
+        document.getElementById('unblockIpBtn').addEventListener('click', async () => {
+            const ip = document.getElementById('unblockIpInput').value;
+            if (!ip) return;
+
+            try {
+                const response = await fetch('/api/unblock-ip', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip })
+                });
+                const data = await response.json();
+                showResult('blockResult', data, 'success');
+            } catch (error) {
+                showResult('blockResult', { error: error.message }, 'danger');
+            }
+        });
+
+        function showResult(elementId, data, type) {
+            const el = document.getElementById(elementId);
+            el.style.display = 'block';
+            el.className = `result-box ${type}`;
+            el.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Quick Actions
+        document.getElementById('healthCheckBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                showResult('actionResult', data, 'success');
+            } catch (error) {
+                showResult('actionResult', { error: error.message }, 'danger');
+            }
+        });
+
+        document.getElementById('exportLogsBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/events?limit=100');
+                const data = await response.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sentinel-logs-${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showResult('actionResult', { success: true, message: 'Logs exported' }, 'success');
+            } catch (error) {
+                showResult('actionResult', { error: error.message }, 'danger');
+            }
+        });
+
+        document.getElementById('refreshEventsBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/events?limit=10');
+                const data = await response.json();
+                const tbody = document.getElementById('eventsBody');
+                tbody.innerHTML = data.events.map(e => `
+                    <tr>
+                        <td>${e.timestamp.slice(0, 19)}</td>
+                        <td>${e.event_type}</td>
+                        <td><span class="severity-badge ${e.severity.toLowerCase()}">${e.severity}</span></td>
+                        <td>${e.details.slice(0, 50)}...</td>
+                        <td>${e.source_ip}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to refresh events:', error);
+            }
+        });
+    </script>
+</body>
+</html>
