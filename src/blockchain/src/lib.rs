@@ -1,9 +1,6 @@
-//! SENTINEL Blockchain & Decentralized Security Module
-//!
-//! This module provides blockchain-based threat reputation and decentralized
-//! security verification capabilities.
-
-pub mod reputation;
+//! SENTINEL blockchain Module
+//! 
+//! This module provides blockchain functionality.
 
 use anyhow::Result;
 

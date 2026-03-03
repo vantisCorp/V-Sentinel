@@ -3,8 +3,6 @@
 //! This module provides cloud-native security capabilities for AWS, Azure,
 //! and GCP with container security, serverless security, and Kubernetes policies.
 
-pub mod advanced_security;
-
 use anyhow::Result;
 use tracing::{info, debug, warn, error};
 use std::sync::Arc;

@@ -1,2 +1,0 @@
-name:	vantisCorp/V-Sentinel
-description:	

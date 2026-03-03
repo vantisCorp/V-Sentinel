@@ -1,3 +1,0 @@
-Unstaged changes after reset:
-M	Cargo.toml
-M	todo.md
