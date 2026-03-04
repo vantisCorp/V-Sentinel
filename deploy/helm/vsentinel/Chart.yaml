@@ -1,0 +1,22 @@
+apiVersion: v2
+name: vsentinel
+description: V-Sentinel Security Platform
+
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+maintainers:
+  - name: V-Sentinel Team
+    email: support@v-sentinel.io
+
+keywords:
+  - security
+  - ai
+  - quantum
+  - threat-detection
+  - cybersecurity
+
+home: https://v-sentinel.io
+sources:
+  - https://github.com/vantisCorp/V-Sentinel

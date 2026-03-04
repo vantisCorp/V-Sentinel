@@ -1,313 +1,251 @@
 #!/bin/bash
-# SENTINEL Security System - Production Deployment Script
+#
+# V-Sentinel Deployment Script
+#
+# Automated deployment script for Docker Compose
 
 set -e
-
-# Configuration
-ENVIRONMENT="${ENVIRONMENT:-production}"
-VERSION="${VERSION:-1.1.0}"
-AWS_REGION="${AWS_REGION:-us-east-1}"
-CLUSTER_NAME="${ENVIRONMENT}-cluster"
-ECR_REPOSITORY_PREFIX="123456789012.dkr.ecr.${AWS_REGION}.amazonaws.com/sentinel"
 
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Configuration
+COMPOSE_FILE="docker-compose.yml"
+ENV_FILE=".env"
+BACKUP_DIR="./backups"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 
 # Functions
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Pre-deployment checks
-pre_deployment_checks() {
-    log_info "Running pre-deployment checks..."
+check_prerequisites() {
+    log_info "Checking prerequisites..."
     
-    # Check if AWS CLI is installed
-    if ! command -v aws &> /dev/null; then
-        log_error "AWS CLI is not installed"
-        exit 1
-    fi
-    
-    # Check if Docker is installed
+    # Check Docker
     if ! command -v docker &> /dev/null; then
         log_error "Docker is not installed"
         exit 1
     fi
     
-    # Check if kubectl is installed
-    if ! command -v kubectl &> /dev/null; then
-        log_error "kubectl is not installed"
+    # Check Docker Compose
+    if ! command -v docker-compose &> /dev/null; then
+        log_error "Docker Compose is not installed"
         exit 1
     fi
     
-    # Check if terraform is installed
-    if ! command -v terraform &> /dev/null; then
-        log_error "terraform is not installed"
-        exit 1
+    log_success "Prerequisites check passed"
+}
+
+setup_environment() {
+    log_info "Setting up environment..."
+    
+    # Create .env file if it doesn't exist
+    if [ ! -f "$ENV_FILE" ]; then
+        log_warning ".env file not found, creating from template..."
+        cat > "$ENV_FILE" << EOF
+# V-Sentinel Environment Configuration
+
+# Database
+DB_PASSWORD=$(openssl rand -base64 32)
+
+# Redis
+REDIS_PASSWORD=$(openssl rand -base64 32)
+
+# Grafana
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=$(openssl rand -base64 16)
+
+# API Keys
+SENTINEL_API_KEY=$(openssl rand -hex 32)
+EOF
+        log_success ".env file created"
+    else
+        log_info ".env file exists, using existing configuration"
     fi
-    
-    # Verify AWS credentials
-    log_info "Verifying AWS credentials..."
-    aws sts get-caller-identity &> /dev/null
-    if [ $? -ne 0 ]; then
-        log_error "AWS credentials not configured"
-        exit 1
-    fi
-    
-    log_info "Pre-deployment checks passed"
 }
 
-# Build Docker images
-build_images() {
-    log_info "Building Docker images..."
+backup_data() {
+    log_info "Creating backup..."
     
-    # Login to ECR
-    log_info "Logging in to ECR..."
-    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY_PREFIX%-sentinel*}
+    mkdir -p "$BACKUP_DIR"
     
-    # Build API image
-    log_info "Building API image..."
-    docker build -t ${ECR_REPOSITORY_PREFIX}-api:${VERSION} -f docker/Dockerfile.api .
-    docker tag ${ECR_REPOSITORY_PREFIX}-api:${VERSION} ${ECR_REPOSITORY_PREFIX}-api:latest
+    # Backup database
+    docker exec vsentinel-postgres pg_dump -U vsentinel vsentinel > "$BACKUP_DIR/db_backup_${TIMESTAMP}.sql" 2>/dev/null || true
     
-    # Build Worker image
-    log_info "Building Worker image..."
-    docker build -t ${ECR_REPOSITORY_PREFIX}-worker:${VERSION} -f docker/Dockerfile.worker .
-    docker tag ${ECR_REPOSITORY_PREFIX}-worker:${VERSION} ${ECR_REPOSITORY_PREFIX}-worker:latest
+    # Backup volumes
+    docker run --rm \
+        -v vsentinel_postgres-data:/data \
+        -v "$BACKUP_DIR:/backup" \
+        alpine tar czf "/backup/postgres_${TIMESTAMP}.tar.gz" -C /data . 2>/dev/null || true
     
-    # Build Web image
-    log_info "Building Web image..."
-    docker build -t ${ECR_REPOSITORY_PREFIX}-web:${VERSION} -f docker/Dockerfile.web .
-    docker tag ${ECR_REPOSITORY_PREFIX}-web:${VERSION} ${ECR_REPOSITORY_PREFIX}-web:latest
-    
-    log_info "Docker images built successfully"
+    log_success "Backup created in $BACKUP_DIR"
 }
 
-# Push images to ECR
-push_images() {
-    log_info "Pushing images to ECR..."
-    
-    docker push ${ECR_REPOSITORY_PREFIX}-api:${VERSION}
-    docker push ${ECR_REPOSITORY_PREFIX}-api:latest
-    
-    docker push ${ECR_REPOSITORY_PREFIX}-worker:${VERSION}
-    docker push ${ECR_REPOSITORY_PREFIX}-worker:latest
-    
-    docker push ${ECR_REPOSITORY_PREFIX}-web:${VERSION}
-    docker push ${ECR_REPOSITORY_PREFIX}-web:latest
-    
-    log_info "Images pushed to ECR successfully"
-}
-
-# Deploy to ECS
-deploy_ecs() {
-    log_info "Deploying to ECS..."
-    
-    # Update ECS task definitions
-    log_info "Updating ECS task definitions..."
-    
-    # API service
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service api \
-        --task-definition sentinel-api:${VERSION} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    # Worker service
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service worker \
-        --task-definition sentinel-worker:${VERSION} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    # Web service
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service web \
-        --task-definition sentinel-web:${VERSION} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    log_info "ECS deployment initiated"
-}
-
-# Wait for deployment to complete
-wait_for_deployment() {
-    log_info "Waiting for deployment to complete..."
-    
-    local max_attempts=60
-    local attempt=0
-    
-    while [ $attempt -lt $max_attempts ]; do
-        # Check if all services are stable
-        local api_stable=$(aws ecs describe-services \
-            --cluster ${CLUSTER_NAME} \
-            --services api \
-            --region ${AWS_REGION} \
-            --query 'services[0].deployments[0].rolloutState' \
-            --output text)
-        
-        local worker_stable=$(aws ecs describe-services \
-            --cluster ${CLUSTER_NAME} \
-            --services worker \
-            --region ${AWS_REGION} \
-            --query 'services[0].deployments[0].rolloutState' \
-            --output text)
-        
-        local web_stable=$(aws ecs describe-services \
-            --cluster ${CLUSTER_NAME} \
-            --services web \
-            --region ${AWS_REGION} \
-            --query 'services[0].deployments[0].rolloutState' \
-            --output text)
-        
-        if [ "$api_stable" = "COMPLETED" ] && [ "$worker_stable" = "COMPLETED" ] && [ "$web_stable" = "COMPLETED" ]; then
-            log_info "Deployment completed successfully"
-            return 0
-        fi
-        
-        log_info "Waiting for deployment... (attempt $((attempt + 1))/$max_attempts)"
-        sleep 30
-        attempt=$((attempt + 1))
-    done
-    
-    log_error "Deployment timed out"
-    return 1
-}
-
-# Run smoke tests
-run_smoke_tests() {
-    log_info "Running smoke tests..."
-    
-    # Test health endpoints
-    log_info "Testing health endpoints..."
-    
-    local api_health=$(curl -s -o /dev/null -w "%{http_code}" https://api.sentinel.security/health)
-    if [ "$api_health" != "200" ]; then
-        log_error "API health check failed (HTTP $api_health)"
-        return 1
-    fi
-    
-    local web_health=$(curl -s -o /dev/null -w "%{http_code}" https://sentinel.security/health)
-    if [ "$web_health" != "200" ]; then
-        log_error "Web health check failed (HTTP $web_health)"
-        return 1
-    fi
-    
-    log_info "Smoke tests passed"
-}
-
-# Rollback deployment
-rollback_deployment() {
-    log_warn "Rolling back deployment..."
-    
-    # Get previous task definitions
-    local previous_api=$(aws ecs describe-task-definition \
-        --task-definition sentinel-api \
-        --region ${AWS_REGION} \
-        --query 'taskDefinition.revision' \
-        --output text)
-    
-    local previous_worker=$(aws ecs describe-task-definition \
-        --task-definition sentinel-worker \
-        --region ${AWS_REGION} \
-        --query 'taskDefinition.revision' \
-        --output text)
-    
-    local previous_web=$(aws ecs describe-task-definition \
-        --task-definition sentinel-web \
-        --region ${AWS_REGION} \
-        --query 'taskDefinition.revision' \
-        --output text)
-    
-    # Rollback to previous version
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service api \
-        --task-definition sentinel-api:${previous_api} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service worker \
-        --task-definition sentinel-worker:${previous_worker} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    aws ecs update-service \
-        --cluster ${CLUSTER_NAME} \
-        --service web \
-        --task-definition sentinel-web:${previous_web} \
-        --force-new-deployment \
-        --region ${AWS_REGION}
-    
-    log_warn "Rollback initiated"
-}
-
-# Main deployment function
 deploy() {
-    log_info "Starting deployment of SENTINEL v${VERSION} to ${ENVIRONMENT}..."
+    log_info "Starting deployment..."
     
-    # Pre-deployment checks
-    pre_deployment_checks
+    # Pull latest images
+    log_info "Pulling latest images..."
+    docker-compose pull
     
     # Build images
-    build_images
+    log_info "Building images..."
+    docker-compose build
     
-    # Push images
-    push_images
+    # Stop existing services
+    log_info "Stopping existing services..."
+    docker-compose down
     
-    # Deploy to ECS
-    deploy_ecs
+    # Start services
+    log_info "Starting services..."
+    docker-compose up -d
     
-    # Wait for deployment
-    if ! wait_for_deployment; then
-        log_error "Deployment failed"
-        rollback_deployment
-        exit 1
-    fi
+    # Wait for services to be healthy
+    log_info "Waiting for services to be healthy..."
+    sleep 30
     
-    # Run smoke tests
-    if ! run_smoke_tests; then
-        log_error "Smoke tests failed"
-        rollback_deployment
-        exit 1
-    fi
+    # Check service status
+    log_info "Checking service status..."
+    docker-compose ps
     
-    log_info "Deployment completed successfully!"
+    log_success "Deployment completed successfully"
 }
 
-# Parse command line arguments
-case "${1:-deploy}" in
+rollback() {
+    log_info "Rolling back deployment..."
+    
+    # Stop services
+    docker-compose down
+    
+    # Restore from backup if specified
+    if [ -n "$BACKUP_FILE" ]; then
+        log_info "Restoring from backup: $BACKUP_FILE"
+        docker run --rm \
+            -v vsentinel_postgres-data:/data \
+            -v "$BACKUP_FILE:/backup/backup.tar.gz" \
+            alpine tar xzf /backup/backup.tar.gz -C /data
+    fi
+    
+    # Restart services
+    docker-compose up -d
+    
+    log_success "Rollback completed"
+}
+
+health_check() {
+    log_info "Performing health check..."
+    
+    # Check V-Sentinel
+    if curl -f http://localhost:8080/health &> /dev/null; then
+        log_success "V-Sentinel: OK"
+    else
+        log_error "V-Sentinel: FAILED"
+        return 1
+    fi
+    
+    # Check PostgreSQL
+    if docker exec vsentinel-postgres pg_isready &> /dev/null; then
+        log_success "PostgreSQL: OK"
+    else
+        log_error "PostgreSQL: FAILED"
+        return 1
+    fi
+    
+    # Check Redis
+    if docker exec vsentinel-redis redis-cli ping &> /dev/null; then
+        log_success "Redis: OK"
+    else
+        log_error "Redis: FAILED"
+        return 1
+    fi
+    
+    log_success "All services are healthy"
+}
+
+show_logs() {
+    log_info "Showing logs..."
+    docker-compose logs -f --tail=100
+}
+
+# Main
+case "$1" in
     deploy)
+        check_prerequisites
+        setup_environment
+        backup_data
+        deploy
+        health_check
+        ;;
+    
+    update)
+        log_info "Updating deployment..."
         deploy
         ;;
+    
     rollback)
-        rollback_deployment
+        BACKUP_FILE="$2"
+        rollback
         ;;
-    smoke-test)
-        run_smoke_tests
+    
+    restart)
+        log_info "Restarting services..."
+        docker-compose restart
+        health_check
         ;;
+    
+    stop)
+        log_info "Stopping services..."
+        docker-compose down
+        ;;
+    
+    status)
+        log_info "Service status:"
+        docker-compose ps
+        ;;
+    
+    logs)
+        show_logs
+        ;;
+    
+    health)
+        health_check
+        ;;
+    
+    backup)
+        backup_data
+        ;;
+    
     *)
-        echo "Usage: $0 {deploy|rollback|smoke-test}"
-        echo "Environment variables:"
-        echo "  ENVIRONMENT - Environment name (default: production)"
-        echo "  VERSION - Version to deploy (default: 1.1.0)"
-        echo "  AWS_REGION - AWS region (default: us-east-1)"
+        echo "Usage: $0 {deploy|update|rollback|restart|stop|status|logs|health|backup}"
+        echo ""
+        echo "Commands:"
+        echo "  deploy     - Deploy or update the application"
+        echo "  update     - Update the application"
+        echo "  rollback   - Rollback to previous version (usage: rollback [backup_file])"
+        echo "  restart    - Restart all services"
+        echo "  stop       - Stop all services"
+        echo "  status     - Show service status"
+        echo "  logs       - Show logs (tail -f)"
+        echo "  health     - Perform health check"
+        echo "  backup     - Create backup"
         exit 1
         ;;
 esac
