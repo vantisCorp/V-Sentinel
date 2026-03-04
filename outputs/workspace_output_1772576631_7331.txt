@@ -1,0 +1,21 @@
+[main 71ea75e] feat: add multilingual README support (8 languages)
+ Committer: root <root@172.30.90.152>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 8 files changed, 3144 insertions(+), 399 deletions(-)
+ create mode 100644 README_DE.md
+ create mode 100644 README_EN.md
+ create mode 100644 README_ES.md
+ create mode 100644 README_FR.md
+ create mode 100644 README_KO.md
+ create mode 100644 README_RU.md
+ create mode 100644 README_ZH.md

@@ -1,0 +1,3 @@
+origin	https://ghp_token_was_removed@github.com/vantisCorp/V-Sentinel.git (fetch)
+origin	https://ghp_token_was_removed@github.com/vantisCorp/V-Sentinel.git (push)
+fatal: could not read Password for 'https://ghp_token_was_removed@github.com': No such device or address

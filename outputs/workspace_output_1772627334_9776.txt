@@ -1,0 +1,18 @@
+[main eb62e68] security: Add security audit script and comprehensive assessment checklist
+ Committer: root <root@172.30.90.152>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 2 files changed, 719 insertions(+)
+ create mode 100644 docs/SECURITY_ASSESSMENT_CHECKLIST.md
+ create mode 100644 scripts/security_audit.sh
+To https://github.com/vantisCorp/V-Sentinel.git
+   e8233fa..eb62e68  main -> main

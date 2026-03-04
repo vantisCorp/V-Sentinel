@@ -1,0 +1,92 @@
+.
+├── api
+├── archive
+├── benches
+├── config
+├── deploy
+│   ├── k8s
+│   └── terraform
+├── docs
+│   ├── 01_core
+│   ├── 02_advanced
+│   ├── 03_gaming
+│   ├── 04_performance
+│   ├── 05_hardware
+│   ├── 06_quantum
+│   ├── 07_ai
+│   ├── 08_testing
+│   ├── 09_ux
+│   ├── 10_implementation
+│   ├── 11_marketing
+│   ├── 12_operations
+│   ├── 13_threat_intel
+│   ├── 14_enterprise
+│   ├── 15_mobile
+│   ├── 16_iot
+│   ├── 17_cloud
+│   ├── 18_ai_ops
+│   ├── 19_blockchain
+│   ├── 20_privacy
+│   ├── 21_future
+│   ├── 22_biometrics
+│   ├── 23_agents
+│   ├── 24_metaverse
+│   ├── 25_quantum_comp
+│   ├── 26_neural
+│   └── 27_autonomous
+├── examples
+│   ├── docs
+│   ├── gaming_server_protection
+│   └── web_app_protection
+│       └── templates
+├── outputs
+├── scripts
+├── src
+│   ├── ai
+│   │   └── src
+│   ├── audit
+│   │   └── src
+│   ├── autonomous
+│   │   └── src
+│   ├── behavioral
+│   │   └── src
+│   ├── biometrics
+│   │   └── src
+│   ├── blockchain
+│   │   └── src
+│   ├── cloud
+│   │   └── src
+│   ├── config
+│   │   └── src
+│   ├── core
+│   │   └── src
+│   ├── error-handling
+│   │   └── src
+│   ├── gaming
+│   │   └── src
+│   ├── iot
+│   │   └── src
+│   ├── metaverse
+│   │   └── src
+│   ├── mobile
+│   │   └── src
+│   ├── monitoring
+│   │   └── src
+│   ├── neural
+│   │   └── src
+│   ├── performance
+│   │   └── src
+│   ├── privacy
+│   │   └── src
+│   ├── quantum
+│   │   └── src
+│   ├── security
+│   │   └── src
+│   ├── siem
+│   │   └── src
+│   └── threat-intel
+│       └── src
+├── summarized_conversations
+└── tests
+
+90 directories

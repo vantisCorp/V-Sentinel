@@ -1,0 +1,3 @@
+  476 src/siem/src/lib.rs
+  459 src/threat-intel/src/lib.rs
+  935 total

@@ -1,0 +1,17 @@
+unknown arguments ["now," "decrypt" "later attacks are already occurring\n- Current RSA/ECC encryption will be vulnerable to quantum attacks\n\n## Tasks\n\n### Phase 1: Cryptographic Discovery\n- [ ] Create cryptographic inventory tool to identify all current encryption usage\n- [ ] Map all cryptographic dependencies across modules\n- [ ] Assess current quantum vulnerability exposure\n\n### Phase 2: PQC Algorithm Implementation\n- [ ] Implement CRYSTALS-Kyber for key encapsulation\n- [ ] Implement CRYSTALS-Dilithium for digital signatures\n- [ ] Implement SPHINCS+ as alternative signature scheme\n- [ ] Add FALCON signature support\n\n### Phase 3: Integration\n- [ ] Create PQC module under src/quantum/\n- [ ] Integrate with existing TLS/SSL implementations\n- [ ] Update key exchange protocols\n- [ ] Migrate digital signature systems\n\n### Phase 4: Crypto Agility\n- [ ] Build cryptographic agility framework\n- [ ] Enable rapid algorithm swapping\n- [ ] Create migration tooling\n- [ ] Implement automated crypto updates\n\n## References\n- NIST PQC Standards: https://www.nist.gov/news-events/news/2024/08/nist-releases-first-3-finalized-post-quantum-encryption-standards\n- Deloitte Tech Trends 2025: Quantum computing and cybersecurity\n- IBM Quantum Safe: https://www.ibm.com/quantum/quantum-safe\n\n## Priority\nCritical - Security infrastructure modernization"]; please quote all values that have spaces
+
+Usage:  gh issue create [flags]
+
+Flags:
+  -a, --assignee login   Assign people by their login. Use "@me" to self-assign.
+  -b, --body string      Supply a body. Will prompt for one otherwise.
+  -F, --body-file file   Read body text from file (use "-" to read from standard input)
+  -e, --editor           Skip prompts and open the text editor to write the title and body in. The first line is the title and the remaining text is the body.
+  -l, --label name       Add labels by name
+  -m, --milestone name   Add the issue to a milestone by name
+  -p, --project title    Add the issue to projects by title
+      --recover string   Recover input from a failed run of create
+  -T, --template name    Template name to use as starting body text
+  -t, --title string     Supply a title. Will prompt for one otherwise.
+  -w, --web              Open the browser to create an issue
+  

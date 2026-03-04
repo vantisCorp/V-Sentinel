@@ -1,0 +1,20 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   Dockerfile
+	new file:   deploy/helm/vsentinel/Chart.yaml
+	new file:   deploy/helm/vsentinel/templates/deployment.yaml
+	new file:   deploy/helm/vsentinel/values.yaml
+	new file:   deploy/nginx/nginx.conf
+	new file:   deploy/prometheus/prometheus.yml
+	new file:   docker-compose.yml
+	modified:   scripts/deploy.sh
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	build_check.log
+	outputs/
+	summarized_conversations/
+

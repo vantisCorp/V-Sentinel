@@ -1,0 +1,26 @@
+total 100
+drwxr-xr-x 24 root root 4096 Mar  3 20:39 .
+drwxr-xr-x 17 user user 4096 Mar  4 04:19 ..
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 ai
+drwxr-xr-x  3 root root 4096 Mar  1 13:57 audit
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 autonomous
+drwxr-xr-x  3 root root 4096 Mar  1 13:08 behavioral
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 biometrics
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 blockchain
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 cloud
+drwxr-xr-x  3 root root 4096 Mar  1 13:47 config
+drwxr-xr-x  3 root root 4096 Mar  1 11:52 core
+drwxr-xr-x  3 root root 4096 Mar  1 14:04 error-handling
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 gaming
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 iot
+-rw-r--r--  1 root root  927 Mar  3 20:39 main.rs
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 metaverse
+drwxr-xr-x  3 root root 4096 Mar  1 13:13 mobile
+drwxr-xr-x  3 root root 4096 Mar  1 13:49 monitoring
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 neural
+drwxr-xr-x  3 root root 4096 Mar  1 14:00 performance
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 privacy
+drwxr-xr-x  3 root root 4096 Mar  1 11:57 quantum
+drwxr-xr-x  3 root root 4096 Mar  1 16:59 security
+drwxr-xr-x  3 root root 4096 Mar  1 13:11 siem
+drwxr-xr-x  3 root root 4096 Mar  1 13:09 threat-intel
