@@ -1,0 +1,29 @@
+[package]
+name = "sentinel-network"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "SENTINEL network module with PQC TLS support"
+
+[dependencies]
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = "1.0"
+rand = { workspace = true }
+sha2 = "0.10"
+
+# PQC dependencies
+sentinel-quantum = { path = "../quantum" }
+pqc_kyber = "0.7"
+pqcrypto-dilithium = "0.5"
+
+# TLS dependencies (will be added when rustls PQC support is available)
+# rustls = { version = "0.23", features = ["post-quantum"] }
+# tokio-rustls = "0.26"
+
+[dev-dependencies]
+tokio-test = "0.4"

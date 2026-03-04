@@ -4,7 +4,6 @@ members = [
     "src/ai",
     "src/gaming",
     "src/quantum",
-    "src/network",
     "src/behavioral",
     "src/threat-intel",
     "src/siem",
