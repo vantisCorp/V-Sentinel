@@ -1,0 +1,172 @@
+# V-Sentinel Performance Thresholds
+#
+# These thresholds define acceptable performance for all modules.
+# Values are in milliseconds unless otherwise specified.
+
+[core]
+# API response times
+health_check_max_ms = 10
+authenticate_max_ms = 50
+api_latency_p50_ms = 45
+api_latency_p95_ms = 120
+api_latency_p99_ms = 200
+
+# Serialization
+json_serialize_1k_ms = 1
+json_serialize_10k_ms = 10
+
+[privacy.zkp]
+# Zero-knowledge proof operations
+bulletproofs_generate_ms = 100
+zksnarks_generate_ms = 500
+zkstarks_generate_ms = 200
+proof_verification_ms = 50
+
+[privacy.differential_privacy]
+# Differential privacy noise generation
+laplace_noise_1k_ms = 5
+laplace_noise_10k_ms = 50
+gaussian_noise_1k_ms = 5
+
+[privacy.homomorphic]
+# Homomorphic encryption operations
+bfv_encrypt_ms = 100
+bfv_decrypt_ms = 100
+bfv_add_ms = 10
+bfv_multiply_ms = 50
+ckks_encrypt_ms = 150
+
+[quantum.keygen]
+# Post-quantum key generation
+crystals_kyber_keygen_ms = 5
+crystals_dilithium_keygen_ms = 10
+
+[quantum.encryption]
+# Post-quantum encryption/decryption
+kyber_encrypt_256b_ms = 1
+kyber_encrypt_1kb_ms = 2
+kyber_encrypt_4kb_ms = 5
+kyber_decrypt_ms = 1
+
+[quantum.signatures]
+# Post-quantum signatures
+dilithium_sign_ms = 5
+dilithium_verify_ms = 2
+
+[biometrics.fingerprint]
+# Fingerprint processing
+feature_extraction_ms = 100
+template_match_ms = 50
+quality_assessment_ms = 30
+
+[biometrics.facial]
+# Facial recognition
+face_detection_ms = 50
+embedding_extraction_ms = 100
+face_match_ms = 30
+
+[biometrics.voice]
+# Voice recognition
+voice_enrollment_ms = 500
+voice_verify_ms = 200
+
+[biometrics.multimodal]
+# Multi-modal fusion
+fusion_score_ms = 10
+threshold_check_ms = 5
+
+[neural.inference]
+# Neural network inference
+transformer_forward_1_ms = 10
+transformer_forward_32_ms = 100
+transformer_forward_128_ms = 500
+
+[neural.training]
+# Neural network training (per epoch)
+training_batch_32_ms = 1000
+training_batch_128_ms = 3000
+
+[neural.threat_detection]
+# Threat detection
+traffic_analysis_ms = 5
+threat_classify_ms = 10
+anomaly_score_ms = 20
+
+[autonomous.agent]
+# Autonomous agent operations
+threat_analyze_ms = 50
+action_decide_ms = 20
+response_execute_ms = 100
+
+[autonomous.learning]
+# Continuous learning
+model_update_ms = 1000
+experience_replay_ms = 500
+
+[metaverse.vr]
+# VR security operations
+avatar_validate_ms = 100
+spatial_check_ms = 20
+asset_protect_ms = 50
+
+[metaverse.ar]
+# AR security operations
+ar_session_setup_ms = 200
+permission_check_ms = 10
+
+[blockchain]
+# Blockchain operations
+reputation_query_ms = 100
+threat_report_ms = 500
+consensus_check_ms = 200
+
+[siem.logs]
+# Log processing
+log_ingest_rate = 100000  # logs per second
+log_parse_ms = 0.1
+log_index_ms = 0.5
+
+[siem.correlation]
+# Event correlation
+correlate_100_events_ms = 50
+correlate_1000_events_ms = 500
+alert_generate_ms = 10
+
+[database]
+# Database operations
+query_simple_ms = 5
+query_complex_ms = 50
+insert_single_ms = 2
+insert_batch_100_ms = 50
+
+[cache]
+# Redis cache operations
+cache_get_ms = 1
+cache_set_ms = 1
+cache_delete_ms = 1
+
+[memory]
+# Memory limits per module
+max_memory_privacy_mb = 512
+max_memory_quantum_mb = 256
+max_memory_biometrics_mb = 512
+max_memory_neural_mb = 2048
+max_memory_autonomous_mb = 512
+max_memory_metaverse_mb = 1024
+max_memory_blockchain_mb = 256
+max_memory_siem_mb = 1024
+
+[cpu]
+# CPU limits per module
+max_cpu_privacy_percent = 50
+max_cpu_quantum_percent = 30
+max_cpu_biometrics_percent = 40
+max_cpu_neural_percent = 80
+max_cpu_autonomous_percent = 50
+max_cpu_metaverse_percent = 60
+
+[throughput]
+# Minimum throughput requirements
+min_requests_per_second = 1000
+min_concurrent_connections = 10000
+min_websocket_connections = 50000
