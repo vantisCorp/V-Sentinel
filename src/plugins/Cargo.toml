@@ -1,0 +1,37 @@
+[package]
+name = "sentinel-plugins"
+version = "0.1.0"
+edition = "2021"
+description = "V-Sentinel Plugin System for third-party integrations"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/vantisCorp/V-Sentinel"
+readme = "README.md"
+keywords = ["security", "plugin", "extension", "sentinel"]
+categories = ["security"]
+
+[dependencies]
+# Async runtime
+tokio = { workspace = true }
+async-trait = "0.1"
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[features]
+default = []
+wasm = []  # WebAssembly plugin support
+native = []  # Native plugin support
