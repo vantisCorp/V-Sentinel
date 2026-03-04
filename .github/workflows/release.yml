@@ -1,0 +1,196 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ============================================================================
+  # Build Release Artifacts
+  # ============================================================================
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (Linux/macOS)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf vsentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz sentinel
+          mv vsentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz ${{ github.workspace }}/
+
+      - name: Package (Windows)
+        if: matrix.archive == 'zip'
+        run: |
+          cd target/${{ matrix.target }}/release
+          7z a vsentinel-${{ github.ref_name }}-${{ matrix.target }}.zip sentinel.exe
+          mv vsentinel-${{ github.ref_name }}-${{ matrix.target }}.zip ${{ github.workspace }}/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: vsentinel-${{ matrix.target }}
+          path: vsentinel-${{ github.ref_name }}-${{ matrix.target }}.*
+
+  # ============================================================================
+  # Create Release
+  # ============================================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [ -n "$PREV_TAG" ]; then
+            echo "Generating changelog from $PREV_TAG to ${{ github.ref_name }}"
+            git log $PREV_TAG..HEAD --pretty=format:"- %s (%h)" > CHANGELOG.md
+          else
+            echo "First release"
+            git log --pretty=format:"- %s (%h)" -20 > CHANGELOG.md
+          fi
+          
+          # Prepend title
+          echo "# V-Sentinel ${{ github.ref_name }}" > RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## 🛡️ What's New" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          cat CHANGELOG.md >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## 📦 Downloads" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "| Platform | Architecture | Download |" >> RELEASE_NOTES.md
+          echo "|----------|-------------|----------|" >> RELEASE_NOTES.md
+          echo "| Linux | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz |" >> RELEASE_NOTES.md
+          echo "| Windows | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-pc-windows-msvc.zip |" >> RELEASE_NOTES.md
+          echo "| macOS | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-apple-darwin.tar.gz |" >> RELEASE_NOTES.md
+          echo "| macOS | Apple Silicon | vsentinel-${{ github.ref_name }}-aarch64-apple-darwin.tar.gz |" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## 🚀 Features" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "- ⚛️ Post-Quantum Cryptography (Crystals-Kyber, Crystals-Dilithium)" >> RELEASE_NOTES.md
+          echo "- 🧠 AI-Native Threat Detection (Deep Learning, Federated Learning)" >> RELEASE_NOTES.md
+          echo "- 🔐 Privacy-Preserving Technologies (Zero-Knowledge Proofs, Differential Privacy)" >> RELEASE_NOTES.md
+          echo "- 👆 Multi-Modal Biometrics (Fingerprint, Facial, Voice, Behavioral)" >> RELEASE_NOTES.md
+          echo "- 🤖 Autonomous Security Agents" >> RELEASE_NOTES.md
+          echo "- 🌐 Metaverse Security (VR/AR Protection)" >> RELEASE_NOTES.md
+          echo "- ⛓️ Blockchain-Based Threat Reputation" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## 📋 Requirements" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "- Rust 1.70+ (for building from source)" >> RELEASE_NOTES.md
+          echo "- OpenSSL 3.0+" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## 📚 Documentation" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "- [Developer Guide](https://github.com/vantisCorp/V-Sentinel/blob/main/docs/DEVELOPER_GUIDE.md)" >> RELEASE_NOTES.md
+          echo "- [API Documentation](https://vsentinel.com/docs)" >> RELEASE_NOTES.md
+          echo "- [Architecture](https://github.com/vantisCorp/V-Sentinel/blob/main/docs/architecture.html)" >> RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # Publish to Crates.io
+  # ============================================================================
+  publish-crates:
+    name: Publish to Crates.io
+    runs-on: ubuntu-latest
+    needs: release
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Publish to crates.io
+        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+        continue-on-error: true
+
+  # ============================================================================
+  # Notify Discord
+  # ============================================================================
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: release
+    
+    steps:
+      - name: Discord notification
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: |
+            🚀 **New V-Sentinel Release!**
+            
+            Version: ${{ github.ref_name }}
+            
+            📦 Download: https://github.com/vantisCorp/V-Sentinel/releases/tag/${{ github.ref_name }}
+            
+            🛡️ Features:
+            • Post-Quantum Cryptography
+            • AI-Native Threat Detection
+            • Privacy-Preserving Technologies
+            • Multi-Modal Biometrics
+            • Autonomous Security Agents
+            • Metaverse Security
