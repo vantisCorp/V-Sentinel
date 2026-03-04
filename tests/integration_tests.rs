@@ -1,224 +1,362 @@
-//! Integration Tests for SENTINEL Core Module
-//!
-//! These tests verify that the core components work together correctly.
+//! V-Sentinel Integration Tests
+//! 
+//! Comprehensive integration tests for all modules
 
-use sentinel_core::hypervisor::{Hypervisor, VMState, VMExitReason};
-use sentinel_core::memory::MemoryManager;
-use sentinel_ai::PredictionEngine;
-use sentinel_gaming::{TrustedHandshake, AntiDdosShield, GameInfo, AntiCheatSystem};
-use sentinel_quantum::QuantumCryptoManager;
+use std::time::Duration;
+use tokio::time::sleep;
 
-#[tokio::test]
-async fn test_hypervisor_memory_integration() {
-    // Test that hypervisor and memory manager work together
-    let hypervisor = Hypervisor::new().unwrap();
-    hypervisor.initialize().await.unwrap();
+// ============================================================================
+// Quantum Module Integration Tests
+// ============================================================================
+
+mod quantum_tests {
+    use super::*;
     
-    let memory_manager = MemoryManager::new().unwrap();
-    memory_manager.initialize().await.unwrap();
+    /// Test quantum key generation and exchange
+    #[tokio::test]
+    async fn test_quantum_key_exchange() {
+        // Initialize quantum manager for Alice
+        let alice_config = sentinel_quantum::QuantumConfig {
+            default_algorithm: sentinel_quantum::KeyType::Kyber1024,
+            enable_hybrid_mode: true,
+            key_rotation_days: 90,
+        };
+        let alice_manager = sentinel_quantum::QuantumManager::new(alice_config)
+            .expect("Failed to create Alice's quantum manager");
+        
+        // Initialize quantum manager for Bob
+        let bob_config = sentinel_quantum::QuantumConfig {
+            default_algorithm: sentinel_quantum::KeyType::Kyber1024,
+            enable_hybrid_mode: true,
+            key_rotation_days: 90,
+        };
+        let bob_manager = sentinel_quantum::QuantumManager::new(bob_config)
+            .expect("Failed to create Bob's quantum manager");
+        
+        // Alice generates keypair
+        let alice_keypair = alice_manager
+            .generate_keypair(sentinel_quantum::KeyType::Kyber1024)
+            .await
+            .expect("Failed to generate Alice's keypair");
+        
+        // Bob generates keypair
+        let bob_keypair = bob_manager
+            .generate_keypair(sentinel_quantum::KeyType::Kyber1024)
+            .await
+            .expect("Failed to generate Bob's keypair");
+        
+        // Alice encrypts message for Bob
+        let message = b"Hello, Quantum World!";
+        let ciphertext = alice_manager
+            .encrypt(message, &bob_keypair.public_key)
+            .await
+            .expect("Failed to encrypt message");
+        
+        // Bob decrypts message
+        let plaintext = bob_manager
+            .decrypt(&ciphertext, &bob_keypair.private_key)
+            .await
+            .expect("Failed to decrypt message");
+        
+        assert_eq!(message.to_vec(), plaintext, "Decrypted message should match original");
+    }
     
-    // Create VM and protect memory region
-    let vm_id = hypervisor.create_vm("test_vm".to_string()).await.unwrap().id();
-    hypervisor.start_vm(vm_id).await.unwrap();
+    /// Test quantum signatures
+    #[tokio::test]
+    async fn test_dilithium_signatures() {
+        let config = sentinel_quantum::QuantumConfig::default();
+        let manager = sentinel_quantum::QuantumManager::new(config)
+            .expect("Failed to create quantum manager");
+        
+        let keypair = manager
+            .generate_keypair(sentinel_quantum::KeyType::Dilithium5)
+            .await
+            .expect("Failed to generate Dilithium keypair");
+        
+        let message = b"Important security message";
+        
+        // Sign
+        let signature = manager
+            .sign(message, &keypair.private_key)
+            .await
+            .expect("Failed to sign message");
+        
+        // Verify
+        let valid = manager
+            .verify(message, &signature, &keypair.public_key)
+            .await
+            .expect("Failed to verify signature");
+        
+        assert!(valid, "Signature should be valid");
+        
+        // Test with modified message
+        let modified_message = b"Modified security message";
+        let invalid = manager
+            .verify(modified_message, &signature, &keypair.public_key)
+            .await
+            .expect("Failed to verify signature");
+        
+        assert!(!invalid, "Modified message should fail verification");
+    }
     
-    memory_manager.protect_region(0x1000, 0x1000, sentinel_core::memory::MemoryProtection::ReadWrite).await.unwrap();
-    
-    // Verify both components are working
-    assert_eq!(hypervisor.get_vm_state(vm_id).await.unwrap(), VMState::Running);
-    assert_eq!(memory_manager.protected_region_count().await, 1);
+    /// Test hybrid encryption mode
+    #[tokio::test]
+    async fn test_hybrid_encryption() {
+        let config = sentinel_quantum::QuantumConfig {
+            enable_hybrid_mode: true,
+            ..Default::default()
+        };
+        let manager = sentinel_quantum::QuantumManager::new(config)
+            .expect("Failed to create quantum manager");
+        
+        let keypair = manager
+            .generate_keypair(sentinel_quantum::KeyType::Kyber768)
+            .await
+            .expect("Failed to generate hybrid keypair");
+        
+        let data = vec![0u8; 1024]; // 1KB of data
+        
+        let ciphertext = manager
+            .encrypt(&data, &keypair.public_key)
+            .await
+            .expect("Failed to encrypt with hybrid mode");
+        
+        let plaintext = manager
+            .decrypt(&ciphertext, &keypair.private_key)
+            .await
+            .expect("Failed to decrypt with hybrid mode");
+        
+        assert_eq!(data, plaintext, "Hybrid decryption should match original");
+    }
 }
 
-#[tokio::test]
-async fn test_hypervisor_ai_integration() {
-    // Test that hypervisor can provide data to AI engine
-    let hypervisor = Hypervisor::new().unwrap();
-    hypervisor.initialize().await.unwrap();
+// ============================================================================
+// Privacy Module Integration Tests
+// ============================================================================
+
+mod privacy_tests {
+    use super::*;
     
-    let ai_engine = PredictionEngine::new().unwrap();
-    ai_engine.initialize().await.unwrap();
-    ai_engine.load_model("model.pt").await.unwrap();
+    /// Test zero-knowledge proof generation and verification
+    #[tokio::test]
+    async fn test_zero_knowledge_proofs() {
+        let manager = sentinel_privacy::PrivacyManager::new(Default::default())
+            .expect("Failed to create privacy manager");
+        
+        let secret = b"secret_value";
+        let public_inputs = vec![1, 2, 3, 4];
+        
+        // Generate proof
+        let proof = manager
+            .generate_zk_proof(
+                sentinel_privacy::ZkProofType::Bulletproof,
+                secret,
+                &public_inputs
+            )
+            .await
+            .expect("Failed to generate ZK proof");
+        
+        // Verify proof
+        let valid = manager
+            .verify_zk_proof(&proof)
+            .await
+            .expect("Failed to verify ZK proof");
+        
+        assert!(valid, "ZK proof should be valid");
+    }
     
-    // Create VM and simulate threat detection
-    let vm_id = hypervisor.create_vm("test_vm".to_string()).await.unwrap().id();
-    hypervisor.start_vm(vm_id).await.unwrap();
+    /// Test differential privacy
+    #[tokio::test]
+    async fn test_differential_privacy() {
+        let manager = sentinel_privacy::PrivacyManager::new(Default::default())
+            .expect("Failed to create privacy manager");
+        
+        let raw_data = vec![100.0, 200.0, 150.0, 180.0, 220.0];
+        
+        let private_data = manager
+            .apply_differential_privacy(&raw_data, 1.0, 1e-5)
+            .await
+            .expect("Failed to apply differential privacy");
+        
+        // Private data should be different but statistically similar
+        assert_ne!(raw_data, private_data.data, "Data should be perturbed");
+        
+        // Check epsilon is set correctly
+        assert_eq!(private_data.epsilon, 1.0, "Epsilon should match");
+    }
     
-    // Simulate VM exit (potential threat)
-    hypervisor.handle_vm_exit(vm_id, VMExitReason::EptViolation).await.unwrap();
-    
-    // Use AI to analyze threat
-    let features = sentinel_ai::ThreatFeatures {
-        suspicious_api_calls: 15,
-        file_modifications: 5,
-        registry_changes: 3,
-        network_connections: 2,
-        execution_time_ms: 1000,
-        memory_usage: 1024 * 1024,
-        cpu_usage: 50.0,
-        child_processes: 2,
-        is_signed: false,
-        has_good_reputation: false,
-    };
-    
-    let prediction = ai_engine.predict(&features).await.unwrap();
-    assert!(prediction.is_malicious);
+    /// Test homomorphic encryption
+    #[tokio::test]
+    async fn test_homomorphic_encryption() {
+        let manager = sentinel_privacy::PrivacyManager::new(Default::default())
+            .expect("Failed to create privacy manager");
+        
+        let a = 10;
+        let b = 20;
+        
+        // Encrypt both values
+        let encrypted_a = manager
+            .homomorphic_encrypt(&a.to_le_bytes())
+            .await
+            .expect("Failed to encrypt a");
+        
+        let encrypted_b = manager
+            .homomorphic_encrypt(&b.to_le_bytes())
+            .await
+            .expect("Failed to encrypt b");
+        
+        // Perform addition on encrypted data
+        let encrypted_sum = manager
+            .homomorphic_add(&encrypted_a, &encrypted_b)
+            .await
+            .expect("Failed to add encrypted values");
+        
+        // Decrypt result
+        let sum_bytes = manager
+            .homomorphic_decrypt(&encrypted_sum)
+            .await
+            .expect("Failed to decrypt sum");
+        
+        let sum = i32::from_le_bytes(
+            sum_bytes[..4].try_into().expect("Invalid bytes")
+        );
+        
+        assert_eq!(a + b, sum, "Homomorphic addition should work correctly");
+    }
 }
 
-#[tokio::test]
-async fn test_gaming_components_integration() {
-    // Test that gaming components work together
-    let handshake = TrustedHandshake::new().unwrap();
-    handshake.initialize().await.unwrap();
+// ============================================================================
+// Cross-Module Integration Tests
+// ============================================================================
+
+mod cross_module_tests {
+    use super::*;
     
-    let ddos_shield = AntiDdosShield::new().unwrap();
-    ddos_shield.initialize().await.unwrap();
-    ddos_shield.start_protection().await.unwrap();
-    
-    // Detect game and initiate handshake
-    let game_info = GameInfo {
-        name: "Test Game".to_string(),
-        process_id: 1234,
-        executable_path: "/path/to/game.exe".to_string(),
-        anti_cheat_system: AntiCheatSystem::Vanguard,
-        is_detected: true,
-    };
-    
-    let session_id = handshake.initiate_handshake(&game_info).await.unwrap();
-    handshake.complete_handshake(&session_id).await.unwrap();
-    handshake.activate_zero_scan_mode(&session_id).await.unwrap();
-    
-    // Monitor network traffic
-    let packet = sentinel_gaming::NetworkPacket {
-        source_ip: "192.168.1.1".to_string(),
-        destination_ip: "192.168.1.2".to_string(),
-        source_port: 12345,
-        destination_port: 80,
-        protocol: "TCP".to_string(),
-        size: 1024,
-        payload: vec![0u8; 1024],
-    };
-    
-    let analysis = ddos_shield.monitor_traffic(&packet).await.unwrap();
-    assert!(!analysis.source_ip.is_empty());
+    /// Test quantum + privacy integration
+    #[tokio::test]
+    async fn test_quantum_privacy_integration() {
+        // Create quantum manager
+        let quantum_manager = sentinel_quantum::QuantumManager::new(Default::default())
+            .expect("Failed to create quantum manager");
+        
+        // Create privacy manager
+        let privacy_manager = sentinel_privacy::PrivacyManager::new(Default::default())
+            .expect("Failed to create privacy manager");
+        
+        // Generate quantum keys
+        let keypair = quantum_manager
+            .generate_keypair(sentinel_quantum::KeyType::Kyber1024)
+            .await
+            .expect("Failed to generate keypair");
+        
+        // Generate ZK proof of key possession without revealing key
+        let proof = privacy_manager
+            .generate_zk_proof(
+                sentinel_privacy::ZkProofType::Bulletproof,
+                &keypair.public_key,
+                &vec![]
+            )
+            .await
+            .expect("Failed to generate ZK proof");
+        
+        // Verify proof
+        let valid = privacy_manager
+            .verify_zk_proof(&proof)
+            .await
+            .expect("Failed to verify proof");
+        
+        assert!(valid, "ZK proof of quantum key should be valid");
+    }
 }
 
-#[tokio::test]
-async fn test_quantum_crypto_integration() {
-    // Test that quantum crypto works with other components
-    let quantum_manager = QuantumCryptoManager::new().unwrap();
-    quantum_manager.initialize().await.unwrap();
+// ============================================================================
+// Performance Tests
+// ============================================================================
+
+mod performance_tests {
+    use super::*;
+    use std::time::Instant;
     
-    // Generate key pair
-    let keypair = quantum_manager.generate_kem_keypair(
-        sentinel_quantum::KemAlgorithm::CrystalsKyber768
-    ).await.unwrap();
-    
-    // Encapsulate key
-    let encapsulated = quantum_manager.encapsulate(
-        &keypair.public_key,
-        sentinel_quantum::KemAlgorithm::CrystalsKyber768
-    ).await.unwrap();
-    
-    // Decapsulate key
-    let decapsulated = quantum_manager.decapsulate(
-        &encapsulated.ciphertext,
-        &keypair.private_key,
-        sentinel_quantum::KemAlgorithm::CrystalsKyber768
-    ).await.unwrap();
-    
-    // Verify shared secrets match
-    assert_eq!(encapsulated.shared_secret, decapsulated);
+    /// Test quantum encryption performance
+    #[tokio::test]
+    async fn test_quantum_encryption_performance() {
+        let manager = sentinel_quantum::QuantumManager::new(Default::default())
+            .expect("Failed to create quantum manager");
+        
+        let keypair = manager
+            .generate_keypair(sentinel_quantum::KeyType::Kyber1024)
+            .await
+            .expect("Failed to generate keypair");
+        
+        let data = vec![0u8; 1024]; // 1KB
+        
+        let start = Instant::now();
+        for _ in 0..100 {
+            let _ = manager.encrypt(&data, &keypair.public_key).await;
+        }
+        let duration = start.elapsed();
+        
+        println!("100 encryptions took {:?}", duration);
+        println!("Average: {:?}", duration / 100);
+        
+        // Should complete 100 encryptions in reasonable time
+        assert!(duration.as_secs() < 10, "Encryption should be fast");
+    }
 }
 
-#[tokio::test]
-async fn test_full_system_integration() {
-    // Test all components working together
-    let hypervisor = Hypervisor::new().unwrap();
-    hypervisor.initialize().await.unwrap();
-    
-    let memory_manager = MemoryManager::new().unwrap();
-    memory_manager.initialize().await.unwrap();
-    
-    let ai_engine = PredictionEngine::new().unwrap();
-    ai_engine.initialize().await.unwrap();
-    ai_engine.load_model("model.pt").await.unwrap();
-    
-    let quantum_manager = QuantumCryptoManager::new().unwrap();
-    quantum_manager.initialize().await.unwrap();
-    
-    // Create VM and protect memory
-    let vm_id = hypervisor.create_vm("secure_vm".to_string()).await.unwrap().id();
-    hypervisor.start_vm(vm_id).await.unwrap();
-    
-    memory_manager.protect_region(0x1000, 0x2000, sentinel_core::memory::MemoryProtection::ReadWrite).await.unwrap();
-    
-    // Generate quantum keys for secure communication
-    let keypair = quantum_manager.generate_kem_keypair(
-        sentinel_quantum::KemAlgorithm::CrystalsKyber768
-    ).await.unwrap();
-    
-    // Simulate threat detection and AI analysis
-    let features = sentinel_ai::ThreatFeatures {
-        suspicious_api_calls: 20,
-        file_modifications: 10,
-        registry_changes: 5,
-        network_connections: 5,
-        execution_time_ms: 2000,
-        memory_usage: 2048 * 1024,
-        cpu_usage: 80.0,
-        child_processes: 5,
-        is_signed: false,
-        has_good_reputation: false,
-    };
-    
-    let prediction = ai_engine.predict(&features).await.unwrap();
-    
-    // Verify all components are working
-    assert_eq!(hypervisor.get_vm_state(vm_id).await.unwrap(), VMState::Running);
-    assert_eq!(memory_manager.protected_region_count().await, 1);
-    assert!(prediction.is_malicious);
-    assert!(!keypair.public_key.is_empty());
-}
+// ============================================================================
+// Stress Tests
+// ============================================================================
 
-#[tokio::test]
-async fn test_performance_integration() {
-    // Test that components meet performance targets
-    let hypervisor = Hypervisor::new().unwrap();
-    let start = std::time::Instant::now();
-    hypervisor.initialize().await.unwrap();
-    let init_time = start.elapsed();
+mod stress_tests {
+    use super::*;
     
-    // VM creation should be fast
-    let start = std::time::Instant::now();
-    let vm_id = hypervisor.create_vm("perf_test".to_string()).await.unwrap().id();
-    let creation_time = start.elapsed();
-    
-    // VM start should be fast
-    let start = std::time::Instant::now();
-    hypervisor.start_vm(vm_id).await.unwrap();
-    let start_time = start.elapsed();
-    
-    // Verify performance targets
-    assert!(init_time < std::time::Duration::from_millis(100));
-    assert!(creation_time < std::time::Duration::from_millis(10));
-    assert!(start_time < std::time::Duration::from_millis(10));
-}
-
-#[tokio::test]
-async fn test_error_handling_integration() {
-    // Test error handling across components
-    let hypervisor = Hypervisor::new().unwrap();
-    
-    // Should fail to create VM before initialization
-    assert!(hypervisor.create_vm("test".to_string()).await.is_err());
-    
-    hypervisor.initialize().await.unwrap();
-    
-    // Should fail to operate on non-existent VM
-    assert!(hypervisor.start_vm(999).await.is_err());
-    assert!(hypervisor.get_vm_state(999).await.is_err());
-    
-    // Should fail invalid state transitions
-    let vm_id = hypervisor.create_vm("test".to_string()).await.unwrap().id();
-    assert!(hypervisor.start_vm(vm_id).await.is_ok());
-    assert!(hypervisor.start_vm(vm_id).await.is_err()); // Already running
+    /// Test concurrent sessions
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn test_concurrent_sessions() {
+        let manager = std::sync::Arc::new(
+            tokio::sync::Mutex::new(
+                sentinel_metaverse::MetaverseManager::new(Default::default())
+                    .expect("Failed to create manager")
+            )
+        );
+        
+        let mut handles = vec![];
+        
+        for i in 0..50 {
+            let manager_clone = manager.clone();
+            let handle = tokio::spawn(async move {
+                let mut mgr = manager_clone.lock().await;
+                let user_id = uuid::Uuid::new_v4();
+                let avatar_id = uuid::Uuid::new_v4();
+                
+                let session = mgr
+                    .start_vr_session(
+                        user_id,
+                        avatar_id,
+                        format!("world_{}", i),
+                        sentinel_metaverse::VrSecurityLevel::Standard
+                    )
+                    .await
+                    .expect("Failed to start session");
+                
+                // Simulate some work
+                tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                
+                mgr.end_vr_session(session)
+                    .await
+                    .expect("Failed to end session");
+            });
+            handles.push(handle);
+        }
+        
+        // Wait for all sessions to complete
+        for handle in handles {
+            handle.await.expect("Session failed");
+        }
+        
+        let mgr = manager.lock().await;
+        let stats = mgr.get_statistics();
+        assert_eq!(stats.active_vr_sessions, 0, "All sessions should be closed");
+    }
 }

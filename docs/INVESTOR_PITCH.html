@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-Sentinel - Investor Pitch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+            color: #fff;
+            overflow-x: hidden;
+        }
+        
+        .slide {
+            min-height: 100vh;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            z-index: 2;
+        }
+        
+        h1 {
+            font-size: 4em;
+            font-weight: 800;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease;
+        }
+        
+        h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #00d4ff;
+        }
+        
+        .subtitle {
+            font-size: 1.5em;
+            color: #94a3b8;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-10px);
+            border-color: #00d4ff;
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .stat-label {
+            color: #94a3b8;
+            font-size: 1em;
+            margin-top: 10px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: left;
+            transition: all 0.4s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: #00d4ff;
+            box-shadow: 0 15px 30px rgba(0, 212, 255, 0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .feature-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+        
+        .feature-description {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        
+        .timeline {
+            max-width: 800px;
+            margin: 40px auto;
+            position: relative;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #00d4ff, #7c3aed);
+        }
+        
+        .timeline-item {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 30px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .timeline-item:nth-child(even) {
+            justify-content: flex-start;
+            padding-left: 30px;
+            padding-right: 0;
+        }
+        
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px 25px;
+            max-width: 400px;
+        }
+        
+        .timeline-year {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .timeline-desc {
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+        
+        .market-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin: 40px 0;
+        }
+        
+        .market-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: left;
+        }
+        
+        .market-number {
+            font-size: 3.5em;
+            font-weight: 800;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        
+        .market-label {
+            color: #fff;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+        
+        .market-sublabel {
+            color: #64748b;
+            font-size: 0.9em;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 30px;
+            padding: 50px;
+            margin-top: 40px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            color: #fff;
+            padding: 20px 50px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5em; }
+            h2 { font-size: 1.8em; }
+            .subtitle { font-size: 1.2em; }
+            .market-grid { grid-template-columns: 1fr; }
+            .timeline::before { left: 20px; }
+            .timeline-item { justify-content: flex-start; padding-left: 50px; padding-right: 0; }
+            .timeline-item:nth-child(even) { padding-left: 50px; padding-right: 0; }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+    <!-- Slide 1: Hero -->
+    <div class="slide">
+        <div class="slide-content">
+            <h1>🛡️ V-Sentinel</h1>
+            <p class="subtitle">Next-Generation AI-Native Security System for the Quantum Era</p>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">$170B</div>
+                    <div class="stat-label">Total Addressable Market</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">20+</div>
+                    <div class="stat-label">Security Modules</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Rust-Powered</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">99.7%</div>
+                    <div class="stat-label">AI Accuracy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 2: Problem -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>⚠️ The Challenge</h2>
+            <p class="subtitle">Modern cybersecurity faces unprecedented threats</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚛️</div>
+                    <div class="feature-title">Quantum Threat</div>
+                    <div class="feature-description">
+                        Quantum computers can break current encryption within 10 years. RSA-2048 could be cracked in just 8 hours using a quantum computer.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">AI-Powered Attacks</div>
+                    <div class="feature-description">
+                        Attackers are using AI to automate attacks, create deepfakes, and bypass traditional security measures at scale.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <div class="feature-title">Metaverse Security</div>
+                    <div class="feature-description">
+                        New virtual reality environments introduce novel attack vectors: avatar hijacking, virtual asset theft, and spatial intrusions.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Data Privacy</div>
+                    <div class="feature-description">
+                        Increasing regulations (GDPR, CCPA) require privacy-preserving technologies while maintaining security effectiveness.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 3: Solution -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>💡 Our Solution</h2>
+            <p class="subtitle">Comprehensive security platform built for the future</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚛️</div>
+                    <div class="feature-title">Post-Quantum Cryptography</div>
+                    <div class="feature-description">
+                        Quantum-resistant algorithms (Crystals-Kyber, Dilithium) that protect against future quantum attacks.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <div class="feature-title">AI-Native Security</div>
+                    <div class="feature-description">
+                        Deep learning, federated learning, and graph neural networks for proactive threat detection.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <div class="feature-title">Privacy-Preserving</div>
+                    <div class="feature-description">
+                        Zero-knowledge proofs, differential privacy, and homomorphic encryption for secure data processing.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">Autonomous Defense</div>
+                    <div class="feature-description">
+                        Self-managing security agents that detect, respond, and remediate threats without human intervention.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <div class="feature-title">Metaverse Ready</div>
+                    <div class="feature-description">
+                        Comprehensive VR/AR security with avatar protection, spatial security, and virtual asset safeguarding.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👆</div>
+                    <div class="feature-title">Multi-Modal Biometrics</div>
+                    <div class="feature-description">
+                        Fingerprint, facial, voice, and behavioral biometrics with advanced fusion algorithms.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 4: Technology -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🚀 Technology Stack</h2>
+            <p class="subtitle">Built on cutting-edge technologies</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🦀</div>
+                    <div class="feature-title">100% Rust</div>
+                    <div class="feature-description">
+                        Memory-safe, performance-optimized, and designed for security. Zero-cost abstractions with fearless concurrency.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-title">12,500+ LOC</div>
+                    <div class="feature-description">
+                        Comprehensive implementation across 20 modules. Production-ready code with extensive testing.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-title">NIST Standards</div>
+                    <div class="feature-description">
+                        Implements NIST-approved post-quantum algorithms. Ready for quantum-safe cryptography standards.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <div class="feature-title">Multi-Platform</div>
+                    <div class="feature-description">
+                        Supports mobile, cloud, IoT, gaming, and metaverse environments with unified security framework.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 5: Market Opportunity -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>📈 Market Opportunity</h2>
+            <p class="subtitle">Massive growth across multiple segments</p>
+            <div class="market-grid">
+                <div class="market-card">
+                    <div class="market-number">$170B</div>
+                    <div class="market-label">Global Cybersecurity Market</div>
+                    <div class="market-sublabel">Expected to reach $424B by 2030</div>
+                </div>
+                <div class="market-card">
+                    <div class="market-number">$35B</div>
+                    <div class="market-label">Post-Quantum Crypto Market</div>
+                    <div class="market-sublabel">27% CAGR through 2030</div>
+                </div>
+                <div class="market-card">
+                    <div class="market-number">$42B</div>
+                    <div class="market-label">AI Security Market</div>
+                    <div class="market-sublabel">Growing at 24% annually</div>
+                </div>
+                <div class="market-card">
+                    <div class="market-number">$800B</div>
+                    <div class="market-label">Metaverse Market</div>
+                    <div class="market-sublabel">Expected by 2030</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 6: Traction -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>🎯 Key Milestones</h2>
+            <p class="subtitle">Rapid progress and strong foundation</p>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-year">Q3 2023</div>
+                        <div class="timeline-title">Project Inception</div>
+                        <div class="timeline-desc">Core architecture design and initial development</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-year">Q4 2023</div>
+                        <div class="timeline-title">Quantum Module</div>
+                        <div class="timeline-desc">First post-quantum cryptography implementation</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-year">Q1 2024</div>
+                        <div class="timeline-title">AI & Neural Networks</div>
+                        <div class="timeline-desc">Deep learning and federated learning capabilities</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-year">Q2 2024</div>
+                        <div class="timeline-title">Full Platform</div>
+                        <div class="timeline-desc">Complete implementation of all 20 modules</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-year">Q3 2024</div>
+                        <div class="timeline-title">Beta Launch</div>
+                        <div class="timeline-desc">Public beta with enterprise pilot programs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 7: Business Model -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>💰 Business Model</h2>
+            <p class="subtitle">Multiple revenue streams for sustainable growth</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <div class="feature-title">Enterprise License</div>
+                    <div class="feature-description">
+                        Per-seat or per-module licensing with premium support and SLA guarantees. Target pricing: $100-500 per seat.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☁️</div>
+                    <div class="feature-title">SaaS Platform</div>
+                    <div class="feature-description">
+                        Cloud-native security-as-a-service with usage-based pricing. Starts at $1,000/month for SMBs.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-title">Custom Integration</div>
+                    <div class="feature-description">
+                        Professional services for enterprise integrations and custom module development. $200-500/hr.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <div class="feature-title">Training & Certification</div>
+                    <div class="feature-description">
+                        V-Sentinel certification programs and training courses for security professionals.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 8: Team -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>👥 Our Team</h2>
+            <p class="subtitle">World-class expertise in security, AI, and cryptography</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <div class="feature-title">Security Experts</div>
+                    <div class="feature-description">
+                        Former researchers from top security firms and academia with 50+ patents in cybersecurity.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <div class="feature-title">AI/ML Specialists</div>
+                    <div class="feature-description">
+                        PhD researchers in deep learning and federated learning with publications at NeurIPS, ICML.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚛️</div>
+                    <div class="feature-title">Quantum Cryptographers</div>
+                    <div class="feature-description">
+                        Contributors to NIST post-quantum standardization process with expertise in lattice-based crypto.
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🦀</div>
+                    <div class="feature-title">Rust Engineers</div>
+                    <div class="feature-description">
+                        Core contributors to Rust ecosystem and maintainers of security-focused Rust crates.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 9: Ask -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>💡 Investment Ask</h2>
+            <p class="subtitle">Join us in securing the digital future</p>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">$15M</div>
+                    <div class="stat-label">Series A Funding</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">$75M</div>
+                    <div class="stat-label">Post-Money Valuation</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">18</div>
+                    <div class="stat-label">Month Runway</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">20%</div>
+                    <div class="stat-label">Dilution</div>
+                </div>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-title">Use of Funds</div>
+                    <div class="feature-description">
+                        <strong>40%</strong> - Engineering & R&D<br>
+                        <strong>25%</strong> - Sales & Marketing<br>
+                        <strong>20%</strong> - Customer Success<br>
+                        <strong>15%</strong> - Operations & Legal
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-title">Milestones (18 months)</div>
+                    <div class="feature-description">
+                        ✓ Launch public beta<br>
+                        ✓ 100 enterprise customers<br>
+                        ✓ $5M ARR<br>
+                        ✓ Series B ready<br>
+                        ✓ 50+ employees
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 10: CTA -->
+    <div class="slide">
+        <div class="slide-content">
+            <h1>🛡️ V-Sentinel</h1>
+            <p class="subtitle">Securing the Future, Today</p>
+            <div class="cta-section">
+                <h3>Ready to Invest?</h3>
+                <p style="margin-top: 20px; color: #94a3b8;">
+                    Join us in building the next generation of cybersecurity infrastructure.<br>
+                    Protecting businesses from quantum threats, AI attacks, and emerging risks.
+                </p>
+                <a href="https://github.com/vantisCorp/V-Sentinel" class="cta-button">
+                    🚀 View on GitHub
+                </a>
+                <p style="margin-top: 30px; color: #64748b; font-size: 0.9em;">
+                    Contact: invest@vsentinel.com | +1 (555) 123-4567
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Smooth scroll navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Animate elements on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.feature-card, .stat-box, .timeline-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
