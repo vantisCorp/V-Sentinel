@@ -9,6 +9,8 @@ pub mod enhanced_hardening;
 pub mod advanced_penetration_testing;
 pub mod advanced_security_audit;
 pub mod secure_coding;
+pub mod pqc_security;
+pub mod pqc_hardening;
 
 pub use hardening::{
     SecurityHardeningManager,
@@ -63,6 +65,26 @@ pub use secure_coding::{
     CodeViolation,
     AnalysisSummary,
     EnforcerConfig,
+};
+
+pub use pqc_security::{
+    PqcSecurityAssessor,
+    PqcVulnerabilityFinding,
+    PqcVulnerabilityType,
+    PqcSeverity,
+    PqcComplianceStatus,
+    PqcAssessmentResult,
+    PqcMigrationReadiness,
+};
+
+pub use pqc_hardening::{
+    PqcHardeningManager,
+    PqcHardeningConfig,
+    PqcHardeningMeasure,
+    PqcHardeningCategory,
+    SecurityImpact,
+    PqcHardeningResult,
+    MeasureResult,
 };
 
 /// Security module version
