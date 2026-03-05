@@ -1,0 +1,48 @@
+# Test Configuration for PQC Integration Tests
+
+[general]
+environment = "Testing"
+test_timeout_secs = 300
+
+[pqc]
+# Test with Level 1 for faster tests
+enable_pqc = true
+kem_algorithm = "CrystalsKyber512"
+signature_algorithm = "CrystalsDilithium2"
+hybrid_mode = true
+fallback_to_classical = true
+min_security_level = 1
+key_rotation_hours = 24
+session_timeout_secs = 300
+
+[network]
+listen_address = "127.0.0.1"
+listen_port = 8443
+enable_tls = true
+enable_pqc = true
+max_connections = 100
+
+[gateway]
+address = "127.0.0.1"
+port = 8080
+name = "test-gateway"
+
+[vpn]
+server_address = "127.0.0.1:1195"
+network_cidr = "10.9.0.0/24"
+rekey_interval_secs = 300
+mtu = 1500
+
+[messaging]
+enable_pqc = true
+forward_secrecy = true
+message_ttl_secs = 86400
+max_message_size = 1048576
+
+[logging]
+level = "Debug"
+console = true
+
+[metrics]
+enabled = true
+include_pqc_metrics = true
