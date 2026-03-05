@@ -1,0 +1,36 @@
+[package]
+name = "sentinel-vpn"
+version = "0.1.0"
+edition = "2021"
+authors = ["VantisCorp <dev@vantiscorp.com>"]
+description = "VPN Service with Post-Quantum Cryptography support for V-Sentinel"
+
+[dependencies]
+# Core dependencies
+sentinel-config = { path = "../../config" }
+sentinel-quantum = { path = "../../quantum" }
+sentinel-network = { path = "../../network" }
+sentinel-security = { path = "../../security" }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+
+# Networking
+socket2 = { version = "0.5", features = ["all"] }
+
+# Cryptography
+rustls = { version = "0.23", features = ["std"] }
+
+[dev-dependencies]
+tokio-test = "0.4"

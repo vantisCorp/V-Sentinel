@@ -8,8 +8,8 @@
 
 ## Service Integration (Week 5)
 - [x] Create API Gateway service with PQC support
-- [ ] Create VPN service with PQC support
-- [ ] Create Secure Messaging service with PQC support
+- [x] Create VPN service with PQC support
+- [x] Create Secure Messaging service with PQC support
 - [ ] Create integration tests for all services
 
 ## Testing and Documentation (Week 6)
