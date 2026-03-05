@@ -1,0 +1,54 @@
+[package]
+name = "sentinel-gateway"
+version = "0.1.0"
+edition = "2021"
+authors = ["VantisCorp <dev@vantiscorp.com>"]
+description = "API Gateway with Post-Quantum Cryptography support for V-Sentinel"
+
+[dependencies]
+# Core dependencies
+sentinel-config = { path = "../../config" }
+sentinel-quantum = { path = "../../quantum" }
+sentinel-network = { path = "../../network" }
+sentinel-security = { path = "../../security" }
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# HTTP server
+axum = { version = "0.7", features = ["multipart", "headers"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["trace", "cors", "compression"] }
+hyper = { version = "1.0", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Cryptography
+rustls = { version = "0.23", features = ["std"] }
+tokio-rustls = "0.26"
+rustls-pemfile = "2.0"
+
+# Metrics
+prometheus = "0.13"
+metrics = "0.21"
+metrics-exporter-prometheus = "0.12"
+
+# Rate limiting
+governor = "0.6"
+
+[dev-dependencies]
+tokio-test = "0.4"
