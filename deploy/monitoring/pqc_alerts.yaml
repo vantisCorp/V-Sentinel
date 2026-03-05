@@ -1,0 +1,312 @@
+# V-Sentinel PQC Monitoring Alerts
+# Prometheus alerting rules for PQC services
+
+groups:
+  # PQC Gateway Alerts
+  - name: pqc_gateway_alerts
+    rules:
+      - alert: PQLGatewayHighLatency
+        expr: histogram_quantile(0.95, rate(pqc_tls_handshake_duration_seconds_bucket[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "PQC Gateway TLS handshake latency is high"
+          description: "TLS handshake p95 latency is {{ $value | humanizeDuration }} (> 100ms). This may indicate performance issues."
+          runbook: "INC-001"
+
+      - alert: PQLGatewayCriticalLatency
+        expr: histogram_quantile(0.95, rate(pqc_tls_handshake_duration_seconds_bucket[5m])) > 0.5
+        for: 2m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "PQC Gateway TLS handshake latency is critical"
+          description: "TLS handshake p95 latency is {{ $value | humanizeDuration }} (> 500ms). Immediate attention required."
+          runbook: "INC-001"
+
+      - alert: PQLGatewayConnectionErrors
+        expr: rate(pqc_gateway_connection_errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "PQC Gateway connection error rate is elevated"
+          description: "Connection error rate is {{ $value | humanize }} errors/sec. Investigate network or service issues."
+
+      - alert: PQLGatewaySessionFailures
+        expr: rate(pqc_session_failures_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "PQC session establishment failures detected"
+          description: "Session failure rate is {{ $value }} failures/sec. Check authentication and key exchange."
+
+  # PQC VPN Alerts
+  - name: pqc_vpn_alerts
+    rules:
+      - alert: PQLVpnTunnelEstablishmentSlow
+        expr: histogram_quantile(0.95, rate(pqc_vpn_tunnel_establishment_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: vpn
+        annotations:
+          summary: "PQC VPN tunnel establishment is slow"
+          description: "VPN tunnel setup p95 latency is {{ $value | humanizeDuration }} (> 500ms)."
+
+      - alert: PQLVpnTunnelDrops
+        expr: rate(pqc_vpn_tunnel_drops_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: vpn
+        annotations:
+          summary: "PQC VPN tunnel drops detected"
+          description: "Tunnel drop rate is {{ $value }} drops/sec. Check network stability."
+
+      - alert: PQLVpnEncryptionErrors
+        expr: rate(pqc_vpn_encryption_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: vpn
+        annotations:
+          summary: "PQC VPN encryption errors detected"
+          description: "Encryption error rate is {{ $value }} errors/sec. Check key management."
+
+  # PQC Messaging Alerts
+  - name: pqc_messaging_alerts
+    rules:
+      - alert: PQLMessagingEncryptionSlow
+        expr: histogram_quantile(0.95, rate(pqc_messaging_encryption_seconds_bucket[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: messaging
+        annotations:
+          summary: "PQC messaging encryption is slow"
+          description: "Encryption p95 latency is {{ $value | humanizeDuration }} (> 10ms)."
+
+      - alert: PQLMessagingQueueBacklog
+        expr: pqc_messaging_queue_size > 10000
+        for: 5m
+        labels:
+          severity: warning
+          service: messaging
+        annotations:
+          summary: "PQC messaging queue backlog is high"
+          description: "Queue size is {{ $value }} messages. Check consumer health."
+
+      - alert: PQLMessagingDeliveryFailures
+        expr: rate(pqc_messaging_delivery_failures_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: messaging
+        annotations:
+          summary: "PQC messaging delivery failures detected"
+          description: "Delivery failure rate is {{ $value }} failures/sec. Check network and encryption."
+
+  # Key Manager Alerts
+  - name: pqc_key_manager_alerts
+    rules:
+      - alert: PQLKeyRotationFailure
+        expr: rate(pqc_key_rotation_failures_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: key-manager
+        annotations:
+          summary: "PQC key rotation failure detected"
+          description: "{{ $value }} key rotation failures in the last hour. Check HSM and rotation configuration."
+          runbook: "INC-002"
+
+      - alert: PQLKeyExpirationImminent
+        expr: pqc_key_age_days > 80
+        for: 0m
+        labels:
+          severity: warning
+          service: key-manager
+        annotations:
+          summary: "PQC key approaching expiration"
+          description: "Key {{ $labels.key_id }} is {{ $value }} days old (> 80 days). Rotation should occur at 90 days."
+          runbook: "INC-002"
+
+      - alert: PQLKeyExpirationCritical
+        expr: pqc_key_age_days > 85
+        for: 0m
+        labels:
+          severity: critical
+          service: key-manager
+        annotations:
+          summary: "PQC key expiration critical"
+          description: "Key {{ $labels.key_id }} is {{ $value }} days old (> 85 days). Immediate rotation required."
+          runbook: "INC-002"
+
+      - alert: PQLKeyGenerationSlow
+        expr: histogram_quantile(0.95, rate(pqc_key_generation_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: key-manager
+        annotations:
+          summary: "PQC key generation is slow"
+          description: "Key generation p95 latency is {{ $value | humanizeDuration }} (> 1s). Check system resources."
+
+      - alert: PQLHSMConnectionFailure
+        expr: pqc_hsm_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: key-manager
+        annotations:
+          summary: "HSM connection lost"
+          description: "Hardware Security Module connection is down. Key operations may fail."
+
+  # Certificate Manager Alerts
+  - name: pqc_certificate_alerts
+    rules:
+      - alert: PQLCertificateExpiringSoon
+        expr: pqc_certificate_days_until_expiry < 30
+        for: 0m
+        labels:
+          severity: warning
+          service: certificate-manager
+        annotations:
+          summary: "PQC certificate expiring within 30 days"
+          description: "Certificate {{ $labels.cert_id }} expires in {{ $value }} days. Plan renewal."
+          runbook: "INC-004"
+
+      - alert: PQLCertificateExpiringCritical
+        expr: pqc_certificate_days_until_expiry < 7
+        for: 0m
+        labels:
+          severity: critical
+          service: certificate-manager
+        annotations:
+          summary: "PQC certificate expiring within 7 days"
+          description: "Certificate {{ $labels.cert_id }} expires in {{ $value }} days. Immediate renewal required."
+          runbook: "INC-004"
+
+      - alert: PQLCertificateRenewalFailure
+        expr: rate(pqc_certificate_renewal_failures_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: certificate-manager
+        annotations:
+          summary: "PQC certificate renewal failure"
+          description: "{{ $value }} certificate renewal failures in the last hour. Check CA connectivity."
+          runbook: "INC-004"
+
+  # Quantum Threat Detection Alerts
+  - name: quantum_threat_alerts
+    rules:
+      - alert: QuantumComputerCapabilityDetected
+        expr: quantum_threat_score > 0.7
+        for: 0m
+        labels:
+          severity: critical
+          type: security
+        annotations:
+          summary: "Potential quantum computer capability detected"
+          description: "Quantum threat score is {{ $value }} (> 0.7). This indicates possible quantum computing advances that could threaten current PQC implementations."
+          runbook: "INC-003"
+
+      - alert: QuantumThreatIndicator
+        expr: rate(quantum_threat_indicators_total[24h]) > 10
+        for: 0m
+        labels:
+          severity: warning
+          type: security
+        annotations:
+          summary: "Increased quantum threat indicators"
+          description: "{{ $value }} quantum threat indicators in the last 24 hours. Review threat intelligence."
+
+      - alert: PQCAlgorithmWeaknessAlert
+        expr: pqc_algorithm_security_status != 1
+        for: 0m
+        labels:
+          severity: critical
+          type: security
+        annotations:
+          summary: "PQC algorithm security concern detected"
+          description: "Algorithm {{ $labels.algorithm }} has security status {{ $value }}. Review NIST guidance for updates."
+
+  # Service Health Alerts
+  - name: service_health_alerts
+    rules:
+      - alert: PQLServiceDown
+        expr: up{job=~"pqc-.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PQC service is down"
+          description: "Service {{ $labels.job }} on instance {{ $labels.instance }} is down."
+
+      - alert: PQLServiceHighMemoryUsage
+        expr: container_memory_usage_bytes{container=~"pqc-.*"} / container_spec_memory_limit_bytes{container=~"pqc-.*"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PQC service high memory usage"
+          description: "Service {{ $labels.container }} memory usage is {{ $value | humanizePercentage }}. Check for memory leaks."
+
+      - alert: PQLServiceHighCpuUsage
+        expr: rate(container_cpu_usage_seconds_total{container=~"pqc-.*"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PQC service high CPU usage"
+          description: "Service {{ $labels.container }} CPU usage is {{ $value | humanizePercentage }}. Consider scaling."
+
+      - alert: PQLServiceRestarts
+        expr: rate(kube_pod_container_status_restarts_total{container=~"pqc-.*"}[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PQC service restarts detected"
+          description: "Service {{ $labels.container }} has restarted {{ $value }} times in the last hour. Investigate instability."
+
+  # Compliance Alerts
+  - name: compliance_alerts
+    rules:
+      - alert: NISTComplianceViolation
+        expr: pqc_compliance_nist == 0
+        for: 0m
+        labels:
+          severity: critical
+          type: compliance
+        annotations:
+          summary: "NIST PQC compliance violation detected"
+          description: "Service {{ $labels.service }} is not NIST FIPS 203-206 compliant."
+
+      - alert: CNSA2ComplianceViolation
+        expr: pqc_compliance_cnsa2 == 0
+        for: 0m
+        labels:
+          severity: critical
+          type: compliance
+        annotations:
+          summary: "CNSA 2.0 compliance violation detected"
+          description: "Service {{ $labels.service }} is not CNSA 2.0 compliant."
+
+      - alert: HybridModeDisabled
+        expr: pqc_hybrid_mode_enabled == 0
+        for: 0m
+        labels:
+          severity: warning
+          type: compliance
+        annotations:
+          summary: "PQC hybrid mode is disabled"
+          description: "Service {{ $labels.service }} has hybrid mode disabled. CNSA 2.0 recommends hybrid operation during transition."
