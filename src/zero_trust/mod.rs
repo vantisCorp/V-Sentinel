@@ -14,7 +14,28 @@ pub mod identity;
 pub mod trust;
 
 pub use trust::trust_score::{TrustScore, TrustLevel};
-pub use policy::engine::PolicyEngine;
+
+// Policy module exports
+pub use policy::{
+    // Policy Engine
+    PolicyEngine, Policy, PolicyType, PolicyCondition, PolicyAction,
+    ConditionType, Operator,
+    // Policy Language
+    PolicyLanguageManager, PolicyLanguageConfig, PolicyExpression,
+    PolicyTemplate, PolicyVersion,
+    // Enforcement
+    EnforcementPointManager, EnforcementConfig, EnforcementStats,
+    ApiGatewayEnforcer, ApiGatewayConfig, ApiRequest,
+    ServiceMeshEnforcer, ServiceMeshConfig, MeshRequest,
+    DatabaseEnforcer, DatabaseConfig, DatabaseRequest, QueryType,
+    // Validation
+    PolicyValidator, ValidationConfig, ValidationResult,
+    PolicySimulator, TestScenario, SimulationResults,
+    ImpactAnalysis, ImpactType,
+    // Audit
+    PolicyAuditManager, AuditConfig, AuditLogEntry,
+    ComplianceFramework, ComplianceReport, ComplianceStatus,
+};
 pub use auth::continuous::ContinuousAuthManager;
 pub use auth::mfa::{MfaManager, MfaConfig, MfaMethod, MfaVerificationResult};
 pub use auth::biometrics::{BiometricsManager, BiometricsConfig, BiometricAnalysisResult};
