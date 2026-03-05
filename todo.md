@@ -3,8 +3,8 @@
 ## Configuration Integration (Week 3)
 - [x] Extend NetworkConfig with PQC settings
 - [x] Add PQC configuration validators
-- [ ] Update config loading/saving
-- [ ] Create configuration examples
+- [x] Update config loading/saving
+- [x] Create configuration examples
 
 ## Service Integration (Week 5)
 - [ ] Integrate PQC in API gateway
