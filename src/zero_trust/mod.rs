@@ -20,6 +20,8 @@ pub use auth::mfa::{MfaManager, MfaConfig, MfaMethod, MfaVerificationResult};
 pub use auth::biometrics::{BiometricsManager, BiometricsConfig, BiometricAnalysisResult};
 pub use auth::adaptive::{AdaptiveAuthManager, AdaptiveAuthConfig, AdaptiveAuthDecision, AuthRequirement};
 pub use segmentation::network::NetworkSegmenter;
+pub use segmentation::application::{ApplicationSegmenter, ApplicationSegment, ServiceMeshConfig};
+pub use segmentation::data::{DataSegmenter, DataSegment, DataClassification, UserAttributes};
 
 /// Zero Trust Architecture Error Types
 #[derive(Debug, thiserror::Error)]
