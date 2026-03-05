@@ -24,6 +24,10 @@ members = [
     "src/error-handling",
     "src/plugins",
     "src/tools",
+    "src/security",
+    "src/services/gateway",
+    "src/services/messaging",
+    "src/services/vpn",
 ]
 resolver = "2"
 
