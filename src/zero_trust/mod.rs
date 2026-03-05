@@ -23,6 +23,23 @@ pub use segmentation::network::NetworkSegmenter;
 pub use segmentation::application::{ApplicationSegmenter, ApplicationSegment, ServiceMeshConfig};
 pub use segmentation::data::{DataSegmenter, DataSegment, DataClassification, UserAttributes};
 
+// Identity module exports
+pub use identity::{
+    // Identity Fabric
+    IdentityFabric, IdentityProvider, UserInfo,
+    // SSO
+    SsoManager, SsoConfig, SsoSession, SsoSessionState,
+    SamlProvider, SamlConfig, OAuthProvider, OAuthConfig,
+    JitProvisioningConfig, ServiceProviderConfig,
+    // Identity Sync
+    IdentitySyncManager, SyncConfig, SyncStatus, IdentityMapping,
+    ConflictResolution, ConflictRecord, SyncRecord, SyncDirection,
+    // Identity Analytics
+    IdentityAnalyticsManager, AnalyticsConfig, AccessEvent,
+    UserProfile, RiskScore, AnomalyType, AnomalyRecord,
+    AccessPatternReport, ComplianceReport, ComplianceFramework,
+};
+
 /// Zero Trust Architecture Error Types
 #[derive(Debug, thiserror::Error)]
 pub enum ZeroTrustError {
