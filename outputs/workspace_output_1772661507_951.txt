@@ -1,2 +1,0 @@
-To https://github.com/vantisCorp/V-Sentinel.git
-   ba0173d..0502db3  feature/post-quantum-cryptography -> feature/post-quantum-cryptography

@@ -1,2 +1,0 @@
-To https://github.com/vantisCorp/V-Sentinel.git
-   a7d838e..c81df1b  main -> main

@@ -1,7 +1,0 @@
-  9 src/autonomous/src/lib.rs
-  9 src/biometrics/src/lib.rs
-  9 src/blockchain/src/lib.rs
-  9 src/metaverse/src/lib.rs
-  9 src/neural/src/lib.rs
-  9 src/privacy/src/lib.rs
- 54 total

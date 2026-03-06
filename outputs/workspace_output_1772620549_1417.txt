@@ -1,2 +1,0 @@
-127.0.0.1 - - [04/Mar/2026 11:11:17] "GET /?password=fd969571-39b1-4712-8d75-ca8ef998c579 HTTP/1.1" 200 -
-172.30.0.1 - - [04/Mar/2026 11:11:17] "GET /?hideControls=true&password=fd969571-39b1-4712-8d75-ca8ef998c579 HTTP/1.1" 200 -

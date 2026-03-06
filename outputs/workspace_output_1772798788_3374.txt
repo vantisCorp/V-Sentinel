@@ -1,0 +1,179 @@
+On branch feature/ai-security-protection
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    outputs/workspace_output_1772570678_7459.txt
+	deleted:    outputs/workspace_output_1772570736_5299.txt
+	deleted:    outputs/workspace_output_1772570757_5840.txt
+	deleted:    outputs/workspace_output_1772570775_8629.txt
+	deleted:    outputs/workspace_output_1772570797_4496.txt
+	deleted:    outputs/workspace_output_1772576281_1702.txt
+	deleted:    outputs/workspace_output_1772576631_7331.txt
+	deleted:    outputs/workspace_output_1772576717_6826.txt
+	deleted:    outputs/workspace_output_1772593517_3945.txt
+	deleted:    outputs/workspace_output_1772593661_1653.txt
+	deleted:    outputs/workspace_output_1772593667_5114.txt
+	deleted:    outputs/workspace_output_1772593682_7611.txt
+	deleted:    outputs/workspace_output_1772593807_2355.txt
+	deleted:    outputs/workspace_output_1772593816_662.txt
+	deleted:    outputs/workspace_output_1772593823_2990.txt
+	deleted:    outputs/workspace_output_1772597941_4300.txt
+	deleted:    outputs/workspace_output_1772597945_4667.txt
+	deleted:    outputs/workspace_output_1772597947_7175.txt
+	deleted:    outputs/workspace_output_1772597951_2915.txt
+	deleted:    outputs/workspace_output_1772597963_8551.txt
+	deleted:    outputs/workspace_output_1772598002_9448.txt
+	deleted:    outputs/workspace_output_1772598006_3617.txt
+	deleted:    outputs/workspace_output_1772598016_9620.txt
+	deleted:    outputs/workspace_output_1772598021_9531.txt
+	deleted:    outputs/workspace_output_1772598025_727.txt
+	deleted:    outputs/workspace_output_1772611650_4312.txt
+	deleted:    outputs/workspace_output_1772611667_7276.txt
+	deleted:    outputs/workspace_output_1772611671_9440.txt
+	deleted:    outputs/workspace_output_1772611674_4176.txt
+	deleted:    outputs/workspace_output_1772611677_8860.txt
+	deleted:    outputs/workspace_output_1772612183_3910.txt
+	deleted:    outputs/workspace_output_1772612190_2569.txt
+	deleted:    outputs/workspace_output_1772612194_4141.txt
+	deleted:    outputs/workspace_output_1772614813_5070.txt
+	deleted:    outputs/workspace_output_1772615349_1196.txt
+	deleted:    outputs/workspace_output_1772615355_9727.txt
+	deleted:    outputs/workspace_output_1772615366_9501.txt
+	deleted:    outputs/workspace_output_1772615370_490.txt
+	deleted:    outputs/workspace_output_1772615384_6237.txt
+	deleted:    outputs/workspace_output_1772618078_7169.txt
+	deleted:    outputs/workspace_output_1772618250_3735.txt
+	deleted:    outputs/workspace_output_1772618264_341.txt
+	deleted:    outputs/workspace_output_1772618268_2395.txt
+	deleted:    outputs/workspace_output_1772618409_2360.txt
+	deleted:    outputs/workspace_output_1772618412_5136.txt
+	deleted:    outputs/workspace_output_1772618436_3010.txt
+	deleted:    outputs/workspace_output_1772618440_5889.txt
+	deleted:    outputs/workspace_output_1772618447_5580.txt
+	deleted:    outputs/workspace_output_1772618455_1596.txt
+	deleted:    outputs/workspace_output_1772618470_5044.txt
+	deleted:    outputs/workspace_output_1772618479_1879.txt
+	deleted:    outputs/workspace_output_1772618491_1364.txt
+	deleted:    outputs/workspace_output_1772618495_8698.txt
+	deleted:    outputs/workspace_output_1772618498_8405.txt
+	deleted:    outputs/workspace_output_1772618506_1541.txt
+	deleted:    outputs/workspace_output_1772618511_112.txt
+	deleted:    outputs/workspace_output_1772620151_4435.txt
+	deleted:    outputs/workspace_output_1772620160_9349.txt
+	deleted:    outputs/workspace_output_1772620164_8065.txt
+	deleted:    outputs/workspace_output_1772620166_2212.txt
+	deleted:    outputs/workspace_output_1772620549_1417.txt
+	deleted:    outputs/workspace_output_1772620565_4051.txt
+	deleted:    outputs/workspace_output_1772620569_6426.txt
+	deleted:    outputs/workspace_output_1772622691_2466.txt
+	deleted:    outputs/workspace_output_1772622704_7639.txt
+	deleted:    outputs/workspace_output_1772622717_7246.txt
+	deleted:    outputs/workspace_output_1772622722_3675.txt
+	deleted:    outputs/workspace_output_1772622727_7840.txt
+	deleted:    outputs/workspace_output_1772622792_1141.txt
+	deleted:    outputs/workspace_output_1772622796_5433.txt
+	deleted:    outputs/workspace_output_1772622801_7554.txt
+	deleted:    outputs/workspace_output_1772622930_4465.txt
+	deleted:    outputs/workspace_output_1772622935_4127.txt
+	deleted:    outputs/workspace_output_1772622945_6449.txt
+	deleted:    outputs/workspace_output_1772622948_2804.txt
+	deleted:    outputs/workspace_output_1772622953_502.txt
+	deleted:    outputs/workspace_output_1772622995_5502.txt
+	deleted:    outputs/workspace_output_1772626314_7003.txt
+	deleted:    outputs/workspace_output_1772626321_1124.txt
+	deleted:    outputs/workspace_output_1772626331_2357.txt
+	deleted:    outputs/workspace_output_1772626338_8041.txt
+	deleted:    outputs/workspace_output_1772626342_5342.txt
+	deleted:    outputs/workspace_output_1772626685_5015.txt
+	deleted:    outputs/workspace_output_1772626693_5297.txt
+	deleted:    outputs/workspace_output_1772626711_1997.txt
+	deleted:    outputs/workspace_output_1772626895_1225.txt
+	deleted:    outputs/workspace_output_1772626911_6572.txt
+	deleted:    outputs/workspace_output_1772627024_8058.txt
+	deleted:    outputs/workspace_output_1772627034_8364.txt
+	deleted:    outputs/workspace_output_1772627070_6973.txt
+	deleted:    outputs/workspace_output_1772627095_9490.txt
+	deleted:    outputs/workspace_output_1772627102_1614.txt
+	deleted:    outputs/workspace_output_1772627110_4153.txt
+	deleted:    outputs/workspace_output_1772627114_1400.txt
+	deleted:    outputs/workspace_output_1772627334_9776.txt
+	deleted:    outputs/workspace_output_1772627338_4170.txt
+	deleted:    outputs/workspace_output_1772627692_8064.txt
+	deleted:    outputs/workspace_output_1772627707_438.txt
+	deleted:    outputs/workspace_output_1772627724_6688.txt
+	deleted:    outputs/workspace_output_1772627731_8089.txt
+	deleted:    outputs/workspace_output_1772627741_4480.txt
+	deleted:    outputs/workspace_output_1772627748_6277.txt
+	deleted:    outputs/workspace_output_1772627758_8784.txt
+	deleted:    outputs/workspace_output_1772627771_9773.txt
+	deleted:    outputs/workspace_output_1772627775_263.txt
+	deleted:    outputs/workspace_output_1772627784_3208.txt
+	deleted:    outputs/workspace_output_1772627921_588.txt
+	deleted:    outputs/workspace_output_1772629120_289.txt
+	deleted:    outputs/workspace_output_1772629161_4369.txt
+	deleted:    outputs/workspace_output_1772629175_7110.txt
+	deleted:    outputs/workspace_output_1772629180_6432.txt
+	deleted:    outputs/workspace_output_1772629184_7254.txt
+	deleted:    outputs/workspace_output_1772629197_3703.txt
+	deleted:    outputs/workspace_output_1772655934_3357.txt
+	deleted:    outputs/workspace_output_1772655989_3125.txt
+	deleted:    outputs/workspace_output_1772656048_8039.txt
+	deleted:    outputs/workspace_output_1772656276_4236.txt
+	deleted:    outputs/workspace_output_1772656295_2888.txt
+	deleted:    outputs/workspace_output_1772656304_3536.txt
+	deleted:    outputs/workspace_output_1772656507_9615.txt
+	deleted:    outputs/workspace_output_1772657768_6346.txt
+	deleted:    outputs/workspace_output_1772657860_7878.txt
+	deleted:    outputs/workspace_output_1772657867_2865.txt
+	deleted:    outputs/workspace_output_1772658535_2768.txt
+	deleted:    outputs/workspace_output_1772658638_8730.txt
+	deleted:    outputs/workspace_output_1772658646_2788.txt
+	deleted:    outputs/workspace_output_1772658652_4907.txt
+	deleted:    outputs/workspace_output_1772658829_819.txt
+	deleted:    outputs/workspace_output_1772658953_3560.txt
+	deleted:    outputs/workspace_output_1772659038_6148.txt
+	deleted:    outputs/workspace_output_1772659833_9820.txt
+	deleted:    outputs/workspace_output_1772660421_6421.txt
+	deleted:    outputs/workspace_output_1772660428_5887.txt
+	deleted:    outputs/workspace_output_1772660435_7707.txt
+	deleted:    outputs/workspace_output_1772660445_3019.txt
+	deleted:    outputs/workspace_output_1772661307_8186.txt
+	deleted:    outputs/workspace_output_1772661422_4755.txt
+	deleted:    outputs/workspace_output_1772661429_291.txt
+	deleted:    outputs/workspace_output_1772661438_5335.txt
+	deleted:    outputs/workspace_output_1772661465_8340.txt
+	deleted:    outputs/workspace_output_1772661483_4371.txt
+	deleted:    outputs/workspace_output_1772661499_1306.txt
+	deleted:    outputs/workspace_output_1772661507_951.txt
+	deleted:    outputs/workspace_output_1772662039_1987.txt
+	deleted:    outputs/workspace_output_1772662076_566.txt
+	deleted:    outputs/workspace_output_1772662237_3409.txt
+	deleted:    outputs/workspace_output_1772666303_20.txt
+	deleted:    outputs/workspace_output_1772666442_2795.txt
+	deleted:    outputs/workspace_output_1772666451_2955.txt
+	deleted:    outputs/workspace_output_1772666459_2172.txt
+	deleted:    outputs/workspace_output_1772666471_8567.txt
+	deleted:    outputs/workspace_output_1772666476_5863.txt
+	deleted:    outputs/workspace_output_1772666486_4058.txt
+	deleted:    outputs/workspace_output_1772666499_2483.txt
+	deleted:    outputs/workspace_output_1772666655_9577.txt
+	deleted:    outputs/workspace_output_1772666663_6370.txt
+	deleted:    outputs/workspace_output_1772667271_5576.txt
+	deleted:    outputs/workspace_output_1772667462_1119.txt
+	modified:   todo.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	REPOSITORY_ANALYSIS_REPORT.md
+	outputs/workspace_output_1772798788_3374.txt
+	summarized_conversations/original_conversation_1772668764_8269.txt
+	summarized_conversations/original_conversation_1772672487_779.txt
+	summarized_conversations/original_conversation_1772700722_1832.txt
+	summarized_conversations/original_conversation_1772733778_9859.txt
+	summarized_conversations/original_conversation_1772736045_9178.txt
+	summarized_conversations/original_conversation_1772750140_2526.txt
+	summarized_conversations/original_conversation_1772765242_212.txt
+	summarized_conversations/original_conversation_1772777726_4882.txt
+	summarized_conversations/original_conversation_1772798185_7797.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

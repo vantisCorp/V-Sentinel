@@ -1,9 +1,0 @@
-total 48
-drwxr-xr-x  5 root root  4096 Mar  3 20:39 .
-drwxr-xr-x 17 user user  4096 Mar  4 04:19 ..
--rw-r--r--  1 root root  6857 Mar  3 20:39 README.md
--rw-r--r--  1 root root 11124 Mar  2 20:20 ai_prediction_example.rs
-drwxr-xr-x  2 root root  4096 Mar  3 20:39 docs
-drwxr-xr-x  2 root root  4096 Mar  3 20:39 gaming_server_protection
--rw-r--r--  1 root root  5506 Mar  2 20:10 hypervisor_example.rs
-drwxr-xr-x  3 root root  4096 Mar  3 20:39 web_app_protection

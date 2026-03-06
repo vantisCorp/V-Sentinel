@@ -1,1 +1,0 @@
-! Issue vantisCorp/V-Sentinel#1 (Add performance benchmarking suite) is already closed

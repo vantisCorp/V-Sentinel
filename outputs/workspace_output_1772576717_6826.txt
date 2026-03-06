@@ -1,8 +1,0 @@
--rw-r--r-- 1 root root  13K Mar  3 21:40 README.md
--rw-r--r-- 1 root root 9.8K Mar  3 21:51 README_DE.md
--rw-r--r-- 1 root root 9.5K Mar  3 21:46 README_EN.md
--rw-r--r-- 1 root root  15K Mar  3 22:19 README_ES.md
--rw-r--r-- 1 root root  15K Mar  3 22:20 README_FR.md
--rw-r--r-- 1 root root  15K Mar  3 22:16 README_KO.md
--rw-r--r-- 1 root root  18K Mar  3 22:09 README_RU.md
--rw-r--r-- 1 root root 9.1K Mar  3 21:57 README_ZH.md
