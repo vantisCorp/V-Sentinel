@@ -29,6 +29,7 @@ members = [
     "src/services/messaging",
     "src/services/vpn",
     "src/zero_trust",
+    "src/ai_security",
 ]
 resolver = "2"
 
