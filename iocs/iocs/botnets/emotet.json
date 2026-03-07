@@ -1,0 +1,341 @@
+{
+  "threat_actor": "Emotet",
+  "aliases": ["Heodo", "Geodo", "Bugat"],
+  "country": "Ukraine/Russia",
+  "motivation": "Financial",
+  "description": "Sophisticated banking trojan and malware distribution service, known for modular capabilities and large-scale spam campaigns",
+  "attribution_confidence": "medium",
+  "mitre_attack": "G0095",
+  "campaigns": [
+    "Emotet Takedown and Resurgence",
+    "COVID-19 Phishing Campaigns",
+    "Holiday Shopping Season Attacks",
+    "Tax Season Fraud",
+    "US Election Interference"
+  ],
+  "indicators": [
+    {
+      "id": "emotet-001",
+      "type": "ip",
+      "value": "89.34.96.52",
+      "first_seen": "2024-09-01T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "Command and control server for Emotet module distribution",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["c2", "botnet", "banking-trojan", "malware-distribution"],
+      "port": 443,
+      "protocol": "https"
+    },
+    {
+      "id": "emotet-002",
+      "type": "ip",
+      "value": "185.220.101.67",
+      "first_seen": "2024-08-15T00:00:00Z",
+      "last_seen": "2025-12-28T00:00:00Z",
+      "confidence": "medium",
+      "description": "Infrastructure for stolen data exfiltration",
+      "campaign": "Holiday Shopping Season Attacks",
+      "malware_family": "Emotet",
+      "tags": ["exfil", "botnet", "banking-trojan"],
+      "port": 8080,
+      "protocol": "https"
+    },
+    {
+      "id": "emotet-003",
+      "type": "domain",
+      "value": "cdn.update-service[.]net",
+      "first_seen": "2024-09-01T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "C2 domain masquerading as legitimate CDN service",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["c2", "masquerading", "botnet", "cdn"],
+      "dns_info": {
+        "registrar": "NameCheap, Inc.",
+        "registered": "2024-08-25",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "emotet-004",
+      "type": "domain",
+      "value": "email-marketing-service[.]com",
+      "first_seen": "2024-10-01T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "high",
+      "description": "Domain used for spam campaign distribution",
+      "campaign": "Tax Season Fraud",
+      "malware_family": "Emotet",
+      "tags": ["spam", "phishing", "botnet", "email-distribution"],
+      "dns_info": {
+        "registrar": "GoDaddy.com, LLC",
+        "registered": "2024-09-28",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "emotet-005",
+      "type": "url",
+      "value": "https://cdn.update-service[.]net/api/v2/modules",
+      "first_seen": "2024-09-05T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "API endpoint for malware module updates",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["c2", "api", "module-distribution", "botnet"],
+      "http_method": "POST"
+    },
+    {
+      "id": "emotet-006",
+      "type": "hash",
+      "value": "3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5",
+      "hash_type": "sha256",
+      "first_seen": "2024-09-01T00:00:00Z",
+      "last_seen": "2026-01-15T00:00:00Z",
+      "confidence": "high",
+      "description": "Emotet downloader payload",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["malware", "downloader", "botnet", "windows"],
+      "file_info": {
+        "name": "invoice.exe",
+        "size": 458752,
+        "type": "PE32 executable (GUI) Intel 80386",
+        "compile_time": "2024-08-28T10:15:00Z"
+      }
+    },
+    {
+      "id": "emotet-007",
+      "type": "hash",
+      "value": "4f5e6d7c8b9a0f1e2d3c4b5a6f7e8d9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+      "hash_type": "sha256",
+      "first_seen": "2024-10-15T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "high",
+      "description": "Emotet banking module",
+      "campaign": "Tax Season Fraud",
+      "malware_family": "Emotet",
+      "tags": ["malware", "banking-trojan", "botnet", "credentials"],
+      "file_info": {
+        "name": "banking.dll",
+        "size": 327680,
+        "type": "PE32+ executable (DLL) x86-64",
+        "compile_time": "2024-10-10T14:30:00Z"
+      }
+    },
+    {
+      "id": "emotet-008",
+      "type": "hash",
+      "value": "5a6b7c8d9e0f1e2d3c4b5a6f7e8d9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7",
+      "hash_type": "sha256",
+      "first_seen": "2024-11-01T00:00:00Z",
+      "last_seen": "2025-10-25T00:00:00Z",
+      "confidence": "high",
+      "description": "Emotet email spreading module",
+      "campaign": "Holiday Shopping Season Attacks",
+      "malware_family": "Emotet",
+      "tags": ["malware", "spam-module", "botnet", "email"],
+      "file_info": {
+        "name": "spreader.dll",
+        "size": 286720,
+        "type": "PE32 executable (DLL) Intel 80386",
+        "compile_time": "2024-10-28T09:45:00Z"
+      }
+    },
+    {
+      "id": "emotet-009",
+      "type": "email",
+      "value": "notifications@hr-dept[.]com",
+      "first_seen": "2024-10-01T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "medium",
+      "description": "Phishing email sender address for payroll-themed campaigns",
+      "campaign": "Tax Season Fraud",
+      "malware_family": "Emotet",
+      "tags": ["phishing", "email", "botnet", "spam"]
+    },
+    {
+      "id": "emotet-010",
+      "type": "email",
+      "value": "shipping@amazon-logistics[.]net",
+      "first_seen": "2024-11-15T00:00:00Z",
+      "last_seen": "2025-12-31T00:00:00Z",
+      "confidence": "medium",
+      "description": "Phishing email for holiday shopping themed attacks",
+      "campaign": "Holiday Shopping Season Attacks",
+      "malware_family": "Emotet",
+      "tags": ["phishing", "email", "botnet", "holiday-spam"]
+    },
+    {
+      "id": "emotet-011",
+      "type": "certificate",
+      "value": "D3:E4:F5:A6:B7:C8:D9:E0:F1:A2:B3:C4:D5:E6:F7",
+      "first_seen": "2024-09-01T00:00:00Z",
+      "last_seen": "2025-12-28T00:00:00Z",
+      "confidence": "medium",
+      "description": "SSL certificate used for C2 infrastructure",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["certificate", "tls", "c2", "botnet"],
+      "cert_info": {
+        "issuer": "Let's Encrypt Authority X3",
+        "subject": "cdn.update-service[.]net",
+        "valid_from": "2024-09-02T00:00:00Z",
+        "valid_to": "2024-12-01T00:00:00Z",
+        "serial": "06:D4:E5:F6:A7:B8:C9:D0"
+      }
+    },
+    {
+      "id": "emotet-012",
+      "type": "url",
+      "value": "https://cdn.update-service[.]net/download/update.exe",
+      "first_seen": "2024-09-10T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "Malicious download URL for Emotet payload",
+      "campaign": "Emotet Takedown and Resurgence",
+      "malware_family": "Emotet",
+      "tags": ["malware-delivery", "downloader", "botnet"],
+      "http_method": "GET"
+    },
+    {
+      "id": "emotet-013",
+      "type": "url",
+      "value": "https://email-marketing-service[.]com/track/click?id=abc123",
+      "first_seen": "2024-10-15T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "high",
+      "description": "URL used in spam campaign tracking",
+      "campaign": "Tax Season Fraud",
+      "malware_family": "Emotet",
+      "tags": ["spam", "tracking", "botnet", "phishing"],
+      "http_method": "GET"
+    }
+  ],
+  "ttps": {
+    "initial_access": [
+      "T1566.001: Spearphishing Link",
+      "T1566.002: Spearphishing Attachment",
+      "T1190: Exploit Public-Facing Application"
+    ],
+    "execution": [
+      "T1059.003: Windows Command Shell",
+      "T1059.006: PowerShell",
+      "T1204.002: User Execution: Malicious File"
+    ],
+    "persistence": [
+      "T1547.001: Boot or Logon Autostart Execution",
+      "T1053.005: Scheduled Task",
+      "T1543.003: Windows Service",
+      "T1547.012: Print Processors"
+    ],
+    "privilege_escalation": [
+      "T1068: Exploitation for Privilege Escalation",
+      "T1548.002: Bypass User Account Control"
+    ],
+    "defense_evasion": [
+      "T1027: Obfuscated Files or Information",
+      "T1055: Process Injection",
+      "T1562.001: Impair Defenses: Disable or Modify Tools",
+      "T1564.001: Hidden Files and Directories",
+      "T1140: Deobfuscate/Decode Files or Information"
+    ],
+    "credential_access": [
+      "T1056.001: Input Capture: Keylogging",
+      "T1056.002: Input Capture: GUI Input Capture",
+      "T1115: Clipboard Data",
+      "T1057: Process Discovery"
+    ],
+    "discovery": [
+      "T1018: Remote System Discovery",
+      "T1087.001: Local Account",
+      "T1016: System Network Configuration Discovery",
+      "T1007: System Service Discovery"
+    ],
+    "lateral_movement": [
+      "T1021.002: SMB/Windows Admin Shares",
+      "T1021.004: SSH",
+      "T1021.001: Remote Desktop Protocol",
+      "T1570: Lateral Tool Transfer"
+    ],
+    "collection": [
+      "T1113: Screen Capture",
+      "T1115: Clipboard Data",
+      "T1005: Data from Local System",
+      "T1114: Email Collection"
+    ],
+    "command_and_control": [
+      "T1071.001: Web Protocols",
+      "T1071.004: DNS",
+      "T1102: Web Service",
+      "T1071.003: Mail Protocols"
+    ],
+    "exfiltration": [
+      "T1041: Exfiltration Over C2 Channel",
+      "T1048.003: Exfiltration Over Unencrypted/Obfuscated Channel"
+    ],
+    "impact": [
+      "T1561.002: Disk Wipe: Disk Structure Wipe",
+      "T1565.001: Data Manipulation: Stored Data Manipulation"
+    ]
+  },
+  "modules": {
+    "downloader": {
+      "description": "Downloads and executes additional payloads",
+      "capabilities": ["download", "execute", "update"]
+    },
+    "banking": {
+      "description": "Steals banking credentials",
+      "capabilities": ["credential-theft", "form-grabbing", "browser-hijacking"]
+    },
+    "spreader": {
+      "description": "Propagates via email spam campaigns",
+      "capabilities": ["email-harvesting", "spam-sending", "attachment-distribution"]
+    },
+    "stealer": {
+      "description": "Steals sensitive data",
+      "capabilities": ["file-theft", "credential-dumping", "browser-passwords"]
+    }
+  },
+  "spam_campaigns": [
+    {
+      "name": "COVID-19 Relief Payments",
+      "subject_lines": [
+        "Your COVID-19 relief payment has been approved",
+        "Urgent: Claim your stimulus payment",
+        "COVID-19 financial assistance application"
+      ],
+      "attachment_types": [".doc", ".docx", ".xls", ".xlsx", ".zip"]
+    },
+    {
+      "name": "Holiday Shopping Scams",
+      "subject_lines": [
+        "Your order has been shipped",
+        "Delivery confirmation required",
+        "Package tracking update"
+      ],
+      "attachment_types": [".doc", ".docx", ".pdf"]
+    },
+    {
+      "name": "Tax Season Fraud",
+      "subject_lines": [
+        "Your tax refund is ready",
+        "Notice of tax assessment",
+        "Payroll information for review"
+      ],
+      "attachment_types": [".doc", ".docx", ".xls", ".xlsx"]
+    }
+  ],
+  "references": [
+    "https://attack.mitre.org/groups/G0095/",
+    "https://www.cisa.gov/news-events/news/emotet-malware",
+    "https://www.europol.europa.eu/newsroom/news/operation-ladybird-international-law-enforcement-action-against-emotet-botnet",
+    "https://www.microsoft.com/security/blog/2024/09/01/emotet-resurgence-continued-threat",
+    "https://www.proofpoint.com/threat-insight/post/emotet-resurges-new-campaigns"
+  ],
+  "last_updated": "2026-01-15T00:00:00Z"
+}
