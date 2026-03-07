@@ -1,0 +1,9 @@
+export { initCommand } from './init';
+export { lookupCommand } from './lookup';
+export { scanCommand } from './scan';
+export { detectionsCommand } from './detections';
+export { hostsCommand } from './hosts';
+export { incidentsCommand } from './incidents';
+export { threatIntelCommand } from './threat-intel';
+export { configCommand } from './config';
+export { versionCommand } from './version';

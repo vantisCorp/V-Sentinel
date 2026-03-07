@@ -1,0 +1,121 @@
+{
+  "YARA Rule": {
+    "prefix": "yara-rule",
+    "body": [
+      "rule ${1:RuleName} {",
+      "    meta:",
+      "        author = &quot;${2:Your Name}&quot;",
+      "        description = &quot;${3:Description of the rule}&quot;",
+      "        date = &quot;${4:2024-01-01}&quot;",
+      "        version = &quot;${5:1.0}&quot;",
+      "",
+      "    strings:",
+      "        $${6:string1} = &quot;${7:malicious_string}&quot; nocase",
+      "",
+      "    condition:",
+      "        $${6} and ${8:filesize < 1MB}",
+      "}"
+    ],
+    "description": "Create a basic YARA rule"
+  },
+  "YARA Rule with Hex": {
+    "prefix": "yara-hex",
+    "body": [
+      "rule ${1:RuleName} {",
+      "    meta:",
+      "        author = &quot;${2:Your Name}&quot;",
+      "        description = &quot;${3:Description}&quot;",
+      "",
+      "    strings:",
+      "        $${4:hex_string} = { ${5:4D 5A 90 00 03 00 00 00} }",
+      "",
+      "    condition:",
+      "        $${4}",
+      "}"
+    ],
+    "description": "Create a YARA rule with hex pattern"
+  },
+  "YARA Rule with Regex": {
+    "prefix": "yara-regex",
+    "body": [
+      "rule ${1:RuleName} {",
+      "    meta:",
+      "        author = &quot;${2:Your Name}&quot;",
+      "        description = &quot;${3:Description}&quot;",
+      "",
+      "    strings:",
+      "        $${4:regex_string} = /${5:https?:\\/\\/[^\\s]+}/ nocase",
+      "",
+      "    condition:",
+      "        $${4}",
+      "}"
+    ],
+    "description": "Create a YARA rule with regex"
+  },
+  "APT Detection Rule": {
+    "prefix": "yara-apt",
+    "body": [
+      "import &quot;pe&quot;",
+      "",
+      "rule ${1:APT}_${2:Family}_Detector {",
+      "    meta:",
+      "        author = &quot;${3:Security Team}&quot;",
+      "        description = &quot;Detects ${4:APT29} related malware&quot;",
+      "        threat_actor = &quot;${5:APT29}&quot;",
+      "        malware_family = &quot;${6:CozyCar}&quot;",
+      "        mitre_attck = &quot;${7:T1055, T1059}&quot;",
+      "",
+      "    strings:",
+      "        $${8:string1} = &quot;${9:malicious_string}&quot; wide nocase",
+      "        $${10:hex1} = { ${11:E8 ?? ?? ?? ?? 83 C4} }",
+      "",
+      "    condition:",
+      "        uint16(0) == 0x5A4D and",
+      "        any of ($${8}, $${10})",
+      "}"
+    ],
+    "description": "Create an APT detection YARA rule"
+  },
+  "Ransomware Detection Rule": {
+    "prefix": "yara-ransomware",
+    "body": [
+      "import &quot;pe&quot;",
+      "",
+      "rule ${1:Ransomware}_${2:Family} {",
+      "    meta:",
+      "        author = &quot;${3:Security Team}&quot;",
+      "        description = &quot;Detects ${4:LockBit} ransomware&quot;",
+      "        malware_type = &quot;ransomware&quot;",
+      "        family = &quot;${5:LockBit}&quot;",
+      "",
+      "    strings:",
+      "        $${6:encrypt} = &quot;${7:.encrypted}&quot; nocase",
+      "        $${8:ransom} = &quot;${9:READ_ME.txt}&quot; nocase",
+      "        $${10:keygen} = { ${11:48 8D ?? ?? ?? ?? ?? E8} }",
+      "",
+      "    condition:",
+      "        uint16(0) == 0x5A4D and",
+      "        2 of ($${6}, $${8}, $${10})",
+      "}"
+    ],
+    "description": "Create a ransomware detection YARA rule"
+  },
+  "PE File Rule": {
+    "prefix": "yara-pe",
+    "body": [
+      "import &quot;pe&quot;",
+      "",
+      "rule ${1:PE_Detector} {",
+      "    meta:",
+      "        author = &quot;${2:Your Name}&quot;",
+      "        description = &quot;${3:Description}&quot;",
+      "",
+      "    condition:",
+      "        uint16(0) == 0x5A4D and",
+      "        pe.is_pe and",
+      "        pe.number_of_sections > ${4:3}",
+      "}"
+    ],
+    "description": "Create a PE file detection rule"
+  }
+}
