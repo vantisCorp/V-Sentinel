@@ -24,6 +24,7 @@ members = [
     "src/plugins",
     "src/mcp",
     "src/zero_trust",
+    "src/shadow_ai",
 ]
 resolver = "2"
 
