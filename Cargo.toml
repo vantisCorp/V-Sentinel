@@ -23,6 +23,7 @@ members = [
     "src/error-handling",
     "src/plugins",
     "src/mcp",
+    "src/zero_trust",
 ]
 resolver = "2"
 
