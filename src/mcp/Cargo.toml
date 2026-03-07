@@ -1,0 +1,39 @@
+[package]
+name = "v-sentinel-mcp"
+version = "0.1.0"
+edition = "2021"
+description = "Model Context Protocol (MCP) server for V-Sentinel AI-driven security operations"
+authors = ["Vantis Corp <security@vantiscorp.com>"]
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/vantisCorp/V-Sentinel"
+keywords = ["mcp", "ai", "security", "model-context-protocol"]
+categories = ["security", "api-bindings"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+tokio-stream = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# MCP SDK (simplified for now - will be replaced with official SDK when available)
+async-stream = "0.3"
+futures = "0.3"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# V-Sentinel internal modules
+v-sentinel-core = { path = "../core" }
+v-sentinel-threat-intel = { path = "../threat-intel" }
+v-sentinel-config = { path = "../config" }
+
+[dev-dependencies]
+tokio-test = "0.4"
