@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/version-2.1.0-red?style=for-the-badge&logo=github&logoColor=black)
-![License](https://img.shields.io/badge/license-MIT-black?style=for-the-badge&logo=open-source-initiative&logoColor=red)
+![License](https://img.shields.io/badge/license-AGPL--3.0%20%7C%20Commercial-black?style=for-the-badge&logo=open-source-initiative&logoColor=red)
 ![Build](https://img.shields.io/badge/build-passing-red?style=for-the-badge&logo=github-actions&logoColor=black)
 ![Stars](https://img.shields.io/github/stars/vantisCorp/V-Sentinel?style=for-the-badge&logo=github&logoColor=red&color=black)
 ![Forks](https://img.shields.io/github/forks/vantisCorp/V-Sentinel?style=for-the-badge&logo=git&logoColor=red&color=black)

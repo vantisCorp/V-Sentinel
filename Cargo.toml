@@ -35,11 +35,11 @@ name = "sentinel"
 path = "src/main.rs"
 
 [workspace.package]
-version = "0.1.0"
+version = "2.1.0"
 edition = "2021"
-authors = ["SENTINEL Security Team"]
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/sentinel-security/sentinel"
+authors = ["VantisCorp"]
+license = "AGPL-3.0 OR Commercial"
+repository = "https://github.com/vantisCorp/V-Sentinel"
 description = "Next-generation AI-native security system with quantum-ready cryptography"
 
 [workspace.dependencies]

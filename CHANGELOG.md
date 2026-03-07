@@ -1,4 +1,52 @@
-# SENTINEL Security System v1.1.0 - Release Notes
+# V-Sentinel v2.1.0 - Release Notes
+
+## Release Date
+March 2026
+
+## Overview
+
+V-Sentinel v2.1.0 is a major release that introduces comprehensive AI-powered security features including Zero Trust Architecture, Shadow AI Detection, Deepfake Detection, and AI Security modules. This release implements the complete 2025 Security Roadmap.
+
+---
+
+## What's New in v2.1.0
+
+### 🛡️ Zero Trust Architecture (NIST SP 800-207)
+- **Trust Engine**: Multi-factor trust scoring with behavioral analysis
+- **Policy Engine**: Fine-grained access control policies
+- **Network Segmentation**: Micro-segmentation with continuous verification
+- **Identity Verification**: Continuous identity validation and monitoring
+
+### 🤖 Shadow AI Detection and Governance
+- **Discovery Engine**: Detect unauthorized AI tools and applications
+- **Traffic Analysis**: Monitor AI API calls and data flows
+- **Risk Assessment**: Evaluate shadow AI risks and compliance
+- **Governance Framework**: Policy enforcement for AI usage
+
+### 🎭 Deepfake Detection and Media Forensics
+- **Multi-Modal Analysis**: Audio, video, and image deepfake detection
+- **Media Analyzer**: Spectral analysis, facial landmark detection
+- **Content Authenticator**: Watermarking and chain of custody
+- **Threat Intelligence**: Integration with deepfake threat databases
+
+### 🔐 AI Security Module
+- **Data Security**: Encryption, lineage tracking, poisoning detection
+- **Model Security**: Model encryption, watermarking, integrity verification
+- **API Security**: Rate limiting, prompt injection detection, abuse monitoring
+- **MLOps Security**: Drift detection, performance monitoring, pipeline security
+
+### 📦 Multi-Language SDKs
+- **Python SDK**: Full-featured Python client library
+- **TypeScript SDK**: Node.js and browser support
+- **Go SDK**: High-performance Go client
+
+### 🔧 Developer Tools
+- **CLI Tool**: Command-line interface for V-Sentinel operations
+- **VS Code Extension**: IDE integration for security analysis
+
+---
+
+## Previous Release: v1.1.0
 
 ## Release Date
 January 15, 2026
@@ -283,8 +331,12 @@ We would like to thank our community contributors, beta testers, and early adopt
 
 ## License
 
-SENTINEL Security System v1.1.0 is released under the MIT License.
+V-Sentinel is released under a dual license:
+- **Open Source**: AGPL-3.0 for open source projects
+- **Commercial**: Contact licensing@vantiscorp.com for commercial licensing
 
-© 2026 Vantis Corp. All rights reserved.
+See [LICENSE](LICENSE) file for details.
 
-For more information, visit https://sentinel.security
+© 2026 VantisCorp. All rights reserved.
+
+For more information, visit https://vantiscorp.com
