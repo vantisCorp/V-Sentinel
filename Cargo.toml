@@ -25,6 +25,7 @@ members = [
     "src/mcp",
     "src/zero_trust",
     "src/shadow_ai",
+    "src/deepfake",
 ]
 resolver = "2"
 
