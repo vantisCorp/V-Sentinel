@@ -1,0 +1,187 @@
+# V-Sentinel v2.1.0 - Default Configuration
+# Next-generation AI-native security system with quantum-ready cryptography
+
+# ============================================================================
+# General Settings
+# ============================================================================
+[general]
+# Application name
+app_name = "V-Sentinel"
+# Version
+version = "2.1.0"
+# Log level: trace, debug, info, warn, error
+log_level = "info"
+# Environment: development, staging, production
+environment = "production"
+
+# ============================================================================
+# Security Modules
+# ============================================================================
+[security]
+# Enable Zero Trust Architecture (NIST SP 800-207)
+zero_trust_enabled = true
+# Enable Shadow AI Detection and Governance
+shadow_ai_enabled = true
+# Enable Deepfake Detection and Media Forensics
+deepfake_enabled = true
+# Enable AI Security Module
+ai_security_enabled = true
+
+# ============================================================================
+# Zero Trust Architecture Settings
+# ============================================================================
+[zero_trust]
+# Trust score threshold (0.0 - 1.0)
+trust_threshold = 0.75
+# Session timeout in seconds
+session_timeout = 3600
+# Maximum authentication attempts
+max_auth_attempts = 5
+# Enable behavioral biometrics
+behavioral_biometrics = true
+# Enable micro-segmentation
+micro_segmentation = true
+
+# ============================================================================
+# Shadow AI Detection Settings
+# ============================================================================
+[shadow_ai]
+# Scan interval in seconds
+scan_interval = 300
+# Enable network traffic analysis
+traffic_analysis = true
+# Risk score threshold (0-100)
+risk_threshold = 70
+# Auto-block unauthorized AI tools
+auto_block = false
+
+# ============================================================================
+# Deepfake Detection Settings
+# ============================================================================
+[deepfake]
+# Detection sensitivity: low, medium, high
+sensitivity = "medium"
+# Enable audio deepfake detection
+audio_detection = true
+# Enable video deepfake detection
+video_detection = true
+# Enable image deepfake detection
+image_detection = true
+# Minimum confidence threshold
+confidence_threshold = 0.85
+
+# ============================================================================
+# AI Security Settings
+# ============================================================================
+[ai_security]
+# Enable prompt injection detection
+prompt_injection_detection = true
+# Enable model watermarking
+model_watermarking = true
+# Enable data encryption at rest
+data_encryption = true
+# Rate limit per minute
+rate_limit = 100
+
+# ============================================================================
+# Post-Quantum Cryptography Settings
+# ============================================================================
+[cryptography]
+# KEM algorithm: kyber512, kyber768, kyber1024
+kem_algorithm = "kyber768"
+# Signature algorithm: dilithium2, dilithium3, dilithium5
+signature_algorithm = "dilithium3"
+# Enable hybrid encryption (classical + post-quantum)
+hybrid_encryption = true
+# Key rotation interval in days
+key_rotation_days = 90
+
+# ============================================================================
+# API Settings
+# ============================================================================
+[api]
+# API host
+host = "0.0.0.0"
+# API port
+port = 8080
+# Enable TLS
+tls_enabled = true
+# TLS certificate path
+tls_cert = "/etc/v-sentinel/certs/server.crt"
+# TLS key path
+tls_key = "/etc/v-sentinel/certs/server.key"
+# API timeout in seconds
+timeout = 30
+
+# ============================================================================
+# Monitoring Settings
+# ============================================================================
+[monitoring]
+# Enable metrics collection
+metrics_enabled = true
+# Metrics port
+metrics_port = 9090
+# Enable health checks
+health_checks_enabled = true
+# Health check path
+health_check_path = "/health"
+# Enable Prometheus metrics
+prometheus_enabled = true
+
+# ============================================================================
+# Logging Settings
+# ============================================================================
+[logging]
+# Log file path
+log_file = "/var/log/v-sentinel/v-sentinel.log"
+# Maximum log file size in MB
+max_log_size = 100
+# Number of backup files
+backup_count = 5
+# Log format: json, text
+format = "json"
+# Include timestamps
+timestamps = true
+
+# ============================================================================
+# Database Settings
+# ============================================================================
+[database]
+# Database type: postgres, mysql, sqlite
+type = "postgres"
+# Database host
+host = "localhost"
+# Database port
+port = 5432
+# Database name
+name = "v_sentinel"
+# Database user
+user = "v_sentinel"
+# Connection pool size
+pool_size = 10
+
+# ============================================================================
+# Redis Settings
+# ============================================================================
+[redis]
+# Redis host
+host = "localhost"
+# Redis port
+port = 6379
+# Redis database
+database = 0
+# Connection timeout in seconds
+timeout = 5
+
+# ============================================================================
+# Performance Settings
+# ============================================================================
+[performance]
+# Maximum worker threads (0 = auto)
+worker_threads = 0
+# Maximum blocking threads
+max_blocking_threads = 512
+# Enable async runtime
+async_runtime = true
+# Queue capacity
+queue_capacity = 1024

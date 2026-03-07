@@ -1,6 +1,33 @@
-# V-Sentinel v2.1.0 - Release Notes
+# V-Sentinel Changelog
 
-## Release Date
+All notable changes to V-Sentinel will be documented in this file.
+
+## [2.1.1] - 2026-03-07
+
+### Added
+- **Installation Scripts**
+  - `install.sh` - Linux/macOS automated installer with systemd service
+  - `install.ps1` - Windows PowerShell installer with Windows Service
+  - `install.bat` - Windows batch installer for simpler installations
+  - `INSTALL.md` - Comprehensive installation documentation
+- **Configuration**
+  - `config/default.toml` - Default configuration file with all settings
+  - Docker support with existing Dockerfile and docker-compose.yml
+- **.gitignore** - Added for repository cleanliness
+
+### Features
+- Zero Trust Architecture (NIST SP 800-207)
+- Shadow AI Detection and Governance
+- Deepfake Detection and Media Forensics
+- AI Security Module
+- Multi-Language SDKs (Python, TypeScript, Go)
+- Developer Tools (CLI, VS Code Extension)
+
+---
+
+## [2.1.0] - 2026-03-07
+
+### Release Date
 March 2026
 
 ## Overview
