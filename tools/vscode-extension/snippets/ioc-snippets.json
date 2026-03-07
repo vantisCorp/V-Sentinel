@@ -1,0 +1,105 @@
+{
+  "IOC IP Address": {
+    "prefix": "ioc-ip",
+    "body": [
+      "{",
+      "  &quot;type&quot;: &quot;ip&quot;,",
+      "  &quot;value&quot;: &quot;${1:192.168.1.1}&quot;,",
+      "  &quot;confidence&quot;: &quot;${2:high}&quot;,",
+      "  &quot;threat_actor&quot;: &quot;${3:APT29}&quot;,",
+      "  &quot;campaign&quot;: &quot;${4:CozyDuke}&quot;,",
+      "  &quot;malware_family&quot;: &quot;${5:CozyCar}&quot;,",
+      "  &quot;first_seen&quot;: &quot;${6:2024-01-01}&quot;,",
+      "  &quot;last_seen&quot;: &quot;${7:2024-12-31}&quot;,",
+      "  &quot;tags&quot;: [&quot;${8:apt}&quot;, &quot;${9:espionage}&quot;],",
+      "  &quot;references&quot;: [",
+      "    &quot;${10:https://example.com/report}&quot;",
+      "  ]",
+      "}"
+    ],
+    "description": "Create an IP address IOC"
+  },
+  "IOC Domain": {
+    "prefix": "ioc-domain",
+    "body": [
+      "{",
+      "  &quot;type&quot;: &quot;domain&quot;,",
+      "  &quot;value&quot;: &quot;${1:malicious.example.com}&quot;,",
+      "  &quot;confidence&quot;: &quot;${2:high}&quot;,",
+      "  &quot;threat_actor&quot;: &quot;${3:Lazarus}&quot;,",
+      "  &quot;campaign&quot;: &quot;${4:OperationDreamJob}&quot;,",
+      "  &quot;malware_family&quot;: &quot;${5:Manuscrypt}&quot;,",
+      "  &quot;tags&quot;: [&quot;${6:c2}&quot;, &quot;${7:malware}&quot;],",
+      "  &quot;references&quot;: [",
+      "    &quot;${8:https://example.com/report}&quot;",
+      "  ]",
+      "}"
+    ],
+    "description": "Create a domain IOC"
+  },
+  "IOC Hash": {
+    "prefix": "ioc-hash",
+    "body": [
+      "{",
+      "  &quot;type&quot;: &quot;hash_${1|sha256,sha1,md5|}&quot;,",
+      "  &quot;value&quot;: &quot;${2:abc123...}&quot;,",
+      "  &quot;confidence&quot;: &quot;${3:high}&quot;,",
+      "  &quot;malware_family&quot;: &quot;${4:Emotet}&quot;,",
+      "  &quot;tags&quot;: [&quot;${5:malware}&quot;, &quot;${6:banker}&quot;],",
+      "  &quot;references&quot;: [",
+      "    &quot;${7:https://example.com/analysis}&quot;",
+      "  ]",
+      "}"
+    ],
+    "description": "Create a file hash IOC"
+  },
+  "IOC URL": {
+    "prefix": "ioc-url",
+    "body": [
+      "{",
+      "  &quot;type&quot;: &quot;url&quot;,",
+      "  &quot;value&quot;: &quot;${1:https://malicious.example.com/payload}&quot;,",
+      "  &quot;confidence&quot;: &quot;${2:high}&quot;,",
+      "  &quot;threat_actor&quot;: &quot;${3:APT29}&quot;,",
+      "  &quot;tags&quot;: [&quot;${4:payload}&quot;, &quot;${5:download}&quot;],",
+      "  &quot;references&quot;: [",
+      "    &quot;${6:https://example.com/report}&quot;",
+      "  ]",
+      "}"
+    ],
+    "description": "Create a URL IOC"
+  },
+  "IOC Email": {
+    "prefix": "ioc-email",
+    "body": [
+      "{",
+      "  &quot;type&quot;: &quot;email&quot;,",
+      "  &quot;value&quot;: &quot;${1:attacker@example.com}&quot;,",
+      "  &quot;confidence&quot;: &quot;${2:medium}&quot;,",
+      "  &quot;campaign&quot;: &quot;${3:PhishingCampaign2024}&quot;,",
+      "  &quot;tags&quot;: [&quot;${4:phishing}&quot;, &quot;${5:spear-phishing}&quot;],",
+      "  &quot;references&quot;: [",
+      "    &quot;${6:https://example.com/report}&quot;",
+      "  ]",
+      "}"
+    ],
+    "description": "Create an email IOC"
+  },
+  "Threat Actor Profile": {
+    "prefix": "threat-actor",
+    "body": [
+      "{",
+      "  &quot;name&quot;: &quot;${1:APT29}&quot;,",
+      "  &quot;aliases&quot;: [&quot;${2:Cozy Bear}&quot;, &quot;${3:The Dukes}&quot;],",
+      "  &quot;country&quot;: &quot;${4:Russia}&quot;,",
+      "  &quot;motivation&quot;: &quot;${5:Espionage}&quot;,",
+      "  &quot;mitre_id&quot;: &quot;${6:G0018}&quot;,",
+      "  &quot;description&quot;: &quot;${7:APT29 is a threat actor...}&quot;,",
+      "  &quot;campaigns&quot;: [&quot;${8:CozyDuke}&quot;, &quot;${9:CloudDuke}&quot;],",
+      "  &quot;malware&quot;: [&quot;${10:CozyCar}&quot;, &quot;${11:MiniDuke}&quot;],",
+      "  &quot;techniques&quot;: [&quot;${12:T1566}&quot;, &quot;${13:T1059}&quot;]",
+      "}"
+    ],
+    "description": "Create a threat actor profile"
+  }
+}

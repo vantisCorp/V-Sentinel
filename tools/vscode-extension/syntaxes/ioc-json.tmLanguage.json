@@ -1,0 +1,96 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "IOC JSON",
+  "scopeName": "source.iocjson",
+  "patterns": [
+    {
+      "include": "#value"
+    }
+  ],
+  "repository": {
+    "value": {
+      "patterns": [
+        {
+          "include": "#object"
+        },
+        {
+          "include": "#array"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#keyword"
+        }
+      ]
+    },
+    "object": {
+      "begin": "\\{",
+      "end": "\\}",
+      "patterns": [
+        {
+          "include": "#key"
+        },
+        {
+          "include": "#value"
+        }
+      ]
+    },
+    "array": {
+      "begin": "\\[",
+      "end": "\\]",
+      "patterns": [
+        {
+          "include": "#value"
+        }
+      ]
+    },
+    "key": {
+      "match": "&quot;([^&quot;]+)&quot;\\s*:",
+      "captures": {
+        "1": {
+          "patterns": [
+            {
+              "match": "^(type|value|confidence|threat_actor|campaign|malware_family|first_seen|last_seen)$",
+              "name": "entity.name.tag.iocjson"
+            },
+            {
+              "match": "^(tags|references|indicators|techniques)$",
+              "name": "entity.name.tag.array.iocjson"
+            },
+            {
+              "match": "^(description|title|summary)$",
+              "name": "entity.name.tag.description.iocjson"
+            },
+            {
+              "match": ".+",
+              "name": "string.quoted.double.iocjson"
+            }
+          ]
+        }
+      }
+    },
+    "string": {
+      "begin": "&quot;",
+      "end": "&quot;",
+      "patterns": [
+        {
+          "match": "(\\\\.)",
+          "name": "constant.character.escape.iocjson"
+        }
+      ],
+      "name": "string.quoted.double.iocjson"
+    },
+    "number": {
+      "match": "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?",
+      "name": "constant.numeric.iocjson"
+    },
+    "keyword": {
+      "match": "\\b(true|false|null)\\b",
+      "name": "constant.language.iocjson"
+    }
+  }
+}
