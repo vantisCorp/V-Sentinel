@@ -1,6 +1,6 @@
 //! MCP Resources - Static documentation and references
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Resource type
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,10 +41,7 @@ pub fn get_fql_guide() -> Resource {
 
 /// List all available resources
 pub fn list_resources() -> Vec<Resource> {
-    vec![
-        get_api_docs(),
-        get_fql_guide(),
-    ]
+    vec![get_api_docs(), get_fql_guide()]
 }
 
 /// Read resource content by URI

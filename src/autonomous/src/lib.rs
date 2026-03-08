@@ -1,18 +1,18 @@
 //! SENTINEL Autonomous Security Agents Module
-//! 
+//!
 //! This module provides autonomous security agent capabilities including
 //! self-improving AI agents, autonomous threat response, automated remediation,
 //! policy enforcement, and continuous learning systems.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
+use anyhow::{anyhow, Result};
+use chrono::Utc;
+use rand::{rngs::OsRng, RngCore};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use rand::{RngCore, rngs::OsRng};
-use std::collections::{HashMap, VecDeque};
-use chrono::Utc;
-use sha2::{Sha256, Digest};
+use tracing::{debug, error, info, warn};
 
 /// Autonomous Security Manager
 pub struct AutonomousManager {
@@ -474,7 +474,7 @@ impl AutonomousManager {
     /// Create a new autonomous manager
     pub fn new() -> Result<Self> {
         info!("Creating Autonomous Security Manager...");
-        
+
         Ok(Self {
             agents: Arc::new(RwLock::new(HashMap::new())),
             orchestrator: Arc::new(RwLock::new(AgentOrchestrator::new())),
@@ -484,24 +484,24 @@ impl AutonomousManager {
             statistics: Arc::new(RwLock::new(AutonomousStatistics::default())),
         })
     }
-    
+
     /// Initialize autonomous manager
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing Autonomous Security Manager...");
-        
+
         // Create default agents
         self.create_default_agents().await?;
-        
+
         // Initialize learning system
         self.learning_system.write().await.initialize()?;
-        
+
         // Initialize policy engine
         self.policy_engine.write().await.initialize()?;
-        
+
         info!("Autonomous Security Manager initialized successfully");
         Ok(())
     }
-    
+
     /// Create default autonomous agents
     pub async fn create_default_agents(&self) -> Result<()> {
         let agent_types = vec![
@@ -511,19 +511,19 @@ impl AutonomousManager {
             AgentType::ComplianceMonitor,
             AgentType::IncidentResponder,
         ];
-        
+
         for agent_type in agent_types {
             let agent = self.create_agent(agent_type).await?;
             self.add_agent(agent).await?;
         }
-        
+
         Ok(())
     }
-    
+
     /// Create autonomous agent
     pub async fn create_agent(&self, agent_type: AgentType) -> Result<AutonomousAgent> {
         let agent_id = self.generate_agent_id().await;
-        
+
         let capabilities = match agent_type {
             AgentType::ThreatDetection => vec![
                 AgentCapability::PatternRecognition,
@@ -555,7 +555,7 @@ impl AutonomousManager {
             ],
             _ => vec![],
         };
-        
+
         let agent = AutonomousAgent {
             agent_id: agent_id.clone(),
             agent_type,
@@ -567,103 +567,113 @@ impl AutonomousManager {
             last_active: Utc::now().timestamp(),
             is_active: true,
         };
-        
+
         Ok(agent)
     }
-    
+
     /// Add agent
     pub async fn add_agent(&self, agent: AutonomousAgent) -> Result<()> {
         let agent_id = agent.agent_id.clone();
-        
+
         {
             let mut agents = self.agents.write().await;
             agents.insert(agent_id.clone(), agent);
         }
-        
+
         {
             let mut orchestrator = self.orchestrator.write().await;
             orchestrator.active_agents.push(agent_id.clone());
         }
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_agents += 1;
             stats.active_agents += 1;
         }
-        
+
         info!("Added autonomous agent: {}", agent_id);
         Ok(())
     }
-    
+
     /// Submit task to autonomous system
     pub async fn submit_task(&self, task: Task) -> Result<String> {
         let mut orchestrator = self.orchestrator.write().await;
-        
+
         // Assign task to appropriate agent
         let task_id = task.task_id.clone();
         let assignment = orchestrator.assign_task(task).await?;
-        
+
         info!("Task {} assigned to agent {}", task_id, assignment);
-        
+
         Ok(task_id)
     }
-    
+
     /// Get agent status
     pub async fn get_agent_status(&self, agent_id: &str) -> Result<Option<AutonomousAgent>> {
         let agents = self.agents.read().await;
         Ok(agents.get(agent_id).cloned())
     }
-    
+
     /// List agents
     pub async fn list_agents(&self) -> Vec<AutonomousAgent> {
         let agents = self.agents.read().await;
         agents.values().cloned().collect()
     }
-    
+
     /// Execute autonomous response
-    pub async fn execute_autonomous_response(&self, threat: ThreatInfo) -> Result<Vec<RemediationAction>> {
+    pub async fn execute_autonomous_response(
+        &self,
+        threat: ThreatInfo,
+    ) -> Result<Vec<RemediationAction>> {
         let mut remediation = self.remediation.write().await;
         let start = std::time::Instant::now();
-        
+
         let actions = remediation.generate_response(&threat)?;
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_remediations += 1;
             stats.autonomous_decisions += 1;
         }
-        
+
         // Learn from this incident
-        self.learning_system.write().await.record_experience(&threat, &actions).await;
-        
+        self.learning_system
+            .write()
+            .await
+            .record_experience(&threat, &actions)
+            .await;
+
         Ok(actions)
     }
-    
+
     /// Trigger learning cycle
     pub async fn trigger_learning_cycle(&self) -> Result<LearningCycleResult> {
         let mut learning = self.learning_system.write().await;
         let start = std::time::Instant::now();
-        
+
         let result = learning.perform_learning_cycle().await?;
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.learning_cycles += 1;
         }
-        
-        info!("Learning cycle completed: {} updates, {:.2}% improvement",
-              result.model_updates, result.performance_improvement * 100.0);
-        
+
+        info!(
+            "Learning cycle completed: {} updates, {:.2}% improvement",
+            result.model_updates,
+            result.performance_improvement * 100.0
+        );
+
         Ok(result)
     }
-    
+
     /// Get statistics
     pub async fn get_statistics(&self) -> AutonomousStatistics {
         self.statistics.read().await.clone()
     }
-    
+
     // Private helper methods
-    
+
     async fn generate_agent_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
@@ -693,7 +703,7 @@ impl AgentOrchestrator {
             load_balancer: LoadBalancer::new(),
         }
     }
-    
+
     pub async fn assign_task(&mut self, task: Task) -> Result<String> {
         // Simplified task assignment
         if let Some(agent_id) = self.active_agents.first() {
@@ -722,15 +732,15 @@ impl ContinuousLearningSystem {
             performance_history: Vec::new(),
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub async fn perform_learning_cycle(&mut self) -> Result<LearningCycleResult> {
         let improvement = 0.05 + (self.model_updates.len() as f64 * 0.01);
         let improvement = improvement.min(0.2);
-        
+
         let update = ModelUpdate {
             update_id: self.generate_update_id(),
             timestamp: Utc::now().timestamp(),
@@ -738,9 +748,9 @@ impl ContinuousLearningSystem {
             performance_improvement: improvement,
             affected_agents: vec![],
         };
-        
+
         self.model_updates.push(update);
-        
+
         Ok(LearningCycleResult {
             learning_cycle_id: self.generate_update_id(),
             timestamp: Utc::now().timestamp(),
@@ -749,11 +759,11 @@ impl ContinuousLearningSystem {
             new_patterns_learned: 5,
         })
     }
-    
+
     pub async fn record_experience(&mut self, threat: &ThreatInfo, actions: &[RemediationAction]) {
         // Record experience for learning
     }
-    
+
     fn generate_update_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
@@ -770,7 +780,7 @@ impl PolicyEngine {
             violation_handler: ViolationHandler::new(),
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         // Create default policies
         Ok(())
@@ -800,10 +810,10 @@ impl AutomatedRemediation {
             safety_checks: Vec::new(),
         }
     }
-    
+
     pub fn generate_response(&mut self, threat: &ThreatInfo) -> Result<Vec<RemediationAction>> {
         let mut actions = Vec::new();
-        
+
         match threat.severity {
             Severity::Critical | Severity::High => {
                 actions.push(RemediationAction::IsolateSystem {
@@ -827,7 +837,7 @@ impl AutomatedRemediation {
                 });
             }
         }
-        
+
         Ok(actions)
     }
 }
@@ -878,28 +888,31 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_autonomous_manager_initialization() {
         let manager = AutonomousManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_agent_creation() {
         let manager = AutonomousManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
-        let agent = manager.create_agent(AgentType::ThreatDetection).await.unwrap();
+
+        let agent = manager
+            .create_agent(AgentType::ThreatDetection)
+            .await
+            .unwrap();
         assert!(!agent.agent_id.is_empty());
         assert_eq!(agent.agent_type, AgentType::ThreatDetection);
     }
-    
+
     #[tokio::test]
     async fn test_autonomous_response() {
         let manager = AutonomousManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let threat = ThreatInfo {
             threat_id: "THREAT-001".to_string(),
             threat_type: ThreatType::Malware,
@@ -909,16 +922,16 @@ mod tests {
             file_path: Some("/tmp/malware.exe".to_string()),
             indicators: vec!["suspicious_behavior".to_string()],
         };
-        
+
         let actions = manager.execute_autonomous_response(threat).await.unwrap();
         assert!(!actions.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_learning_cycle() {
         let manager = AutonomousManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let result = manager.trigger_learning_cycle().await.unwrap();
         assert!(result.model_updates > 0);
         assert!(result.performance_improvement > 0.0);

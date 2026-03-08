@@ -90,14 +90,18 @@ impl ModelSecurityManager {
     }
 
     /// Encrypt a model
-    pub async fn encrypt_model(&self, model: &mut AIModel, key: Option<&[u8]>) -> Result<ModelEncryptionResult> {
+    pub async fn encrypt_model(
+        &self,
+        model: &mut AIModel,
+        key: Option<&[u8]>,
+    ) -> Result<ModelEncryptionResult> {
         info!("Encrypting model: {}", model.id);
 
         let result = self.encryption.encrypt_model(model, key).await?;
-        
+
         model.encrypted = true;
         model.encryption_key_id = Some(result.key_id.clone());
-        
+
         let mut stats = self.stats.write().await;
         stats.models_encrypted += 1;
 
@@ -110,14 +114,18 @@ impl ModelSecurityManager {
     }
 
     /// Apply watermark to model
-    pub async fn apply_watermark(&self, model: &mut AIModel, watermark: &ModelWatermark) -> Result<()> {
+    pub async fn apply_watermark(
+        &self,
+        model: &mut AIModel,
+        watermark: &ModelWatermark,
+    ) -> Result<()> {
         info!("Applying watermark to model: {}", model.id);
 
         self.watermarking.apply(model, watermark).await?;
-        
+
         model.watermarked = true;
         model.watermark_id = Some(watermark.id.clone());
-        
+
         let mut stats = self.stats.write().await;
         stats.models_watermarked += 1;
 
@@ -132,7 +140,7 @@ impl ModelSecurityManager {
     /// Verify model integrity
     pub async fn verify_integrity(&self, model: &AIModel) -> Result<ModelIntegrityResult> {
         let result = self.integrity.verify(model).await?;
-        
+
         let mut stats = self.stats.write().await;
         stats.integrity_checks += 1;
 
@@ -148,9 +156,12 @@ impl ModelSecurityManager {
     }
 
     /// Detect model extraction attempt
-    pub async fn detect_extraction(&self, query_log: &[ModelQuery]) -> Result<ExtractionDetectionResult> {
+    pub async fn detect_extraction(
+        &self,
+        query_log: &[ModelQuery],
+    ) -> Result<ExtractionDetectionResult> {
         let result = self.extraction_detector.detect(query_log).await?;
-        
+
         if result.detected {
             let mut stats = self.stats.write().await;
             stats.extractions_prevented += 1;
@@ -214,10 +225,14 @@ impl ModelEncryptionManager {
     }
 
     /// Encrypt model
-    pub async fn encrypt_model(&self, model: &AIModel, key: Option<&[u8]>) -> Result<ModelEncryptionResult> {
+    pub async fn encrypt_model(
+        &self,
+        model: &AIModel,
+        key: Option<&[u8]>,
+    ) -> Result<ModelEncryptionResult> {
         let keys = self.keys.read().await;
         let key_id = uuid::Uuid::new_v4().to_string();
-        
+
         let encryption_key = key.map(|k| k.to_vec()).unwrap_or_else(|| {
             keys.get(self.default_key_id.as_deref().unwrap_or(""))
                 .cloned()
@@ -238,13 +253,14 @@ impl ModelEncryptionManager {
     /// Decrypt model
     pub async fn decrypt_model(&self, model: &AIModel) -> Result<Vec<u8>> {
         let keys = self.keys.read().await;
-        let key_id = model.encryption_key_id.as_ref().ok_or_else(|| {
-            anyhow::anyhow!("Model not encrypted")
-        })?;
+        let key_id = model
+            .encryption_key_id
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Model not encrypted"))?;
 
-        let _key = keys.get(key_id).ok_or_else(|| {
-            anyhow::anyhow!("Encryption key not found: {}", key_id)
-        })?;
+        let _key = keys
+            .get(key_id)
+            .ok_or_else(|| anyhow::anyhow!("Encryption key not found: {}", key_id))?;
 
         // In production, this would decrypt the model weights
         Ok(vec![])
@@ -315,10 +331,10 @@ impl ModelWatermarkingManager {
         // 1. Weight embedding: modify specific weights to encode watermark
         // 2. Backdoor trigger: embed trigger-response pair
         // 3. Output fingerprint: modify outputs for specific inputs
-        
+
         let mut watermarks = self.watermarks.write().await;
         watermarks.insert(model.id.clone(), watermark.clone());
-        
+
         info!("Watermark applied to model {}: {}", model.id, watermark.id);
         Ok(())
     }
@@ -326,7 +342,7 @@ impl ModelWatermarkingManager {
     /// Verify watermark in model
     pub async fn verify(&self, model: &AIModel) -> Result<WatermarkVerificationResult> {
         let watermarks = self.watermarks.read().await;
-        
+
         if let Some(watermark) = watermarks.get(&model.id) {
             // In production, would verify the watermark is still present
             Ok(WatermarkVerificationResult {
@@ -389,10 +405,10 @@ impl IntegrityManager {
     /// Verify model integrity
     pub async fn verify(&self, model: &AIModel) -> Result<ModelIntegrityResult> {
         let hashes = self.hashes.read().await;
-        
+
         let current_hash = model.hash.clone().unwrap_or_default();
         let expected_hash = hashes.get(&model.id).cloned().unwrap_or_default();
-        
+
         let valid = model.hash.is_some() && current_hash == expected_hash;
 
         Ok(ModelIntegrityResult {
@@ -441,7 +457,7 @@ impl ExtractionDetector {
     pub async fn detect(&self, query_log: &[ModelQuery]) -> Result<ExtractionDetectionResult> {
         // Analyze query patterns for extraction indicators
         let query_count = query_log.len();
-        
+
         // Check for high query volume
         if query_count > self.threshold as usize {
             return Ok(ExtractionDetectionResult {
@@ -523,7 +539,7 @@ mod tests {
     async fn test_model_encryption() {
         let manager = ModelSecurityManager::new();
         let mut model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
-        
+
         let result = manager.encrypt_model(&mut model, None).await.unwrap();
         assert!(result.success);
         assert!(model.encrypted);
@@ -534,10 +550,13 @@ mod tests {
         let manager = ModelSecurityManager::new();
         let mut model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
         let watermark = ModelWatermark::new("owner:acme-corp");
-        
-        manager.apply_watermark(&mut model, &watermark).await.unwrap();
+
+        manager
+            .apply_watermark(&mut model, &watermark)
+            .await
+            .unwrap();
         assert!(model.watermarked);
-        
+
         let verification = manager.verify_watermark(&model).await.unwrap();
         assert!(verification.verified);
     }
@@ -546,7 +565,7 @@ mod tests {
     async fn test_model_integrity() {
         let manager = ModelSecurityManager::new();
         let model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
-        
+
         let result = manager.verify_integrity(&model).await.unwrap();
         // Model has no hash set, so it's technically invalid
         assert!(!result.valid);
@@ -563,7 +582,7 @@ mod tests {
                 response_time_ms: 10,
             })
             .collect();
-        
+
         let result = detector.detect(&queries).await.unwrap();
         assert!(!result.detected);
     }

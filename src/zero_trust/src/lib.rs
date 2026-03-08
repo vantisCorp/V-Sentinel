@@ -1,5 +1,5 @@
 //! SENTINEL Zero Trust Architecture Module
-//! 
+//!
 //! This module implements a comprehensive Zero Trust security architecture
 //! following NIST SP 800-207 guidelines and IBM's Identity-First security paradigm.
 //!
@@ -10,27 +10,27 @@
 //! - Micro-segmentation: Network, application, and data segmentation
 //! - Identity Fabric: Unified identity management
 
-pub mod policy;
-pub mod trust;
 pub mod auth;
-pub mod segmentation;
-pub mod identity;
 pub mod enforcement;
+pub mod identity;
+pub mod policy;
+pub mod segmentation;
+pub mod trust;
 
-pub use policy::{PolicyEngine, Policy, PolicyDecision};
-pub use trust::{TrustEngine, TrustScore, TrustFactor};
-pub use auth::{Authenticator, AuthContext, AuthMethod};
-pub use segmentation::{SegmentationEngine, Segment, SegmentType};
-pub use identity::{IdentityFabric, Identity, IdentityProvider};
-pub use enforcement::{EnforcementPoint, EnforcementAction};
+pub use auth::{AuthContext, AuthMethod, Authenticator};
+pub use enforcement::{EnforcementAction, EnforcementPoint};
+pub use identity::{Identity, IdentityFabric, IdentityProvider};
+pub use policy::{Policy, PolicyDecision, PolicyEngine};
+pub use segmentation::{Segment, SegmentType, SegmentationEngine};
+pub use trust::{TrustEngine, TrustFactor, TrustScore};
 
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, debug};
+use tracing::{debug, info};
 
 /// Zero Trust Architecture Manager
-/// 
+///
 /// The central coordinator for all Zero Trust components.
 /// Implements the "Never trust, always verify" principle.
 pub struct ZeroTrustManager {
@@ -171,7 +171,9 @@ pub enum ResourceType {
 }
 
 /// Sensitivity levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum SensitivityLevel {
     Public,
     Internal,
@@ -322,17 +324,21 @@ impl ZeroTrustManager {
     }
 
     /// Evaluate an access request
-    /// 
+    ///
     /// This is the core Zero Trust evaluation following the principle:
     /// "Never trust, always verify"
     pub async fn evaluate_access(&self, request: AccessRequest) -> Result<AccessDecision> {
-        info!("Evaluating access request {} for subject {} to resource {}", 
-              request.id, request.subject.id, request.resource.id);
+        info!(
+            "Evaluating access request {} for subject {} to resource {}",
+            request.id, request.subject.id, request.resource.id
+        );
 
         // Step 1: Verify identity
         let identity_verified = self.verify_identity(&request).await?;
         if !identity_verified {
-            return self.deny_access(request.id, "Identity verification failed".to_string()).await;
+            return self
+                .deny_access(request.id, "Identity verification failed".to_string())
+                .await;
         }
 
         // Step 2: Calculate trust score
@@ -340,24 +346,33 @@ impl ZeroTrustManager {
         debug!("Trust score for request {}: {}", request.id, trust_score);
 
         if trust_score < self.config.minimum_trust_score {
-            return self.challenge_access(request.id, trust_score, 
-                "Trust score below minimum threshold".to_string()).await;
+            return self
+                .challenge_access(
+                    request.id,
+                    trust_score,
+                    "Trust score below minimum threshold".to_string(),
+                )
+                .await;
         }
 
         // Step 3: Evaluate policies
         let policy_decision = self.evaluate_policies(&request).await?;
-        
+
         // Step 4: Check segmentation
         if self.config.segmentation_enabled {
             let segment_allowed = self.check_segmentation(&request).await?;
             if !segment_allowed {
-                return self.deny_access(request.id, "Segmentation policy violation".to_string()).await;
+                return self
+                    .deny_access(request.id, "Segmentation policy violation".to_string())
+                    .await;
             }
         }
 
         // Step 5: Generate access decision
-        let decision = self.generate_decision(request, trust_score, policy_decision).await?;
-        
+        let decision = self
+            .generate_decision(request, trust_score, policy_decision)
+            .await?;
+
         // Step 6: Enforce decision
         self.enforce_decision(&decision).await?;
 
@@ -385,13 +400,15 @@ impl ZeroTrustManager {
     /// Check segmentation policies
     async fn check_segmentation(&self, request: &AccessRequest) -> Result<bool> {
         let segmentation = self.segmentation.read().await;
-        segmentation.check_access(&request.subject, &request.resource).await
+        segmentation
+            .check_access(&request.subject, &request.resource)
+            .await
     }
 
     /// Generate final access decision
     async fn generate_decision(
-        &self, 
-        request: AccessRequest, 
+        &self,
+        request: AccessRequest,
         trust_score: f64,
         policy_decision: PolicyDecision,
     ) -> Result<AccessDecision> {
@@ -409,24 +426,37 @@ impl ZeroTrustManager {
             decision,
             trust_score,
             applied_policies: policy_decision.applied_policies,
-            obligations: policy_decision.obligations.into_iter().map(|o| Obligation {
-                obligation_type: match o.obligation_type {
-                    policy::ObligationType::Reauthenticate => ObligationType::Reauthenticate,
-                    policy::ObligationType::ProvideMFA => ObligationType::ProvideMFA,
-                    policy::ObligationType::ApproveViaManager => ObligationType::ApproveViaManager,
-                    policy::ObligationType::CompleteTraining => ObligationType::CompleteTraining,
-                    policy::ObligationType::AcknowledgePolicy => ObligationType::AcknowledgePolicy,
-                    policy::ObligationType::LogAccess => ObligationType::LogAccess,
-                    policy::ObligationType::NotifyAdmin => ObligationType::LogAccess, // Map to closest
-                    policy::ObligationType::EncryptData => ObligationType::EncryptData,
-                    policy::ObligationType::ApplyWatermark => ObligationType::EncryptData, // Map to closest
-                },
-                description: o.id.clone(),
-                deadline: None,
-            }).collect(),
+            obligations: policy_decision
+                .obligations
+                .into_iter()
+                .map(|o| Obligation {
+                    obligation_type: match o.obligation_type {
+                        policy::ObligationType::Reauthenticate => ObligationType::Reauthenticate,
+                        policy::ObligationType::ProvideMFA => ObligationType::ProvideMFA,
+                        policy::ObligationType::ApproveViaManager => {
+                            ObligationType::ApproveViaManager
+                        }
+                        policy::ObligationType::CompleteTraining => {
+                            ObligationType::CompleteTraining
+                        }
+                        policy::ObligationType::AcknowledgePolicy => {
+                            ObligationType::AcknowledgePolicy
+                        }
+                        policy::ObligationType::LogAccess => ObligationType::LogAccess,
+                        policy::ObligationType::NotifyAdmin => ObligationType::LogAccess, // Map to closest
+                        policy::ObligationType::EncryptData => ObligationType::EncryptData,
+                        policy::ObligationType::ApplyWatermark => ObligationType::EncryptData, // Map to closest
+                    },
+                    description: o.id.clone(),
+                    deadline: None,
+                })
+                .collect(),
             recommendations: policy_decision.recommendations,
             timestamp: chrono::Utc::now(),
-            expires_at: Some(chrono::Utc::now() + chrono::Duration::seconds(self.config.max_session_duration_secs as i64)),
+            expires_at: Some(
+                chrono::Utc::now()
+                    + chrono::Duration::seconds(self.config.max_session_duration_secs as i64),
+            ),
         })
     }
 
@@ -446,7 +476,12 @@ impl ZeroTrustManager {
     }
 
     /// Challenge access (require additional authentication)
-    async fn challenge_access(&self, request_id: uuid::Uuid, trust_score: f64, reason: String) -> Result<AccessDecision> {
+    async fn challenge_access(
+        &self,
+        request_id: uuid::Uuid,
+        trust_score: f64,
+        reason: String,
+    ) -> Result<AccessDecision> {
         Ok(AccessDecision {
             id: uuid::Uuid::new_v4(),
             request_id,
@@ -485,7 +520,7 @@ impl ZeroTrustManager {
     pub async fn get_statistics(&self) -> Result<ZeroTrustStatistics> {
         let trust_engine = self.trust_engine.read().await;
         let policy_engine = self.policy_engine.read().await;
-        
+
         Ok(ZeroTrustStatistics {
             total_requests: trust_engine.total_requests(),
             allowed_requests: trust_engine.allowed_requests(),

@@ -1,18 +1,18 @@
 //! Policy Enforcement Module
-//! 
+//!
 //! Implements Policy Enforcement Points (PEP) that enforce access decisions
 //! and obligations throughout the system.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug, warn};
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info, warn};
 
 use super::{AccessDecision, Decision, Obligation, ObligationType};
 
 /// Enforcement Point
-/// 
+///
 /// Enforces access decisions and manages obligations
 pub struct EnforcementPoint {
     active_decisions: HashMap<String, ActiveDecision>,
@@ -141,8 +141,11 @@ impl EnforcementPoint {
 
     /// Enforce an access decision
     pub async fn enforce(&self, decision: &AccessDecision) -> Result<()> {
-        info!("Enforcing decision {} for request {}", decision.id, decision.request_id);
-        
+        info!(
+            "Enforcing decision {} for request {}",
+            decision.id, decision.request_id
+        );
+
         match decision.decision {
             Decision::Allow => {
                 self.enforce_allow(decision).await?;
@@ -157,7 +160,7 @@ impl EnforcementPoint {
                 self.enforce_with_obligations(decision).await?;
             }
         }
-        
+
         Ok(())
     }
 
@@ -175,30 +178,41 @@ impl EnforcementPoint {
 
     /// Enforce challenge decision
     async fn enforce_challenge(&self, decision: &AccessDecision) -> Result<()> {
-        info!("Access CHALLENGE required for request {}", decision.request_id);
-        
+        info!(
+            "Access CHALLENGE required for request {}",
+            decision.request_id
+        );
+
         // Issue challenges for obligations
         for obligation in &decision.obligations {
             debug!("Issuing obligation: {:?}", obligation.obligation_type);
         }
-        
+
         Ok(())
     }
 
     /// Enforce decision with obligations
     async fn enforce_with_obligations(&self, decision: &AccessDecision) -> Result<()> {
-        info!("Access ALLOWED WITH OBLIGATIONS for request {}", decision.request_id);
-        
+        info!(
+            "Access ALLOWED WITH OBLIGATIONS for request {}",
+            decision.request_id
+        );
+
         // Record obligations to be fulfilled
         for obligation in &decision.obligations {
             debug!("Obligation required: {:?}", obligation.obligation_type);
         }
-        
+
         Ok(())
     }
 
     /// Record a decision (stores it for tracking)
-    pub fn record_decision(&mut self, decision: &AccessDecision, subject_id: &str, resource_id: &str) -> Result<String> {
+    pub fn record_decision(
+        &mut self,
+        decision: &AccessDecision,
+        subject_id: &str,
+        resource_id: &str,
+    ) -> Result<String> {
         let active = ActiveDecision {
             decision_id: decision.id.to_string(),
             request_id: decision.request_id.to_string(),
@@ -216,9 +230,10 @@ impl EnforcementPoint {
                 DecisionStatus::ObligationPending
             },
         };
-        
-        self.active_decisions.insert(active.decision_id.clone(), active.clone());
-        
+
+        self.active_decisions
+            .insert(active.decision_id.clone(), active.clone());
+
         // Update statistics
         self.statistics.total_decisions += 1;
         match decision.decision {
@@ -227,25 +242,35 @@ impl EnforcementPoint {
             Decision::Challenge => self.statistics.challenge_count += 1,
             Decision::AllowWithObligations => self.statistics.allow_count += 1,
         }
-        
+
         // Create audit entry
-        self.add_audit_entry(active.decision_id.clone(), EnforcementAction::DecisionEnforced, decision);
-        
+        self.add_audit_entry(
+            active.decision_id.clone(),
+            EnforcementAction::DecisionEnforced,
+            decision,
+        );
+
         Ok(active.decision_id)
     }
 
     /// Check if obligation is fulfilled
-    pub async fn check_obligation(&mut self, decision_id: &str, obligation_idx: usize) -> Result<bool> {
-        let decision = self.active_decisions.get_mut(decision_id)
+    pub async fn check_obligation(
+        &mut self,
+        decision_id: &str,
+        obligation_idx: usize,
+    ) -> Result<bool> {
+        let decision = self
+            .active_decisions
+            .get_mut(decision_id)
             .ok_or_else(|| anyhow!("Decision {} not found", decision_id))?;
-        
+
         if obligation_idx >= decision.pending_obligations.len() {
             return Err(anyhow!("Invalid obligation index"));
         }
-        
+
         let obligation = decision.pending_obligations[obligation_idx].clone();
         let handler_key = format!("{:?}", obligation.obligation_type);
-        
+
         if let Some(handler) = self.obligation_handlers.get(&handler_key) {
             let context = EnforcementContext {
                 subject_id: decision.subject_id.clone(),
@@ -253,44 +278,50 @@ impl EnforcementPoint {
                 session_id: None,
                 additional: HashMap::new(),
             };
-            
+
             let fulfilled = handler.fulfill(&obligation, &context).await?;
-            
+
             if fulfilled {
                 // Move obligation to fulfilled
                 let obligation = decision.pending_obligations.remove(obligation_idx);
                 decision.fulfilled_obligations.push(obligation.clone());
-                
+
                 // Update status if all obligations fulfilled
                 if decision.pending_obligations.is_empty() {
                     decision.status = DecisionStatus::Active;
                 }
-                
+
                 self.statistics.obligations_fulfilled += 1;
-                self.add_audit_entry(decision_id.to_string(), EnforcementAction::ObligationFulfilled, &obligation);
-                
+                self.add_audit_entry(
+                    decision_id.to_string(),
+                    EnforcementAction::ObligationFulfilled,
+                    &obligation,
+                );
+
                 return Ok(true);
             }
         }
-        
+
         self.statistics.obligations_failed += 1;
         Ok(false)
     }
 
     /// Revoke a decision
     pub fn revoke_decision(&mut self, decision_id: &str, reason: &str) -> Result<()> {
-        let decision = self.active_decisions.get_mut(decision_id)
+        let decision = self
+            .active_decisions
+            .get_mut(decision_id)
             .ok_or_else(|| anyhow!("Decision {} not found", decision_id))?;
-        
+
         decision.status = DecisionStatus::Revoked;
         self.statistics.revocations += 1;
-        
+
         self.add_audit_entry(
-            decision_id.to_string(), 
+            decision_id.to_string(),
             EnforcementAction::DecisionRevoked,
-            &format!("Revoked: {}", reason)
+            &format!("Revoked: {}", reason),
         );
-        
+
         info!("Revoked decision {}: {}", decision_id, reason);
         Ok(())
     }
@@ -298,16 +329,18 @@ impl EnforcementPoint {
     /// Check if decision is still valid
     pub fn is_decision_valid(&self, decision_id: &str) -> bool {
         if let Some(decision) = self.active_decisions.get(decision_id) {
-            if decision.status != DecisionStatus::Active && decision.status != DecisionStatus::ObligationPending {
+            if decision.status != DecisionStatus::Active
+                && decision.status != DecisionStatus::ObligationPending
+            {
                 return false;
             }
-            
+
             if let Some(expires) = decision.expires_at {
                 if expires < Utc::now() {
                     return false;
                 }
             }
-            
+
             return true;
         }
         false
@@ -320,14 +353,16 @@ impl EnforcementPoint {
 
     /// Get all active decisions for a subject
     pub fn get_subject_decisions(&self, subject_id: &str) -> Vec<&ActiveDecision> {
-        self.active_decisions.values()
+        self.active_decisions
+            .values()
             .filter(|d| d.subject_id == subject_id && d.status == DecisionStatus::Active)
             .collect()
     }
 
     /// Get all active decisions for a resource
     pub fn get_resource_decisions(&self, resource_id: &str) -> Vec<&ActiveDecision> {
-        self.active_decisions.values()
+        self.active_decisions
+            .values()
             .filter(|d| d.resource_id == resource_id && d.status == DecisionStatus::Active)
             .collect()
     }
@@ -335,28 +370,36 @@ impl EnforcementPoint {
     /// Clean up expired decisions
     pub fn cleanup_expired(&mut self) -> usize {
         let now = Utc::now();
-        let expired: Vec<String> = self.active_decisions.iter()
+        let expired: Vec<String> = self
+            .active_decisions
+            .iter()
             .filter(|(_, d)| {
-                d.expires_at.map(|e| e < now).unwrap_or(false) || d.status == DecisionStatus::Expired
+                d.expires_at.map(|e| e < now).unwrap_or(false)
+                    || d.status == DecisionStatus::Expired
             })
             .map(|(id, _)| id.clone())
             .collect();
-        
+
         for id in &expired {
             if let Some(decision) = self.active_decisions.get_mut(id) {
                 decision.status = DecisionStatus::Expired;
             }
         }
-        
+
         if !expired.is_empty() {
             info!("Cleaned up {} expired decisions", expired.len());
         }
-        
+
         expired.len()
     }
 
     /// Add audit entry
-    fn add_audit_entry<T: Serialize>(&mut self, decision_id: String, action: EnforcementAction, details: &T) {
+    fn add_audit_entry<T: Serialize>(
+        &mut self,
+        decision_id: String,
+        action: EnforcementAction,
+        details: &T,
+    ) {
         let entry = EnforcementAuditEntry {
             id: uuid::Uuid::new_v4().to_string(),
             decision_id,
@@ -367,7 +410,7 @@ impl EnforcementPoint {
                 .unwrap_or_default(),
             result: EnforcementResult::Success,
         };
-        
+
         self.audit_log.push(entry);
     }
 
@@ -383,7 +426,8 @@ impl EnforcementPoint {
 
     /// Get active decision count
     pub fn active_decision_count(&self) -> usize {
-        self.active_decisions.values()
+        self.active_decisions
+            .values()
             .filter(|d| d.status == DecisionStatus::Active)
             .count()
     }
@@ -411,12 +455,16 @@ impl ObligationHandler for MFAObligationHandler {
     fn obligation_type(&self) -> ObligationType {
         ObligationType::ProvideMFA
     }
-    
-    async fn fulfill(&self, _obligation: &Obligation, _context: &EnforcementContext) -> Result<bool> {
+
+    async fn fulfill(
+        &self,
+        _obligation: &Obligation,
+        _context: &EnforcementContext,
+    ) -> Result<bool> {
         // In real implementation, would check MFA status
         Ok(true)
     }
-    
+
     fn is_fulfilled(&self, _obligation: &Obligation) -> bool {
         false
     }
@@ -436,12 +484,16 @@ impl ObligationHandler for ReauthObligationHandler {
     fn obligation_type(&self) -> ObligationType {
         ObligationType::Reauthenticate
     }
-    
-    async fn fulfill(&self, _obligation: &Obligation, _context: &EnforcementContext) -> Result<bool> {
+
+    async fn fulfill(
+        &self,
+        _obligation: &Obligation,
+        _context: &EnforcementContext,
+    ) -> Result<bool> {
         // In real implementation, would trigger reauthentication
         Ok(true)
     }
-    
+
     fn is_fulfilled(&self, _obligation: &Obligation) -> bool {
         false
     }
@@ -471,8 +523,10 @@ mod tests {
             timestamp: Utc::now(),
             expires_at: Some(Utc::now() + chrono::Duration::hours(1)),
         };
-        
-        let id = ep.record_decision(&decision, "user-123", "resource-1").unwrap();
+
+        let id = ep
+            .record_decision(&decision, "user-123", "resource-1")
+            .unwrap();
         assert!(!id.is_empty());
         assert!(ep.is_decision_valid(&id));
     }

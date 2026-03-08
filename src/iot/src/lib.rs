@@ -4,11 +4,11 @@
 //! 10B+ devices with lightweight agents and edge computing security.
 
 use anyhow::Result;
-use tracing::{info, debug, warn, error};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
+use tracing::{debug, error, info, warn};
 
 /// IoT Security Manager
 pub struct IotSecurityManager {
@@ -25,7 +25,7 @@ impl IotSecurityManager {
     /// Create a new IoT security manager
     pub fn new() -> Result<Self> {
         info!("Creating IoT Security Manager...");
-        
+
         Ok(Self {
             initialized: Arc::new(RwLock::new(false)),
             active: Arc::new(RwLock::new(false)),
@@ -36,51 +36,51 @@ impl IotSecurityManager {
             devices_protected: Arc::new(RwLock::new(0)),
         })
     }
-    
+
     /// Initialize the IoT security manager
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing IoT Security Manager...");
-        
+
         // TODO: Implement actual initialization
         // This would involve:
         // 1. Setting up device discovery
         // 2. Initializing edge processing
         // 3. Configuring lightweight agents
         // 4. Setting up device authentication
-        
+
         *self.initialized.write().await = true;
-        
+
         info!("IoT Security Manager initialized successfully");
-        
+
         Ok(())
     }
-    
+
     /// Start the IoT security manager
     pub async fn start(&self) -> Result<()> {
         if !*self.initialized.read().await {
             return Err(anyhow::anyhow!("IoT Security Manager not initialized"));
         }
-        
+
         info!("Starting IoT Security Manager...");
-        
+
         *self.active.write().await = true;
-        
+
         info!("IoT Security Manager started");
-        
+
         Ok(())
     }
-    
+
     /// Stop the IoT security manager
     pub async fn stop(&self) -> Result<()> {
         info!("Stopping IoT Security Manager...");
-        
+
         *self.active.write().await = false;
-        
+
         info!("IoT Security Manager stopped");
-        
+
         Ok(())
     }
-    
+
     /// Register IoT device
     pub async fn register_device(&self, device: IotDevice) -> Result<()> {
         debug!("Registering IoT device: {}", device.device_id);
@@ -99,65 +99,70 @@ impl IotSecurityManager {
 
         Ok(())
     }
-    
+
     /// Unregister IoT device
     pub async fn unregister_device(&self, device_id: String) -> Result<()> {
         debug!("Unregistering IoT device: {}", device_id);
-        
+
         let mut devices = self.devices.write().await;
         devices.remove(&device_id);
-        
+
         info!("IoT device unregistered: {}", device_id);
-        
+
         Ok(())
     }
-    
+
     /// Scan IoT device
     pub async fn scan_device(&self, device_id: String) -> Result<DeviceScanResult> {
         if !*self.active.read().await {
             return Err(anyhow::anyhow!("IoT Security Manager not active"));
         }
-        
+
         debug!("Scanning IoT device: {}", device_id);
-        
+
         let devices = self.devices.read().await;
-        let device = devices.get(&device_id)
+        let device = devices
+            .get(&device_id)
             .ok_or_else(|| anyhow::anyhow!("Device {} not found", device_id))?;
-        
+
         // Use lightweight agent to scan device
         let mut agent = self.lightweight_agent.write().await;
         let result = agent.scan_device(device).await?;
-        
+
         if result.has_threats {
             let mut count = self.threats_detected.write().await;
             *count += result.threats.len() as u64;
         }
-        
-        info!("Device scan complete: {} threats found", result.threats.len());
-        
+
+        info!(
+            "Device scan complete: {} threats found",
+            result.threats.len()
+        );
+
         Ok(result)
     }
-    
+
     /// Process edge security
     pub async fn process_edge_security(&self, device_id: String) -> Result<EdgeSecurityResult> {
         if !*self.active.read().await {
             return Err(anyhow::anyhow!("IoT Security Manager not active"));
         }
-        
+
         debug!("Processing edge security for device: {}", device_id);
-        
+
         let mut processor = self.edge_processor.write().await;
         let result = processor.process(device_id).await?;
-        
+
         Ok(result)
     }
-    
+
     /// Get device status
     pub async fn get_device_status(&self, device_id: String) -> Result<DeviceStatus> {
         let devices = self.devices.read().await;
-        let device = devices.get(&device_id)
+        let device = devices
+            .get(&device_id)
             .ok_or_else(|| anyhow::anyhow!("Device {} not found", device_id))?;
-        
+
         let status = DeviceStatus {
             device_id: device.device_id.clone(),
             device_type: device.device_type,
@@ -166,14 +171,14 @@ impl IotSecurityManager {
             threats_detected: device.threat_count,
             agent_active: device.agent_active,
         };
-        
+
         Ok(status)
     }
-    
+
     /// Get statistics
     pub async fn get_stats(&self) -> IotSecurityStats {
         let devices = self.devices.read().await;
-        
+
         IotSecurityStats {
             devices_protected: *self.devices_protected.read().await,
             threats_detected: *self.threats_detected.read().await,
@@ -229,7 +234,7 @@ impl LightweightAgent {
             scans_completed: 0,
         }
     }
-    
+
     pub async fn scan_device(&mut self, device: &IotDevice) -> Result<DeviceScanResult> {
         // TODO: Implement actual device scanning
         // This would:
@@ -237,9 +242,9 @@ impl LightweightAgent {
         // 2. Check for vulnerabilities
         // 3. Analyze network traffic
         // 4. Detect anomalous behavior
-        
+
         self.scans_completed += 1;
-        
+
         Ok(DeviceScanResult {
             device_id: device.device_id.clone(),
             has_threats: false,
@@ -248,7 +253,7 @@ impl LightweightAgent {
             scan_duration: std::time::Duration::from_millis(100),
         })
     }
-    
+
     pub fn agent_size(&self) -> usize {
         self.agent_size
     }
@@ -266,7 +271,7 @@ impl EdgeSecurityProcessor {
             inference_latency: std::time::Duration::from_millis(10),
         }
     }
-    
+
     pub async fn process(&mut self, device_id: String) -> Result<EdgeSecurityResult> {
         // TODO: Implement actual edge processing
         // This would:
@@ -274,7 +279,7 @@ impl EdgeSecurityProcessor {
         // 2. Run AI inference on edge
         // 3. Detect threats in real-time
         // 4. Respond immediately
-        
+
         Ok(EdgeSecurityResult {
             device_id,
             threats_detected: vec![],
@@ -372,18 +377,18 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_iot_security_initialization() {
         let manager = IotSecurityManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_device_registration() {
         let manager = IotSecurityManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let device = IotDevice {
             device_id: "device_001".to_string(),
             device_type: IotDeviceType::SmartCamera,
@@ -396,16 +401,16 @@ mod tests {
             last_scan: None,
             threat_count: 0,
         };
-        
+
         assert!(manager.register_device(device).await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_device_scanning() {
         let manager = IotSecurityManager::new().unwrap();
         manager.initialize().await.unwrap();
         manager.start().await.unwrap();
-        
+
         let device = IotDevice {
             device_id: "device_001".to_string(),
             device_type: IotDeviceType::SmartCamera,
@@ -418,23 +423,26 @@ mod tests {
             last_scan: None,
             threat_count: 0,
         };
-        
+
         manager.register_device(device).await.unwrap();
-        
+
         let result = manager.scan_device("device_001".to_string()).await.unwrap();
         assert_eq!(result.device_id, "device_001");
     }
-    
+
     #[tokio::test]
     async fn test_edge_processing() {
         let manager = IotSecurityManager::new().unwrap();
         manager.initialize().await.unwrap();
         manager.start().await.unwrap();
-        
-        let result = manager.process_edge_security("device_001".to_string()).await.unwrap();
+
+        let result = manager
+            .process_edge_security("device_001".to_string())
+            .await
+            .unwrap();
         assert_eq!(result.device_id, "device_001");
     }
-    
+
     #[tokio::test]
     async fn test_lightweight_agent_size() {
         let agent = LightweightAgent::new();

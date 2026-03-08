@@ -1,17 +1,17 @@
 //! Risk Assessment Module
-//! 
+//!
 //! Evaluates risks associated with AI deployments and usage.
 
 use anyhow::Result;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info};
 
-use super::{DiscoveredAI, AIUsageEvent, DataClassification};
+use super::{AIUsageEvent, DataClassification, DiscoveredAI};
 
 /// Risk Assessment Engine
-/// 
+///
 /// Calculates and tracks risks for AI models and usage
 pub struct RiskAssessment {
     factors: Vec<RiskFactor>,
@@ -75,8 +75,7 @@ pub struct RiskScore {
 }
 
 /// Risk level
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[derive(PartialOrd)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, PartialOrd)]
 pub enum RiskLevel {
     Minimal = 1,
     Low = 2,
@@ -124,7 +123,7 @@ impl RiskAssessment {
             risk_history: HashMap::new(),
             thresholds: RiskThresholds::default(),
         };
-        
+
         engine.add_default_factors();
         engine
     }
@@ -141,11 +140,11 @@ impl RiskAssessment {
                 scoring: RiskScoring {
                     scoring_type: ScoringType::Step,
                     thresholds: vec![
-                        (0.0, 0.1),   // No sensitive data
-                        (0.3, 0.3),   // Internal data
-                        (0.5, 0.5),   // Confidential data
-                        (0.7, 0.8),   // Restricted data
-                        (0.9, 1.0),   // Top secret data
+                        (0.0, 0.1), // No sensitive data
+                        (0.3, 0.3), // Internal data
+                        (0.5, 0.5), // Confidential data
+                        (0.7, 0.8), // Restricted data
+                        (0.9, 1.0), // Top secret data
                     ],
                 },
             },
@@ -158,11 +157,11 @@ impl RiskAssessment {
                 scoring: RiskScoring {
                     scoring_type: ScoringType::Step,
                     thresholds: vec![
-                        (1.0, 0.1),   // Internal
-                        (0.9, 0.2),   // Enterprise agreement
-                        (0.7, 0.4),   // Known provider
-                        (0.5, 0.6),   // Unknown provider
-                        (0.0, 0.9),   // Untrusted
+                        (1.0, 0.1), // Internal
+                        (0.9, 0.2), // Enterprise agreement
+                        (0.7, 0.4), // Known provider
+                        (0.5, 0.6), // Unknown provider
+                        (0.0, 0.9), // Untrusted
                     ],
                 },
             },
@@ -185,11 +184,7 @@ impl RiskAssessment {
                 factor_type: RiskFactorType::ComplianceViolation,
                 scoring: RiskScoring {
                     scoring_type: ScoringType::Step,
-                    thresholds: vec![
-                        (0.0, 0.1),
-                        (0.5, 0.5),
-                        (1.0, 0.9),
-                    ],
+                    thresholds: vec![(0.0, 0.1), (0.5, 0.5), (1.0, 0.9)],
                 },
             },
             RiskFactor {
@@ -204,54 +199,60 @@ impl RiskAssessment {
                 },
             },
         ];
-        
+
         self.factors = factors;
     }
 
     /// Calculate risk for a discovered AI
     pub async fn calculate(&self, discovered: &DiscoveredAI) -> Result<(f64, RiskLevel)> {
         info!("Calculating risk for AI: {}", discovered.id);
-        
+
         let mut total_score = 0.0;
         let mut total_weight = 0.0;
-        
+
         // Calculate data exposure risk
         let data_risk = self.calculate_data_risk(discovered);
         total_score += data_risk * self.get_factor_weight("data-exposure");
         total_weight += self.get_factor_weight("data-exposure");
-        
+
         // Calculate provider trust risk
         let provider_risk = self.calculate_provider_risk(discovered);
         total_score += provider_risk * self.get_factor_weight("provider-trust");
         total_weight += self.get_factor_weight("provider-trust");
-        
+
         // Factor in risk indicators
         let indicator_penalty = discovered.risk_indicators.len() as f64 * 0.05;
         total_score += indicator_penalty;
-        
+
         // Normalize score
         let final_score = if total_weight > 0.0 {
             (total_score / total_weight).min(1.0)
         } else {
             0.5
         };
-        
+
         let risk_level = self.score_to_level(final_score);
-        
-        debug!("Risk score for {}: {} ({:?})", discovered.id, final_score, risk_level);
-        
+
+        debug!(
+            "Risk score for {}: {} ({:?})",
+            discovered.id, final_score, risk_level
+        );
+
         Ok((final_score, risk_level))
     }
 
     /// Calculate data risk
     fn calculate_data_risk(&self, discovered: &DiscoveredAI) -> f64 {
         let data_types = &discovered.details.data_types;
-        
+
         // Check for sensitive data types
         let sensitive_types = ["pii", "phi", "financial", "credentials", "secrets"];
-        let has_sensitive = data_types.iter()
-            .any(|dt| sensitive_types.iter().any(|st| dt.to_lowercase().contains(st)));
-        
+        let has_sensitive = data_types.iter().any(|dt| {
+            sensitive_types
+                .iter()
+                .any(|st| dt.to_lowercase().contains(st))
+        });
+
         if has_sensitive {
             0.8
         } else if !data_types.is_empty() {
@@ -277,7 +278,8 @@ impl RiskAssessment {
 
     /// Get factor weight
     fn get_factor_weight(&self, factor_id: &str) -> f64 {
-        self.factors.iter()
+        self.factors
+            .iter()
             .find(|f| f.id == factor_id)
             .map(|f| f.weight)
             .unwrap_or(0.0)
@@ -301,7 +303,7 @@ impl RiskAssessment {
     /// Analyze usage event for risk
     pub async fn analyze_usage(&self, event: &AIUsageEvent) -> Result<f64> {
         let mut risk_score = 0.0;
-        
+
         // Check data classification
         let classification_risk = match event.data_classification {
             DataClassification::Public => 0.1,
@@ -311,11 +313,11 @@ impl RiskAssessment {
             DataClassification::Sensitive => 0.9,
         };
         risk_score += classification_risk * 0.4;
-        
+
         // Check risk indicators
         let indicator_risk = event.risk_indicators.len() as f64 * 0.1;
         risk_score += indicator_risk * 0.3;
-        
+
         // Check request size (large requests may indicate data exfiltration)
         let size_risk = if event.request_size > 100_000 {
             0.3
@@ -325,31 +327,40 @@ impl RiskAssessment {
             0.0
         };
         risk_score += size_risk * 0.3;
-        
+
         Ok(risk_score.min(1.0))
     }
 
     /// Get detailed risk assessment
     pub async fn get_detailed_assessment(&self, discovered: &DiscoveredAI) -> Result<RiskScore> {
         let (overall_score, risk_level) = self.calculate(discovered).await?;
-        
+
         // Calculate individual factor scores
         let mut factor_scores = HashMap::new();
-        factor_scores.insert("data_exposure".to_string(), self.calculate_data_risk(discovered));
-        factor_scores.insert("provider_trust".to_string(), self.calculate_provider_risk(discovered));
-        
+        factor_scores.insert(
+            "data_exposure".to_string(),
+            self.calculate_data_risk(discovered),
+        );
+        factor_scores.insert(
+            "provider_trust".to_string(),
+            self.calculate_provider_risk(discovered),
+        );
+
         // Generate risk indicators
         let mut risk_indicators = Vec::new();
-        
+
         if !discovered.risk_indicators.is_empty() {
             risk_indicators.push(RiskIndicator {
                 indicator_type: "detected_indicators".to_string(),
                 severity: 0.7,
-                description: format!("Detected risk indicators: {}", discovered.risk_indicators.join(", ")),
+                description: format!(
+                    "Detected risk indicators: {}",
+                    discovered.risk_indicators.join(", ")
+                ),
                 remediation: Some("Review and address detected risk indicators".to_string()),
             });
         }
-        
+
         if discovered.details.api_key_masked.is_some() {
             risk_indicators.push(RiskIndicator {
                 indicator_type: "api_key_exposed".to_string(),
@@ -358,10 +369,10 @@ impl RiskAssessment {
                 remediation: Some("Rotate API key and store securely".to_string()),
             });
         }
-        
+
         // Generate recommendations
         let mut recommendations = Vec::new();
-        
+
         if risk_level >= RiskLevel::High {
             recommendations.push("Consider blocking this AI until approved".to_string());
         }
@@ -371,7 +382,7 @@ impl RiskAssessment {
         if !discovered.details.users.is_empty() {
             recommendations.push("Review user access to this AI".to_string());
         }
-        
+
         Ok(RiskScore {
             id: uuid::Uuid::new_v4().to_string(),
             model_id: discovered.id.clone(),
@@ -429,7 +440,7 @@ mod tests {
     #[test]
     fn test_risk_level_conversion() {
         let assessment = RiskAssessment::new();
-        
+
         assert_eq!(assessment.score_to_level(0.1), RiskLevel::Minimal);
         assert_eq!(assessment.score_to_level(0.3), RiskLevel::Low);
         assert_eq!(assessment.score_to_level(0.5), RiskLevel::Medium);

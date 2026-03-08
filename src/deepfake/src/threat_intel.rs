@@ -286,14 +286,12 @@ impl ThreatIntelIntegration {
                 description: "Common indicators of face swap deepfakes".to_string(),
                 pattern_type: PatternType::Visual,
                 deepfake_types: vec![DeepfakeType::FaceSwap],
-                indicators: vec![
-                    ThreatIndicator {
-                        indicator_type: "edge_artifact".to_string(),
-                        value: "blur_boundary".to_string(),
-                        description: "Blurred boundaries around face region".to_string(),
-                        confidence: 0.7,
-                    },
-                ],
+                indicators: vec![ThreatIndicator {
+                    indicator_type: "edge_artifact".to_string(),
+                    value: "blur_boundary".to_string(),
+                    description: "Blurred boundaries around face region".to_string(),
+                    confidence: 0.7,
+                }],
                 severity: 5,
                 confidence: 0.8,
                 first_seen: Utc::now() - chrono::Duration::days(365),
@@ -307,14 +305,12 @@ impl ThreatIntelIntegration {
                 description: "Indicators of AI-generated voice content".to_string(),
                 pattern_type: PatternType::Audio,
                 deepfake_types: vec![DeepfakeType::VoiceClone, DeepfakeType::TextToSpeech],
-                indicators: vec![
-                    ThreatIndicator {
-                        indicator_type: "spectral".to_string(),
-                        value: "synthetic_artifact".to_string(),
-                        description: "Spectral artifacts from voice synthesis".to_string(),
-                        confidence: 0.75,
-                    },
-                ],
+                indicators: vec![ThreatIndicator {
+                    indicator_type: "spectral".to_string(),
+                    value: "synthetic_artifact".to_string(),
+                    description: "Spectral artifacts from voice synthesis".to_string(),
+                    confidence: 0.75,
+                }],
                 severity: 6,
                 confidence: 0.85,
                 first_seen: Utc::now() - chrono::Duration::days(180),
@@ -327,39 +323,36 @@ impl ThreatIntelIntegration {
 
     /// Get default threat actors
     fn default_actors() -> Vec<ThreatActor> {
-        vec![
-            ThreatActor {
-                id: "actor-deepfake-criminals".to_string(),
-                name: "Deepfake Fraud Actors".to_string(),
-                actor_type: ActorType::OrganizedCrime,
-                motivation: vec!["financial".to_string(), "fraud".to_string()],
-                capability: 7,
-                techniques: vec!["face_swap".to_string(), "voice_clone".to_string()],
-                campaigns: vec!["financial_fraud_2024".to_string()],
-                first_observed: Utc::now() - chrono::Duration::days(500),
-                last_observed: Utc::now(),
-                attribution_confidence: 0.6,
-            },
-        ]
+        vec![ThreatActor {
+            id: "actor-deepfake-criminals".to_string(),
+            name: "Deepfake Fraud Actors".to_string(),
+            actor_type: ActorType::OrganizedCrime,
+            motivation: vec!["financial".to_string(), "fraud".to_string()],
+            capability: 7,
+            techniques: vec!["face_swap".to_string(), "voice_clone".to_string()],
+            campaigns: vec!["financial_fraud_2024".to_string()],
+            first_observed: Utc::now() - chrono::Duration::days(500),
+            last_observed: Utc::now(),
+            attribution_confidence: 0.6,
+        }]
     }
 
     /// Get default campaigns
     fn default_campaigns() -> Vec<Campaign> {
-        vec![
-            Campaign {
-                id: "campaign-financial-fraud-2024".to_string(),
-                name: "Financial Fraud Campaign 2024".to_string(),
-                description: "Coordinated deepfake campaign targeting financial institutions".to_string(),
-                target_sectors: vec!["banking".to_string(), "finance".to_string()],
-                target_regions: vec!["global".to_string()],
-                start_date: Utc::now() - chrono::Duration::days(180),
-                end_date: None,
-                status: CampaignStatus::Active,
-                actors: vec!["actor-deepfake-criminals".to_string()],
-                deepfake_count: 150,
-                techniques: vec!["face_swap".to_string(), "voice_clone".to_string()],
-            },
-        ]
+        vec![Campaign {
+            id: "campaign-financial-fraud-2024".to_string(),
+            name: "Financial Fraud Campaign 2024".to_string(),
+            description: "Coordinated deepfake campaign targeting financial institutions"
+                .to_string(),
+            target_sectors: vec!["banking".to_string(), "finance".to_string()],
+            target_regions: vec!["global".to_string()],
+            start_date: Utc::now() - chrono::Duration::days(180),
+            end_date: None,
+            status: CampaignStatus::Active,
+            actors: vec!["actor-deepfake-criminals".to_string()],
+            deepfake_count: 150,
+            techniques: vec!["face_swap".to_string(), "voice_clone".to_string()],
+        }]
     }
 
     /// Get default threat feeds
@@ -430,7 +423,11 @@ impl ThreatIntelIntegration {
                     },
                     confidence: pattern.confidence,
                     match_type: MatchType::Pattern,
-                    matched_indicators: pattern.indicators.iter().map(|i| i.value.clone()).collect(),
+                    matched_indicators: pattern
+                        .indicators
+                        .iter()
+                        .map(|i| i.value.clone())
+                        .collect(),
                     timestamp: Utc::now(),
                 });
             }

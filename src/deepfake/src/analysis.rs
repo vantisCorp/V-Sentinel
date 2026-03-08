@@ -172,7 +172,7 @@ impl ImageAnalyzer {
 
         // Simulate image analysis
         // In a real implementation, this would use ML models
-        
+
         // Extract metadata
         result.metadata = self.extract_metadata(data).await?;
 
@@ -210,21 +210,21 @@ impl ImageAnalyzer {
 
         // Analyze data patterns (simplified heuristic)
         let data_len = data.len();
-        
+
         // Check for common GAN artifacts patterns
         if data_len > 10000 {
             // Look for unusual patterns in the data
             let sample_size = 1000.min(data_len);
             let sample = &data[..sample_size];
-            
+
             // Simple entropy check
             let mut byte_counts = [0u32; 256];
             for &byte in sample {
                 byte_counts[byte as usize] += 1;
             }
-            
+
             let entropy = self.calculate_entropy(&byte_counts, sample_size);
-            
+
             // Low entropy might indicate artificial content
             if entropy < 7.0 {
                 indicators.compression_artifacts += 1;
@@ -350,7 +350,8 @@ impl VideoAnalyzer {
 
     fn calculate_manipulation_probability(&self, result: &VideoAnalysisResult) -> f32 {
         let frame_score = result.indicators.calculate_score();
-        let audio_score = result.audio_analysis
+        let audio_score = result
+            .audio_analysis
             .as_ref()
             .map(|a| a.synthesis_probability)
             .unwrap_or(0.0);
@@ -481,10 +482,7 @@ impl AudioAnalyzer {
     fn generate_details(&self, analysis: &AudioAnalysis) -> String {
         let mut details = String::new();
 
-        details.push_str(&format!(
-            "Detected {} speakers. ",
-            analysis.speakers.len()
-        ));
+        details.push_str(&format!("Detected {} speakers. ", analysis.speakers.len()));
 
         if analysis.synthesis_probability > 0.5 {
             details.push_str(&format!(

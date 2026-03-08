@@ -1,5 +1,5 @@
 //! Trust Engine Module
-//! 
+//!
 //! Implements dynamic trust scoring based on multiple factors including:
 //! - Device trustworthiness
 //! - User behavior analysis
@@ -7,15 +7,15 @@
 //! - Risk indicators
 
 use anyhow::Result;
-use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Datelike, Duration, Timelike, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{info, debug};
-use chrono::{DateTime, Utc, Duration, Timelike, Datelike};
+use tracing::{debug, info};
 
-use super::{AccessRequest, Subject, DeviceInfo, RiskIndicator};
+use super::{AccessRequest, DeviceInfo, RiskIndicator, Subject};
 
 /// Trust Engine
-/// 
+///
 /// Calculates and manages trust scores for access decisions
 pub struct TrustEngine {
     factors: Vec<Box<dyn TrustFactorEvaluator + Send + Sync>>,
@@ -153,14 +153,14 @@ impl TrustEngine {
             statistics: TrustStatistics::default(),
             trust_history: HashMap::new(),
         };
-        
+
         // Add default trust factors
         engine.add_factor(Box::new(DeviceTrustFactor::new()));
         engine.add_factor(Box::new(BehaviorTrustFactor::new()));
         engine.add_factor(Box::new(LocationTrustFactor::new()));
         engine.add_factor(Box::new(TimeTrustFactor::new()));
         engine.add_factor(Box::new(SessionTrustFactor::new()));
-        
+
         engine
     }
 
@@ -172,11 +172,11 @@ impl TrustEngine {
     /// Calculate trust score for a request
     pub async fn calculate_score(&self, request: &AccessRequest) -> Result<f64> {
         info!("Calculating trust score for request {}", request.id);
-        
+
         let mut total_weight = 0.0;
         let mut weighted_score = 0.0;
         let mut factors = HashMap::new();
-        
+
         // Evaluate each trust factor
         for factor in &self.factors {
             let factor_score = factor.evaluate(request).await?;
@@ -184,27 +184,30 @@ impl TrustEngine {
             total_weight += factor_score.weight;
             factors.insert(factor_score.factor_name.clone(), factor_score);
         }
-        
+
         // Calculate base score
         let base_score = if total_weight > 0.0 {
             weighted_score / total_weight
         } else {
             0.5 // Default neutral score
         };
-        
+
         // Apply risk adjustments
         let risk_adjustment = self.calculate_risk_adjustment(&request.context.risk_indicators);
         let final_score = (base_score + risk_adjustment).clamp(0.0, 1.0);
-        
-        debug!("Trust score: base={}, risk_adj={}, final={}", base_score, risk_adjustment, final_score);
-        
+
+        debug!(
+            "Trust score: base={}, risk_adj={}, final={}",
+            base_score, risk_adjustment, final_score
+        );
+
         Ok(final_score)
     }
 
     /// Calculate risk adjustment based on risk indicators
     fn calculate_risk_adjustment(&self, indicators: &[RiskIndicator]) -> f64 {
         let mut adjustment = 0.0;
-        
+
         for indicator in indicators {
             let penalty = match indicator.indicator_type {
                 super::RiskIndicatorType::AnomalousLocation => -0.15,
@@ -218,10 +221,10 @@ impl TrustEngine {
                 super::RiskIndicatorType::BruteForceAttempt => -0.45,
                 super::RiskIndicatorType::CredentialStuffing => -0.40,
             };
-            
+
             adjustment += penalty * indicator.severity;
         }
-        
+
         adjustment
     }
 
@@ -229,7 +232,7 @@ impl TrustEngine {
     pub fn record_decision(&mut self, score: f64, allowed: bool) {
         self.statistics.total_requests += 1;
         self.statistics.total_trust_score += score;
-        
+
         if allowed {
             self.statistics.allowed_requests += 1;
         } else if score < 0.3 {
@@ -238,7 +241,7 @@ impl TrustEngine {
         } else {
             self.statistics.challenged_requests += 1;
         }
-        
+
         if score > 0.8 {
             self.statistics.high_trust_count += 1;
         }
@@ -291,28 +294,28 @@ impl TrustFactorEvaluator for DeviceTrustFactor {
     fn name(&self) -> &str {
         "device"
     }
-    
+
     fn weight(&self) -> f64 {
         self.weight
     }
-    
+
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
         let mut score: f64 = 0.5; // Base score for unknown device
         let mut details = HashMap::new();
-        
+
         if let Some(ref device) = request.subject.device {
             // Managed device bonus
             if device.is_managed {
                 score += 0.2;
                 details.insert("managed".to_string(), serde_json::json!(true));
             }
-            
+
             // Compliant device bonus
             if device.is_compliant {
                 score += 0.15;
                 details.insert("compliant".to_string(), serde_json::json!(true));
             }
-            
+
             // Device type consideration
             match device.device_type {
                 super::DeviceType::Desktop | super::DeviceType::Server => score += 0.05,
@@ -320,22 +323,26 @@ impl TrustFactorEvaluator for DeviceTrustFactor {
                 super::DeviceType::IoT => score -= 0.1,
                 super::DeviceType::Unknown => score -= 0.15,
             }
-            
+
             // Device risk level
             score -= device.risk_level * 0.3;
-            
+
             // Last seen recency
             let hours_since_seen = (Utc::now() - device.last_seen).num_hours() as f64;
             if hours_since_seen < 24.0 {
                 score += 0.05;
-            } else if hours_since_seen > 720.0 { // 30 days
+            } else if hours_since_seen > 720.0 {
+                // 30 days
                 score -= 0.1;
             }
-            
+
             details.insert("device_id".to_string(), serde_json::json!(device.device_id));
-            details.insert("device_type".to_string(), serde_json::json!(format!("{:?}", device.device_type)));
+            details.insert(
+                "device_type".to_string(),
+                serde_json::json!(format!("{:?}", device.device_type)),
+            );
         }
-        
+
         Ok(FactorScore {
             factor_name: self.name().to_string(),
             score: score.clamp(0.0, 1.0),
@@ -360,15 +367,15 @@ impl TrustFactorEvaluator for BehaviorTrustFactor {
     fn name(&self) -> &str {
         "behavior"
     }
-    
+
     fn weight(&self) -> f64 {
         self.weight
     }
-    
+
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
         let mut score: f64 = 0.5;
         let mut details = HashMap::new();
-        
+
         // Check if user has behavior profile
         if let Some(profile) = self.behavior_history.get(&request.subject.id) {
             // Check resource access pattern
@@ -378,26 +385,30 @@ impl TrustFactorEvaluator for BehaviorTrustFactor {
             } else {
                 score -= 0.1;
             }
-            
+
             // Check action pattern
-            let action_known = profile.typical_actions.iter().any(|a| {
-                format!("{:?}", request.action.action_type).contains(a)
-            });
+            let action_known = profile
+                .typical_actions
+                .iter()
+                .any(|a| format!("{:?}", request.action.action_type).contains(a));
             if action_known {
                 score += 0.1;
             }
-            
+
             // Use anomaly score from profile
             score -= profile.anomaly_score * 0.2;
-            
+
             details.insert("has_profile".to_string(), serde_json::json!(true));
-            details.insert("anomaly_score".to_string(), serde_json::json!(profile.anomaly_score));
+            details.insert(
+                "anomaly_score".to_string(),
+                serde_json::json!(profile.anomaly_score),
+            );
         } else {
             // New user, neutral score with slight penalty
             score -= 0.05;
             details.insert("has_profile".to_string(), serde_json::json!(false));
         }
-        
+
         Ok(FactorScore {
             factor_name: self.name().to_string(),
             score: score.clamp(0.0, 1.0),
@@ -422,26 +433,28 @@ impl TrustFactorEvaluator for LocationTrustFactor {
     fn name(&self) -> &str {
         "location"
     }
-    
+
     fn weight(&self) -> f64 {
         self.weight
     }
-    
+
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
         let mut score: f64 = 0.5;
         let mut details = HashMap::new();
-        
+
         if let Some(ref geo) = request.context.geo_location {
             // Check if location is known for this user
             if let Some(locations) = self.known_locations.get(&request.subject.id) {
                 let mut found_known = false;
-                
+
                 for known in locations {
                     let distance = calculate_distance(
-                        geo.latitude, geo.longitude,
-                        known.latitude, known.longitude
+                        geo.latitude,
+                        geo.longitude,
+                        known.latitude,
+                        known.longitude,
                     );
-                    
+
                     if distance <= known.radius_km {
                         found_known = true;
                         if known.is_trusted {
@@ -453,17 +466,17 @@ impl TrustFactorEvaluator for LocationTrustFactor {
                         break;
                     }
                 }
-                
+
                 if !found_known {
                     score -= 0.15;
                     details.insert("location_type".to_string(), serde_json::json!("unknown"));
                 }
             }
-            
+
             details.insert("country".to_string(), serde_json::json!(geo.country));
             details.insert("city".to_string(), serde_json::json!(geo.city));
         }
-        
+
         Ok(FactorScore {
             factor_name: self.name().to_string(),
             score: score.clamp(0.0, 1.0),
@@ -488,18 +501,18 @@ impl TrustFactorEvaluator for TimeTrustFactor {
     fn name(&self) -> &str {
         "time"
     }
-    
+
     fn weight(&self) -> f64 {
         self.weight
     }
-    
+
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
         let mut score: f64 = 0.5;
         let mut details = HashMap::new();
-        
+
         let hour = request.context.access_time.hour() as i32;
         let is_work_hours = hour >= self.work_hours.0 && hour < self.work_hours.1;
-        
+
         if is_work_hours {
             score += 0.15;
             details.insert("work_hours".to_string(), serde_json::json!(true));
@@ -507,16 +520,16 @@ impl TrustFactorEvaluator for TimeTrustFactor {
             score -= 0.05;
             details.insert("work_hours".to_string(), serde_json::json!(false));
         }
-        
+
         // Weekend penalty
         let weekday = request.context.access_time.weekday();
         if weekday == chrono::Weekday::Sat || weekday == chrono::Weekday::Sun {
             score -= 0.05;
             details.insert("weekend".to_string(), serde_json::json!(true));
         }
-        
+
         details.insert("hour".to_string(), serde_json::json!(hour));
-        
+
         Ok(FactorScore {
             factor_name: self.name().to_string(),
             score: score.clamp(0.0, 1.0),
@@ -538,33 +551,39 @@ impl TrustFactorEvaluator for SessionTrustFactor {
     fn name(&self) -> &str {
         "session"
     }
-    
+
     fn weight(&self) -> f64 {
         self.weight
     }
-    
+
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
         let mut score: f64 = 0.5;
         let mut details = HashMap::new();
-        
+
         // Check session maturity
         if request.context.session_id.is_some() {
             // Existing session
             let request_count = request.context.session_request_count;
-            
+
             if request_count > 0 {
                 score += 0.1; // Bonus for established session
-                details.insert("session_state".to_string(), serde_json::json!("established"));
+                details.insert(
+                    "session_state".to_string(),
+                    serde_json::json!("established"),
+                );
             } else {
                 details.insert("session_state".to_string(), serde_json::json!("new"));
             }
-            
-            details.insert("request_count".to_string(), serde_json::json!(request_count));
+
+            details.insert(
+                "request_count".to_string(),
+                serde_json::json!(request_count),
+            );
         } else {
             // No session - first request
             details.insert("session_state".to_string(), serde_json::json!("none"));
         }
-        
+
         Ok(FactorScore {
             factor_name: self.name().to_string(),
             score: score.clamp(0.0, 1.0),
@@ -577,16 +596,16 @@ impl TrustFactorEvaluator for SessionTrustFactor {
 /// Calculate distance between two geographic points using Haversine formula
 fn calculate_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     const EARTH_RADIUS_KM: f64 = 6371.0;
-    
+
     let lat1_rad = lat1.to_radians();
     let lat2_rad = lat2.to_radians();
     let delta_lat = (lat2 - lat1).to_radians();
     let delta_lon = (lon2 - lon1).to_radians();
-    
-    let a = (delta_lat / 2.0).sin().powi(2) +
-            lat1_rad.cos() * lat2_rad.cos() * (delta_lon / 2.0).sin().powi(2);
+
+    let a = (delta_lat / 2.0).sin().powi(2)
+        + lat1_rad.cos() * lat2_rad.cos() * (delta_lon / 2.0).sin().powi(2);
     let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
-    
+
     EARTH_RADIUS_KM * c
 }
 

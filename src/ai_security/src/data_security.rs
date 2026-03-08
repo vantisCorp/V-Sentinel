@@ -66,7 +66,10 @@ impl DataSecurityManager {
 
     /// Secure a data pipeline
     pub async fn secure_pipeline(&self, pipeline: &DataPipeline) -> Result<PipelineSecurityResult> {
-        info!("Securing data pipeline: {} ({})", pipeline.name, pipeline.id);
+        info!(
+            "Securing data pipeline: {} ({})",
+            pipeline.name, pipeline.id
+        );
 
         let mut result = PipelineSecurityResult::default();
 
@@ -74,7 +77,7 @@ impl DataSecurityManager {
         if pipeline.classification != DataClassification::Public {
             result.encrypted = true;
             result.access_controlled = true;
-            
+
             let mut stats = self.stats.write().await;
             stats.pipelines_secured += 1;
             stats.encryption_operations += 1;
@@ -103,8 +106,11 @@ impl DataSecurityManager {
         resource: &str,
         permission: Permission,
     ) -> Result<bool> {
-        let result = self.access_control.check(principal, resource, permission).await?;
-        
+        let result = self
+            .access_control
+            .check(principal, resource, permission)
+            .await?;
+
         let mut stats = self.stats.write().await;
         if result {
             stats.access_grants += 1;
@@ -116,9 +122,13 @@ impl DataSecurityManager {
     }
 
     /// Classify data
-    pub async fn classify_data(&self, data: &[u8], metadata: &HashMap<String, String>) -> Result<DataClassification> {
+    pub async fn classify_data(
+        &self,
+        data: &[u8],
+        metadata: &HashMap<String, String>,
+    ) -> Result<DataClassification> {
         let classification = self.classifier.classify(data, metadata).await?;
-        
+
         let mut stats = self.stats.write().await;
         stats.classifications += 1;
 
@@ -191,14 +201,14 @@ impl EncryptionManager {
     pub async fn encrypt(&self, data: &[u8], key_id: Option<&str>) -> Result<EncryptedData> {
         let keys = self.keys.read().await;
         let kid = key_id.unwrap_or_else(|| self.default_key_id.as_deref().unwrap_or(""));
-        
-        let key = keys.get(kid).ok_or_else(|| {
-            anyhow::anyhow!("Key not found: {}", kid)
-        })?;
+
+        let key = keys
+            .get(kid)
+            .ok_or_else(|| anyhow::anyhow!("Key not found: {}", kid))?;
 
         // Create cipher
         let cipher = Aes256Gcm::new_from_slice(key)?;
-        
+
         // Generate nonce
         use rand::Rng;
         let mut rng = rand::thread_rng();
@@ -207,7 +217,8 @@ impl EncryptionManager {
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt
-        let ciphertext = cipher.encrypt(nonce, data)
+        let ciphertext = cipher
+            .encrypt(nonce, data)
             .map_err(|e| anyhow::anyhow!("Encryption failed: {}", e))?;
 
         Ok(EncryptedData {
@@ -222,18 +233,19 @@ impl EncryptionManager {
     /// Decrypt data
     pub async fn decrypt(&self, encrypted: &EncryptedData, _key_id: &str) -> Result<Vec<u8>> {
         let keys = self.keys.read().await;
-        let key = keys.get(&encrypted.key_id).ok_or_else(|| {
-            anyhow::anyhow!("Key not found: {}", encrypted.key_id)
-        })?;
+        let key = keys
+            .get(&encrypted.key_id)
+            .ok_or_else(|| anyhow::anyhow!("Key not found: {}", encrypted.key_id))?;
 
         let cipher = Aes256Gcm::new_from_slice(key)?;
-        
+
         let nonce_bytes = BASE64.decode(&encrypted.nonce)?;
         let nonce = Nonce::from_slice(&nonce_bytes[..12]);
-        
+
         let ciphertext = BASE64.decode(&encrypted.ciphertext)?;
-        
-        let plaintext = cipher.decrypt(nonce, ciphertext.as_slice())
+
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext.as_slice())
             .map_err(|e| anyhow::anyhow!("Decryption failed: {}", e))?;
 
         Ok(plaintext)
@@ -301,13 +313,13 @@ impl AccessControlManager {
         permission: Permission,
     ) -> Result<bool> {
         let rules = self.rules.read().await;
-        
+
         // Check direct rules
         for rule in rules.iter() {
             if !rule.active {
                 continue;
             }
-            
+
             if rule.principal == principal && rule.resource == resource {
                 if self.permission_matches(rule.permission, permission) {
                     // Check conditions
@@ -375,7 +387,8 @@ impl AccessControlManager {
     /// Assign role to principal
     pub async fn assign_role(&self, principal: &str, role: &str) -> Result<()> {
         let mut roles = self.roles.write().await;
-        roles.entry(principal.to_string())
+        roles
+            .entry(principal.to_string())
             .or_default()
             .push(role.to_string());
         Ok(())
@@ -438,7 +451,8 @@ impl DataClassifier {
             },
             ClassificationPattern {
                 name: "API Key".to_string(),
-                pattern: r"(?i)(api[_-]?key|secret[_-]?key|access[_-]?token)[\s:=]+[a-zA-Z0-9_-]+".to_string(),
+                pattern: r"(?i)(api[_-]?key|secret[_-]?key|access[_-]?token)[\s:=]+[a-zA-Z0-9_-]+"
+                    .to_string(),
                 classification: DataClassification::Restricted,
                 confidence: 0.85,
             },
@@ -446,7 +460,11 @@ impl DataClassifier {
     }
 
     /// Classify data
-    pub async fn classify(&self, data: &[u8], metadata: &HashMap<String, String>) -> Result<DataClassification> {
+    pub async fn classify(
+        &self,
+        data: &[u8],
+        metadata: &HashMap<String, String>,
+    ) -> Result<DataClassification> {
         let data_str = String::from_utf8_lossy(data);
         let mut max_classification = DataClassification::Public;
 
@@ -519,11 +537,15 @@ impl LineageTracker {
     pub async fn track_pipeline(&self, pipeline: &DataPipeline) -> Result<()> {
         let lineage = DataLineage {
             data_id: pipeline.id.clone(),
-            source: pipeline.sources.iter()
+            source: pipeline
+                .sources
+                .iter()
                 .map(|s| s.location.clone())
                 .collect::<Vec<_>>()
                 .join(","),
-            transformations: pipeline.transformations.iter()
+            transformations: pipeline
+                .transformations
+                .iter()
                 .map(|t| t.name.clone())
                 .collect(),
             timestamps: vec![Utc::now()],
@@ -574,11 +596,14 @@ mod tests {
     async fn test_encryption() {
         let manager = EncryptionManager::new();
         let data = b"test data";
-        
+
         let encrypted = manager.encrypt(data, None).await.unwrap();
         assert!(!encrypted.ciphertext.is_empty());
-        
-        let decrypted = manager.decrypt(&encrypted, &encrypted.key_id).await.unwrap();
+
+        let decrypted = manager
+            .decrypt(&encrypted, &encrypted.key_id)
+            .await
+            .unwrap();
         assert_eq!(decrypted, data);
     }
 
@@ -587,8 +612,11 @@ mod tests {
         let manager = AccessControlManager::new();
         let rule = AccessControl::new("user1", Permission::Read, "resource1");
         manager.add_rule(rule).await.unwrap();
-        
-        let result = manager.check("user1", "resource1", Permission::Read).await.unwrap();
+
+        let result = manager
+            .check("user1", "resource1", Permission::Read)
+            .await
+            .unwrap();
         assert!(result);
     }
 
@@ -597,7 +625,7 @@ mod tests {
         let classifier = DataClassifier::new();
         let data = b"Contact: test@example.com";
         let metadata = HashMap::new();
-        
+
         let classification = classifier.classify(data, &metadata).await.unwrap();
         assert!(classification >= DataClassification::Confidential);
     }

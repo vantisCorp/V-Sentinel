@@ -1,17 +1,17 @@
 //! SENTINEL Neural Network Module
-//! 
+//!
 //! This module provides advanced neural network capabilities for threat detection,
 // including deep learning models, federated learning, graph neural networks,
 // reinforcement learning, and neural explainability.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
+use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
+use rand::{rngs::OsRng, RngCore};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use rand::{RngCore, rngs::OsRng};
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use tracing::{debug, error, info, warn};
 
 /// Neural Network Manager
 pub struct NeuralManager {
@@ -329,7 +329,7 @@ impl NeuralManager {
     /// Create a new neural manager
     pub fn new() -> Result<Self> {
         info!("Creating Neural Network Manager...");
-        
+
         Ok(Self {
             models: Arc::new(RwLock::new(HashMap::new())),
             federated_learning: Arc::new(RwLock::new(FederatedLearningEngine::new())),
@@ -339,28 +339,28 @@ impl NeuralManager {
             statistics: Arc::new(RwLock::new(NeuralStatistics::default())),
         })
     }
-    
+
     /// Initialize neural manager
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing Neural Network Manager...");
-        
+
         // Create default threat detection model
         let model = self.create_threat_detection_model().await?;
         self.add_model(model).await?;
-        
+
         // Initialize federated learning
         self.federated_learning.write().await.initialize()?;
-        
+
         // Initialize GNN
         self.graph_nets.write().await.initialize()?;
-        
+
         // Initialize RL agent
         self.reinforcement.write().await.initialize()?;
-        
+
         info!("Neural Network Manager initialized successfully");
         Ok(())
     }
-    
+
     /// Create threat detection model
     pub async fn create_threat_detection_model(&self) -> Result<NeuralModel> {
         let architecture = ModelArchitecture {
@@ -410,7 +410,7 @@ impl NeuralManager {
             output_size: 10,
             total_parameters: 0,
         };
-        
+
         let hyperparameters = Hyperparameters {
             learning_rate: 0.001,
             batch_size: 64,
@@ -423,11 +423,11 @@ impl NeuralManager {
                 dropout: 0.5,
             }),
         };
-        
+
         let mut weights = Vec::new();
         let total_params = self.calculate_total_parameters(&architecture);
         weights.resize(total_params, 0.0);
-        
+
         let model = NeuralModel {
             id: self.generate_model_id().await,
             model_type: ModelType::DeepNeuralNetwork,
@@ -448,142 +448,156 @@ impl NeuralManager {
             last_updated: Utc::now().timestamp(),
             is_active: true,
         };
-        
+
         Ok(model)
     }
-    
+
     /// Add model
     pub async fn add_model(&self, model: NeuralModel) -> Result<()> {
         let id = model.id.clone();
-        
+
         {
             let mut models = self.models.write().await;
             models.insert(id.clone(), model);
         }
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_models += 1;
         }
-        
+
         info!("Added neural model: {}", id);
         Ok(())
     }
-    
+
     /// Get model
     pub async fn get_model(&self, id: &str) -> Result<Option<NeuralModel>> {
         let models = self.models.read().await;
         Ok(models.get(id).cloned())
     }
-    
+
     /// List models
     pub async fn list_models(&self) -> Vec<NeuralModel> {
         let models = self.models.read().await;
         models.values().cloned().collect()
     }
-    
+
     /// Inference
     pub async fn infer(&self, model_id: &str, input: &[f32]) -> Result<Vec<f32>> {
         let models = self.models.read().await;
-        let model = models.get(model_id).ok_or_else(|| anyhow!("Model not found"))?;
-        
+        let model = models
+            .get(model_id)
+            .ok_or_else(|| anyhow!("Model not found"))?;
+
         let start = std::time::Instant::now();
         let output = self.forward_pass(&model, input)?;
         let duration = start.elapsed();
-        
+
         self.update_statistics(duration).await;
-        
+
         Ok(output)
     }
-    
+
     /// Train model
-    pub async fn train(&self, model_id: &str, training_data: &[Vec<f32>], labels: &[Vec<f32>]) -> Result<ModelPerformance> {
+    pub async fn train(
+        &self,
+        model_id: &str,
+        training_data: &[Vec<f32>],
+        labels: &[Vec<f32>],
+    ) -> Result<ModelPerformance> {
         let mut models = self.models.write().await;
-        let model = models.get_mut(model_id).ok_or_else(|| anyhow!("Model not found"))?;
-        
+        let model = models
+            .get_mut(model_id)
+            .ok_or_else(|| anyhow!("Model not found"))?;
+
         let start = std::time::Instant::now();
-        
+
         // Simplified training
         self.train_model(model, training_data, labels)?;
-        
+
         let duration = start.elapsed();
-        
+
         model.last_updated = Utc::now().timestamp();
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_training_time_ms += duration.as_millis() as u64;
         }
-        
+
         Ok(model.performance.clone())
     }
-    
+
     /// Federated learning round
     pub async fn federated_learning_round(&self) -> Result<f64> {
         let mut fl = self.federated_learning.write().await;
         let start = std::time::Instant::now();
-        
+
         let accuracy = fl.perform_aggregation_round()?;
-        
+
         let duration = start.elapsed();
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.federated_rounds += 1;
         }
-        
-        info!("Federated learning round completed with accuracy: {:.2}", accuracy);
-        
+
+        info!(
+            "Federated learning round completed with accuracy: {:.2}",
+            accuracy
+        );
+
         Ok(accuracy)
     }
-    
+
     /// Graph neural network inference
     pub async fn gnn_infer(&self, graph: Graph) -> Result<Vec<f64>> {
         let gnn = self.graph_nets.read().await;
         let start = std::time::Instant::now();
-        
+
         let predictions = gnn.forward(&graph)?;
-        
+
         self.update_statistics(start.elapsed()).await;
-        
+
         Ok(predictions)
     }
-    
+
     /// Reinforcement learning action
     pub async fn rl_select_action(&self, state: &[f32]) -> Result<usize> {
         let rl = self.reinforcement.read().await;
         let start = std::time::Instant::now();
-        
+
         let action = rl.select_action(state)?;
-        
+
         self.update_statistics(start.elapsed()).await;
-        
+
         Ok(action)
     }
-    
+
     /// Explain prediction
     pub async fn explain(&self, model_id: &str, input: &[f32]) -> Result<Explanation> {
         let models = self.models.read().await;
-        let model = models.get(model_id).ok_or_else(|| anyhow!("Model not found"))?;
-        
+        let model = models
+            .get(model_id)
+            .ok_or_else(|| anyhow!("Model not found"))?;
+
         let explainability = self.explainability.read().await;
-        
+
         let explanation = explainability.generate_explanation(&model, input)?;
-        
+
         Ok(explanation)
     }
-    
+
     /// Get statistics
     pub async fn get_statistics(&self) -> NeuralStatistics {
         self.statistics.read().await.clone()
     }
-    
+
     // Private helper methods
-    
+
     fn calculate_total_parameters(&self, architecture: &ModelArchitecture) -> usize {
         let mut total = 0;
         let mut prev_size = architecture.input_size;
-        
+
         for layer in &architecture.layers {
             match layer.layer_type {
                 LayerType::Dense | LayerType::LSTM | LayerType::GRU => {
@@ -596,21 +610,21 @@ impl NeuralManager {
                 _ => {}
             }
         }
-        
+
         total
     }
-    
+
     fn forward_pass(&self, model: &NeuralModel, input: &[f32]) -> Result<Vec<f32>> {
         // Simplified forward pass
         let mut current = input.to_vec();
-        
+
         for layer in &model.architecture.layers {
             current = self.apply_layer(&layer, &current)?;
         }
-        
+
         Ok(current)
     }
-    
+
     fn apply_layer(&self, layer: &Layer, input: &[f32]) -> Result<Vec<f32>> {
         match layer.layer_type {
             LayerType::Dense => self.apply_dense(layer, input),
@@ -618,11 +632,11 @@ impl NeuralManager {
             _ => Ok(input.to_vec()),
         }
     }
-    
+
     fn apply_dense(&self, layer: &Layer, input: &[f32]) -> Result<Vec<f32>> {
         // Simplified dense layer
         let mut output = vec![0.0; layer.size];
-        
+
         for (i, out) in output.iter_mut().enumerate() {
             let mut sum = 0.0;
             for (j, &inp) in input.iter().enumerate() {
@@ -630,18 +644,18 @@ impl NeuralManager {
             }
             *out = sum;
         }
-        
+
         // Apply activation
         self.apply_activation(layer.activation, &mut output);
-        
+
         Ok(output)
     }
-    
+
     fn apply_dropout(&self, layer: &Layer, input: &[f32]) -> Result<Vec<f32>> {
         // Dropout is applied during training only
         Ok(input.to_vec())
     }
-    
+
     fn apply_activation(&self, activation: ActivationFunction, data: &mut [f32]) {
         match activation {
             ActivationFunction::ReLU => {
@@ -679,36 +693,41 @@ impl NeuralManager {
             }
         }
     }
-    
-    fn train_model(&self, model: &mut NeuralModel, training_data: &[Vec<f32>], labels: &[Vec<f32>]) -> Result<()> {
+
+    fn train_model(
+        &self,
+        model: &mut NeuralModel,
+        training_data: &[Vec<f32>],
+        labels: &[Vec<f32>],
+    ) -> Result<()> {
         // Simplified training
         for (input, label) in training_data.iter().zip(labels.iter()) {
             let output = self.forward_pass(model, input)?;
-            
+
             // Update weights (simplified gradient descent)
             for weight in model.weights.iter_mut() {
                 *weight += 0.001 * (1.0 - *weight);
             }
         }
-        
+
         Ok(())
     }
-    
+
     async fn generate_model_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let hash = Sha256::digest(&bytes);
         format!("MODEL-{}", hex::encode(&hash[..8]))
     }
-    
+
     async fn update_statistics(&self, duration: std::time::Duration) {
         let mut stats = self.statistics.write().await;
         stats.total_inferences += 1;
         let time_ms = duration.as_millis() as f64;
         stats.average_inference_time_ms =
             (stats.average_inference_time_ms * (stats.total_inferences - 1) as f64 + time_ms)
-            / stats.total_inferences as f64;
+                / stats.total_inferences as f64;
     }
 }
 
@@ -722,22 +741,22 @@ impl FederatedLearningEngine {
             round: 0,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         // Initialize with default global model
         Ok(())
     }
-    
+
     pub fn perform_aggregation_round(&mut self) -> Result<f64> {
         self.round += 1;
-        
+
         // Simplified federated averaging
         let mut accuracy = 0.85 + (self.round as f64 * 0.01);
         accuracy = accuracy.min(0.99);
-        
+
         Ok(accuracy)
     }
-    
+
     pub fn add_client(&mut self, client: FederatedClient) {
         self.clients.push(client);
     }
@@ -756,20 +775,20 @@ impl GraphNeuralNetwork {
             embedding_dim: 128,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub fn forward(&self, graph: &Graph) -> Result<Vec<f64>> {
         // Simplified GNN forward pass
         let mut predictions = Vec::new();
-        
+
         for node in &graph.nodes {
             let mut feature_sum = node.features.iter().sum::<f32>();
             let neighbors = graph.adj_list.get(&node.id).map(|v| v.len()).unwrap_or(0);
             let mut neighbor_sum = 0.0;
-            
+
             if let Some(neighbor_ids) = graph.adj_list.get(&node.id) {
                 for neighbor_id in neighbor_ids {
                     if let Some(neighbor) = graph.nodes.get(*neighbor_id) {
@@ -777,14 +796,14 @@ impl GraphNeuralNetwork {
                     }
                 }
             }
-            
+
             let prediction = (feature_sum + neighbor_sum) as f64 / (1.0 + neighbors as f64);
             predictions.push(prediction);
         }
-        
+
         Ok(predictions)
     }
-    
+
     pub fn build_from_system(&mut self, processes: Vec<ProcessInfo>) {
         // Build graph from system processes
         for (i, process) in processes.iter().enumerate() {
@@ -799,7 +818,7 @@ impl GraphNeuralNetwork {
                 label: None,
             });
         }
-        
+
         // Create edges (simplified)
         for i in 0..self.graph.nodes.len() {
             for j in (i + 1)..self.graph.nodes.len().min(i + 5) {
@@ -825,11 +844,11 @@ impl ReinforcementLearningAgent {
             total_steps: 0,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub fn select_action(&self, state: &[f32]) -> Result<usize> {
         // Simplified action selection
         let mut rng = OsRng;
@@ -851,16 +870,16 @@ impl ExplainabilityEngine {
             counterfactual_generator: true,
         }
     }
-    
+
     pub fn generate_explanation(&self, model: &NeuralModel, input: &[f32]) -> Result<Explanation> {
         // Simplified SHAP-like explanation
         let mut attributions = Vec::new();
         for (i, &val) in input.iter().enumerate() {
             attributions.push((i, val.abs()));
         }
-        
+
         attributions.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-        
+
         Ok(Explanation {
             method: ExplainabilityMethod::SHAP,
             attributions: attributions.into_iter().take(10).collect(),
@@ -898,42 +917,42 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_neural_manager_initialization() {
         let manager = NeuralManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_model_creation() {
         let manager = NeuralManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let model = manager.create_threat_detection_model().await.unwrap();
         assert!(!model.id.is_empty());
         assert_eq!(model.model_type, ModelType::DeepNeuralNetwork);
     }
-    
+
     #[tokio::test]
     async fn test_inference() {
         let manager = NeuralManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let models = manager.list_models().await;
         let model_id = &models[0].id;
-        
+
         let input = vec![0.5f32; 1024];
         let output = manager.infer(model_id, &input).await.unwrap();
-        
+
         assert!(!output.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_gnn_inference() {
         let manager = NeuralManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let graph = Graph {
             nodes: vec![
                 Node {
@@ -952,22 +971,22 @@ mod tests {
             edges: vec![],
             adj_list: HashMap::new(),
         };
-        
+
         let predictions = manager.gnn_infer(graph).await.unwrap();
         assert_eq!(predictions.len(), 2);
     }
-    
+
     #[tokio::test]
     async fn test_explanation() {
         let manager = NeuralManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let models = manager.list_models().await;
         let model_id = &models[0].id;
-        
+
         let input = vec![0.5f32; 1024];
         let explanation = manager.explain(model_id, &input).await.unwrap();
-        
+
         assert!(!explanation.attributions.is_empty());
     }
 }

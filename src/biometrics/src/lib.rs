@@ -1,18 +1,18 @@
 //! SENTINEL Biometrics Module
-//! 
+//!
 //! This module provides biometric authentication and identification capabilities
 //! including fingerprint, facial recognition, voice recognition, behavioral biometrics,
 //! and multi-modal biometric fusion.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
+use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
+use rand::{rngs::OsRng, RngCore};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256, Sha512};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Sha512, Digest};
-use rand::{RngCore, rngs::OsRng};
-use std::collections::HashMap;
-use chrono::{DateTime, Utc};
+use tracing::{debug, error, info, warn};
 
 /// Biometrics Manager
 pub struct BiometricsManager {
@@ -437,7 +437,7 @@ impl BiometricsManager {
     /// Create a new biometrics manager
     pub fn new() -> Result<Self> {
         info!("Creating Biometrics Manager...");
-        
+
         Ok(Self {
             fingerprint: Arc::new(RwLock::new(FingerprintEngine::new())),
             facial: Arc::new(RwLock::new(FacialRecognitionEngine::new())),
@@ -448,28 +448,28 @@ impl BiometricsManager {
             statistics: Arc::new(RwLock::new(BiometricStatistics::default())),
         })
     }
-    
+
     /// Initialize biometrics manager
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing Biometrics Manager...");
-        
+
         // Initialize all engines
         self.fingerprint.write().await.initialize()?;
         self.facial.write().await.initialize()?;
         self.voice.write().await.initialize()?;
         self.behavioral.write().await.initialize()?;
-        
+
         info!("Biometrics Manager initialized successfully");
         Ok(())
     }
-    
+
     /// Enroll biometric template
     pub async fn enroll(&self, user_id: &str, sample: BiometricSample) -> Result<String> {
         let start = std::time::Instant::now();
-        
+
         // Extract template from sample
         let template_data = self.extract_template(&sample).await?;
-        
+
         let template = BiometricTemplate {
             user_id: user_id.to_string(),
             template_id: self.generate_template_id().await,
@@ -481,36 +481,47 @@ impl BiometricsManager {
             usage_count: 0,
             is_active: true,
         };
-        
+
         let template_id = template.template_id.clone();
-        
+
         {
             let mut templates = self.templates.write().await;
             templates.insert(template.template_id.clone(), template);
         }
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_enrollments += 1;
-            stats.average_enrollment_time_ms =
-                (stats.average_enrollment_time_ms * (stats.total_enrollments - 1) as f64 + start.elapsed().as_millis() as f64)
+            stats.average_enrollment_time_ms = (stats.average_enrollment_time_ms
+                * (stats.total_enrollments - 1) as f64
+                + start.elapsed().as_millis() as f64)
                 / stats.total_enrollments as f64;
         }
-        
-        info!("Enrolled biometric template: {} for user: {}", template_id, user_id);
+
+        info!(
+            "Enrolled biometric template: {} for user: {}",
+            template_id, user_id
+        );
         Ok(template_id)
     }
-    
+
     /// Authenticate with biometric sample
-    pub async fn authenticate(&self, user_id: &str, sample: BiometricSample) -> Result<AuthenticationResult> {
+    pub async fn authenticate(
+        &self,
+        user_id: &str,
+        sample: BiometricSample,
+    ) -> Result<AuthenticationResult> {
         let start = std::time::Instant::now();
-        
+
         // Get stored template
         let templates = self.templates.read().await;
-        let user_templates: Vec<&BiometricTemplate> = templates.values()
-            .filter(|t| t.user_id == user_id && t.biometric_type == sample.biometric_type && t.is_active)
+        let user_templates: Vec<&BiometricTemplate> = templates
+            .values()
+            .filter(|t| {
+                t.user_id == user_id && t.biometric_type == sample.biometric_type && t.is_active
+            })
             .collect();
-        
+
         if user_templates.is_empty() {
             return Ok(AuthenticationResult {
                 success: false,
@@ -524,14 +535,15 @@ impl BiometricsManager {
                 fraud_indicators: vec!["No template found".to_string()],
             });
         }
-        
+
         // Match sample against templates
-        let (matching_score, liveness_detected, fraud_indicators) = self.match_sample(&sample, &user_templates).await?;
-        
+        let (matching_score, liveness_detected, fraud_indicators) =
+            self.match_sample(&sample, &user_templates).await?;
+
         let threshold = self.get_threshold(sample.biometric_type).await;
         let success = matching_score >= threshold && liveness_detected;
         let confidence = matching_score / threshold;
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_authentications += 1;
@@ -540,11 +552,12 @@ impl BiometricsManager {
             } else {
                 stats.failed_authentications += 1;
             }
-            stats.average_authentication_time_ms =
-                (stats.average_authentication_time_ms * (stats.total_authentications - 1) as f64 + start.elapsed().as_millis() as f64)
+            stats.average_authentication_time_ms = (stats.average_authentication_time_ms
+                * (stats.total_authentications - 1) as f64
+                + start.elapsed().as_millis() as f64)
                 / stats.total_authentications as f64;
         }
-        
+
         Ok(AuthenticationResult {
             success,
             user_id: Some(user_id.to_string()),
@@ -557,7 +570,7 @@ impl BiometricsManager {
             fraud_indicators,
         })
     }
-    
+
     /// Multi-modal authentication
     pub async fn multi_modal_authenticate(
         &self,
@@ -565,17 +578,17 @@ impl BiometricsManager {
         samples: Vec<BiometricSample>,
     ) -> Result<AuthenticationResult> {
         let start = std::time::Instant::now();
-        
+
         let mut results = Vec::new();
         for sample in samples {
             let result = self.authenticate(user_id, sample).await?;
             results.push(result);
         }
-        
+
         // Fuse results
         let fusion = self.fusion.read().await;
         let fused_result = fusion.fuse_results(&results)?;
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_authentications += 1;
@@ -585,58 +598,65 @@ impl BiometricsManager {
                 stats.failed_authentications += 1;
             }
         }
-        
+
         Ok(fused_result)
     }
-    
+
     /// Identify user from biometric sample (1:N matching)
     pub async fn identify(&self, sample: BiometricSample) -> Result<Option<String>> {
         let templates = self.templates.read().await;
-        let matching_templates: Vec<&BiometricTemplate> = templates.values()
+        let matching_templates: Vec<&BiometricTemplate> = templates
+            .values()
             .filter(|t| t.biometric_type == sample.biometric_type && t.is_active)
             .collect();
-        
+
         let threshold = self.get_threshold(sample.biometric_type).await;
-        
+
         let mut best_match: Option<(String, f64)> = None;
-        
+
         for template in matching_templates {
             let score = self.calculate_matching_score(&sample, template).await?;
-            
+
             if score >= threshold {
                 if best_match.is_none() || score > best_match.as_ref().unwrap().1 {
                     best_match = Some((template.user_id.clone(), score));
                 }
             }
         }
-        
+
         Ok(best_match.map(|(user_id, _)| user_id))
     }
-    
+
     /// Delete biometric template
     pub async fn delete_template(&self, template_id: &str) -> Result<bool> {
         let mut templates = self.templates.write().await;
         Ok(templates.remove(template_id).is_some())
     }
-    
+
     /// Get statistics
     pub async fn get_statistics(&self) -> BiometricStatistics {
         self.statistics.read().await.clone()
     }
-    
+
     // Private helper methods
-    
+
     async fn extract_template(&self, sample: &BiometricSample) -> Result<Vec<u8>> {
         match sample.biometric_type {
-            BiometricType::Fingerprint => {
-                self.fingerprint.read().await.extract_template(&sample.sample_data)
-            }
-            BiometricType::FacialRecognition => {
-                self.facial.read().await.extract_template(&sample.sample_data)
-            }
-            BiometricType::VoiceRecognition => {
-                self.voice.read().await.extract_template(&sample.sample_data)
-            }
+            BiometricType::Fingerprint => self
+                .fingerprint
+                .read()
+                .await
+                .extract_template(&sample.sample_data),
+            BiometricType::FacialRecognition => self
+                .facial
+                .read()
+                .await
+                .extract_template(&sample.sample_data),
+            BiometricType::VoiceRecognition => self
+                .voice
+                .read()
+                .await
+                .extract_template(&sample.sample_data),
             _ => {
                 // Default extraction
                 let mut hasher = Sha256::new();
@@ -645,7 +665,7 @@ impl BiometricsManager {
             }
         }
     }
-    
+
     async fn match_sample(
         &self,
         sample: &BiometricSample,
@@ -654,7 +674,7 @@ impl BiometricsManager {
         let mut best_score: f64 = 0.0;
         let mut liveness_detected = false;
         let mut fraud_indicators = Vec::new();
-        
+
         match sample.biometric_type {
             BiometricType::Fingerprint => {
                 let fp = self.fingerprint.read().await;
@@ -685,25 +705,35 @@ impl BiometricsManager {
                 liveness_detected = true;
             }
         }
-        
+
         Ok((best_score, liveness_detected, fraud_indicators))
     }
-    
-    async fn calculate_matching_score(&self, sample: &BiometricSample, template: &BiometricTemplate) -> Result<f64> {
+
+    async fn calculate_matching_score(
+        &self,
+        sample: &BiometricSample,
+        template: &BiometricTemplate,
+    ) -> Result<f64> {
         match sample.biometric_type {
-            BiometricType::Fingerprint => {
-                self.fingerprint.read().await.match_templates(&sample.sample_data, &template.template_data)
-            }
-            BiometricType::FacialRecognition => {
-                self.facial.read().await.match_templates(&sample.sample_data, &template.template_data)
-            }
-            BiometricType::VoiceRecognition => {
-                self.voice.read().await.match_templates(&sample.sample_data, &template.template_data)
-            }
+            BiometricType::Fingerprint => self
+                .fingerprint
+                .read()
+                .await
+                .match_templates(&sample.sample_data, &template.template_data),
+            BiometricType::FacialRecognition => self
+                .facial
+                .read()
+                .await
+                .match_templates(&sample.sample_data, &template.template_data),
+            BiometricType::VoiceRecognition => self
+                .voice
+                .read()
+                .await
+                .match_templates(&sample.sample_data, &template.template_data),
             _ => Ok(0.5),
         }
     }
-    
+
     async fn get_threshold(&self, biometric_type: BiometricType) -> f64 {
         match biometric_type {
             BiometricType::Fingerprint => self.fingerprint.read().await.threshold,
@@ -712,7 +742,7 @@ impl BiometricsManager {
             _ => 0.8,
         }
     }
-    
+
     async fn generate_template_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
@@ -730,15 +760,15 @@ impl FingerprintEngine {
             threshold: 0.85,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub fn extract_template(&self, sample_data: &[u8]) -> Result<Vec<u8>> {
         // Extract minutiae points (simplified)
         let minutiae = self.minutiae_extractor.extract(sample_data)?;
-        
+
         // Encode as template
         let mut template = Vec::new();
         for m in minutiae {
@@ -746,21 +776,21 @@ impl FingerprintEngine {
             template.extend_from_slice(&m.y.to_be_bytes());
             template.extend_from_slice(&m.angle.to_be_bytes());
         }
-        
+
         Ok(template)
     }
-    
+
     pub fn match_templates(&self, sample_data: &[u8], template_data: &[u8]) -> Result<f64> {
         // Simplified matching
         let sample_minutiae = self.minutiae_extractor.extract(sample_data)?;
-        
+
         // Compare minutiae count and positions
         let matching_points = sample_minutiae.len().min(template_data.len() / 16);
         let score = matching_points as f64 / sample_minutiae.len().max(1) as f64;
-        
+
         Ok(score.min(1.0))
     }
-    
+
     pub fn detect_liveness(&self, _sample_data: &[u8]) -> Result<bool> {
         // Simplified liveness detection
         Ok(true)
@@ -774,15 +804,15 @@ impl MinutiaeExtractor {
             quality_threshold: 0.6,
         }
     }
-    
+
     pub fn extract(&self, sample_data: &[u8]) -> Result<Vec<MinutiaePoint>> {
         // Simplified minutiae extraction
         let mut minutiae = Vec::new();
         let mut rng = OsRng;
-        
+
         // Generate random minutiae points for demo
         let num_points = (sample_data.len() / 100).min(50).max(10);
-        
+
         for _ in 0..num_points {
             minutiae.push(MinutiaePoint {
                 x: rng.next_u32() % 512,
@@ -792,7 +822,7 @@ impl MinutiaeExtractor {
                 quality: 0.8,
             });
         }
-        
+
         Ok(minutiae)
     }
 }
@@ -825,53 +855,56 @@ impl FacialRecognitionEngine {
             threshold: 0.85,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub fn extract_template(&self, sample_data: &[u8]) -> Result<Vec<u8>> {
         // Detect faces
         let detection = self.face_detector.detect(sample_data)?;
-        
+
         if detection.faces.is_empty() {
             return Err(anyhow!("No face detected"));
         }
-        
+
         // Extract features from first face
         let face = &detection.faces[0];
         Ok(face.features.iter().flat_map(|f| f.to_be_bytes()).collect())
     }
-    
+
     pub fn match_templates(&self, sample_data: &[u8], template_data: &[u8]) -> Result<f64> {
         let detection = self.face_detector.detect(sample_data)?;
-        
+
         if detection.faces.is_empty() {
             return Ok(0.0);
         }
-        
+
         // Calculate cosine similarity (simplified)
         let features = &detection.faces[0].features;
-        let template_features: Vec<f32> = template_data.chunks(4)
+        let template_features: Vec<f32> = template_data
+            .chunks(4)
             .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0; 4])))
             .collect();
-        
-        let dot_product: f32 = features.iter().zip(template_features.iter())
+
+        let dot_product: f32 = features
+            .iter()
+            .zip(template_features.iter())
             .map(|(a, b)| a * b)
             .sum();
-        
+
         let norm_a: f32 = features.iter().map(|x| x * x).sum::<f32>().sqrt();
         let norm_b: f32 = template_features.iter().map(|x| x * x).sum::<f32>().sqrt();
-        
+
         let similarity = if norm_a > 0.0 && norm_b > 0.0 {
             (dot_product / (norm_a * norm_b)) as f64
         } else {
             0.0
         };
-        
+
         Ok((similarity + 1.0) / 2.0)
     }
-    
+
     pub fn detect_liveness(&self, _sample_data: &[u8]) -> Result<bool> {
         // Simplified liveness detection
         Ok(true)
@@ -885,20 +918,20 @@ impl FaceDetector {
             confidence_threshold: 0.9,
         }
     }
-    
+
     pub fn detect(&self, _sample_data: &[u8]) -> Result<FaceDetectionResult> {
         // Simplified face detection
         let mut rng = OsRng;
-        
+
         let mut faces = Vec::new();
         let num_faces = 1; // Assume one face for demo
-        
+
         for _ in 0..num_faces {
             let mut features = vec![0.0f32; 128];
             for f in features.iter_mut() {
                 *f = (rng.next_u32() as f32 / u32::MAX as f32 - 0.5) * 2.0;
             }
-            
+
             faces.push(DetectedFace {
                 bounding_box: BoundingBox {
                     x: 50,
@@ -916,7 +949,7 @@ impl FaceDetector {
                 features,
             });
         }
-        
+
         Ok(FaceDetectionResult {
             faces,
             image_quality: 0.9,
@@ -951,31 +984,35 @@ impl VoiceRecognitionEngine {
             threshold: 0.8,
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
-    
+
     pub fn extract_template(&self, sample_data: &[u8]) -> Result<Vec<u8>> {
         // Extract voice features
         let features = self.feature_extractor.extract(sample_data)?;
         Ok(features.iter().flat_map(|f| f.to_be_bytes()).collect())
     }
-    
+
     pub fn match_templates(&self, sample_data: &[u8], template_data: &[u8]) -> Result<f64> {
         let features = self.feature_extractor.extract(sample_data)?;
-        let template_features: Vec<f32> = template_data.chunks(4)
+        let template_features: Vec<f32> = template_data
+            .chunks(4)
             .map(|chunk| f32::from_be_bytes(chunk.try_into().unwrap_or([0; 4])))
             .collect();
-        
+
         // Calculate similarity
-        let similarity: f64 = features.iter().zip(template_features.iter())
+        let similarity: f64 = features
+            .iter()
+            .zip(template_features.iter())
             .map(|(a, b)| 1.0 - (a - b).abs() as f64)
-            .sum::<f64>() / features.len().max(1) as f64;
-        
+            .sum::<f64>()
+            / features.len().max(1) as f64;
+
         Ok(similarity)
     }
-    
+
     pub fn detect_liveness(&self, _sample_data: &[u8]) -> Result<bool> {
         Ok(true)
     }
@@ -989,16 +1026,16 @@ impl VoiceFeatureExtractor {
             feature_type: VoiceFeatureType::MFCC,
         }
     }
-    
+
     pub fn extract(&self, sample_data: &[u8]) -> Result<Vec<f32>> {
         // Simplified MFCC extraction
         let mut features = vec![0.0f32; 128];
         let mut rng = OsRng;
-        
+
         for f in features.iter_mut() {
             *f = (rng.next_u32() as f32 / u32::MAX as f32 - 0.5) * 2.0;
         }
-        
+
         Ok(features)
     }
 }
@@ -1031,7 +1068,7 @@ impl BehavioralBiometricsEngine {
             touch: TouchDynamicsEngine::new(),
         }
     }
-    
+
     pub fn initialize(&mut self) -> Result<()> {
         Ok(())
     }
@@ -1086,11 +1123,13 @@ impl MultiModalFusion {
                 (BiometricType::FacialRecognition, 0.35),
                 (BiometricType::VoiceRecognition, 0.2),
                 (BiometricType::Behavioral, 0.15),
-            ].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect(),
             threshold: 0.8,
         }
     }
-    
+
     pub fn fuse_results(&self, results: &[AuthenticationResult]) -> Result<AuthenticationResult> {
         if results.is_empty() {
             return Ok(AuthenticationResult {
@@ -1105,28 +1144,32 @@ impl MultiModalFusion {
                 fraud_indicators: vec!["No results to fuse".to_string()],
             });
         }
-        
+
         // Weighted average fusion
         let mut total_weight = 0.0;
         let mut weighted_score = 0.0;
         let mut all_liveness = true;
         let mut all_fraud = Vec::new();
-        
+
         for result in results {
-            let weight = self.weights.get(&result.biometric_type).copied().unwrap_or(0.1);
+            let weight = self
+                .weights
+                .get(&result.biometric_type)
+                .copied()
+                .unwrap_or(0.1);
             weighted_score += result.matching_score * weight;
             total_weight += weight;
-            
+
             if !result.liveness_detected {
                 all_liveness = false;
             }
-            
+
             all_fraud.extend(result.fraud_indicators.clone());
         }
-        
+
         let fused_score = weighted_score / total_weight;
         let success = fused_score >= self.threshold && all_liveness;
-        
+
         Ok(AuthenticationResult {
             success,
             user_id: results[0].user_id.clone(),
@@ -1150,18 +1193,18 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_biometrics_manager_initialization() {
         let manager = BiometricsManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_fingerprint_enrollment() {
         let manager = BiometricsManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let sample = BiometricSample {
             sample_id: "SAMPLE-001".to_string(),
             biometric_type: BiometricType::Fingerprint,
@@ -1171,16 +1214,16 @@ mod tests {
             device_id: "DEVICE-001".to_string(),
             metadata: HashMap::new(),
         };
-        
+
         let template_id = manager.enroll("USER-001", sample).await.unwrap();
         assert!(!template_id.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_fingerprint_authentication() {
         let manager = BiometricsManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         // Enroll first
         let sample = BiometricSample {
             sample_id: "SAMPLE-001".to_string(),
@@ -1192,7 +1235,7 @@ mod tests {
             metadata: HashMap::new(),
         };
         manager.enroll("USER-001", sample).await.unwrap();
-        
+
         // Authenticate
         let auth_sample = BiometricSample {
             sample_id: "SAMPLE-002".to_string(),
@@ -1203,16 +1246,16 @@ mod tests {
             device_id: "DEVICE-001".to_string(),
             metadata: HashMap::new(),
         };
-        
+
         let result = manager.authenticate("USER-001", auth_sample).await.unwrap();
         assert!(result.success);
     }
-    
+
     #[tokio::test]
     async fn test_facial_recognition() {
         let manager = BiometricsManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let sample = BiometricSample {
             sample_id: "SAMPLE-001".to_string(),
             biometric_type: BiometricType::FacialRecognition,
@@ -1222,16 +1265,16 @@ mod tests {
             device_id: "DEVICE-001".to_string(),
             metadata: HashMap::new(),
         };
-        
+
         let template_id = manager.enroll("USER-001", sample).await.unwrap();
         assert!(!template_id.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_statistics() {
         let manager = BiometricsManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let sample = BiometricSample {
             sample_id: "SAMPLE-001".to_string(),
             biometric_type: BiometricType::Fingerprint,
@@ -1241,9 +1284,9 @@ mod tests {
             device_id: "DEVICE-001".to_string(),
             metadata: HashMap::new(),
         };
-        
+
         manager.enroll("USER-001", sample).await.unwrap();
-        
+
         let stats = manager.get_statistics().await;
         assert_eq!(stats.total_enrollments, 1);
     }

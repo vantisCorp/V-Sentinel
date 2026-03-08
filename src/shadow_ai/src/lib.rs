@@ -1,5 +1,5 @@
 //! SENTINEL Shadow AI Detection and Governance Module
-//! 
+//!
 //! This module detects and govern unsanctioned AI models (Shadow AI)
 //! deployed across organizational systems without proper authorization.
 //!
@@ -10,25 +10,25 @@
 //! - Risk Assessment: Evaluate risks of detected AI deployments
 
 pub mod discovery;
-pub mod traffic;
 pub mod governance;
-pub mod risk;
 pub mod models;
+pub mod risk;
+pub mod traffic;
 
-pub use discovery::{DiscoveryEngine, DiscoveredAI, DiscoveryMethod};
-pub use traffic::{TrafficAnalyzer, AITrafficPattern, TrafficSignature};
-pub use governance::{GovernanceEngine, AIPolicy, ApprovalWorkflow, GovernanceAction};
-pub use risk::{RiskAssessment, RiskLevel, RiskFactor};
-pub use models::{AIModel, AIModelType, AIModelStatus};
+pub use discovery::{DiscoveredAI, DiscoveryEngine, DiscoveryMethod};
+pub use governance::{AIPolicy, ApprovalWorkflow, GovernanceAction, GovernanceEngine};
+pub use models::{AIModel, AIModelStatus, AIModelType};
+pub use risk::{RiskAssessment, RiskFactor, RiskLevel};
+pub use traffic::{AITrafficPattern, TrafficAnalyzer, TrafficSignature};
 
 use anyhow::Result;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{info, debug};
-use std::collections::HashMap;
+use tracing::{debug, info};
 
 /// Shadow AI Manager
-/// 
+///
 /// Central coordinator for Shadow AI detection and governance.
 /// Addresses the growing risk of unsanctioned AI deployments.
 pub struct ShadowAIManager {
@@ -101,8 +101,7 @@ pub struct DetectionResult {
 }
 
 /// Governance status
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
-#[derive(PartialEq)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize, PartialEq)]
 pub enum GovernanceStatus {
     Approved,
     Pending,
@@ -190,11 +189,14 @@ impl ShadowAIManager {
     /// Run full discovery scan
     pub async fn run_discovery(&self) -> Result<Vec<DiscoveredAI>> {
         info!("Starting Shadow AI discovery scan");
-        
+
         let mut discovery = self.discovery.write().await;
         let discovered = discovery.scan_all().await?;
-        
-        info!("Discovery complete: found {} AI instances", discovered.len());
+
+        info!(
+            "Discovery complete: found {} AI instances",
+            discovered.len()
+        );
         Ok(discovered)
     }
 
@@ -203,7 +205,7 @@ impl ShadowAIManager {
         if !self.config.traffic_analysis_enabled {
             return Ok(vec![]);
         }
-        
+
         let analyzer = self.traffic_analyzer.read().await;
         analyzer.analyze(traffic_data).await
     }
@@ -224,13 +226,15 @@ impl ShadowAIManager {
     pub async fn process_discovery(&self, discovered: DiscoveredAI) -> Result<DetectionResult> {
         // Assess risk
         let (risk_score, risk_level) = self.assess_risk(&discovered).await?;
-        
+
         // Check governance status
         let governance_status = self.check_governance(&discovered.id).await?;
-        
+
         // Generate recommended actions
-        let recommended_actions = self.generate_recommendations(risk_score, governance_status).await?;
-        
+        let recommended_actions = self
+            .generate_recommendations(risk_score, governance_status)
+            .await?;
+
         Ok(DetectionResult {
             id: uuid::Uuid::new_v4().to_string(),
             discovered,
@@ -249,23 +253,23 @@ impl ShadowAIManager {
         governance_status: GovernanceStatus,
     ) -> Result<Vec<GovernanceAction>> {
         let mut actions = Vec::new();
-        
+
         if risk_score >= self.config.alert_risk_threshold {
             actions.push(GovernanceAction::Alert);
         }
-        
+
         if governance_status == GovernanceStatus::Unapproved {
             actions.push(GovernanceAction::RequestApproval);
         }
-        
+
         if risk_score >= 0.9 && self.config.auto_block_high_risk {
             actions.push(GovernanceAction::Block);
         }
-        
+
         if governance_status == GovernanceStatus::Pending {
             actions.push(GovernanceAction::ExpediteReview);
         }
-        
+
         Ok(actions)
     }
 
@@ -276,7 +280,12 @@ impl ShadowAIManager {
     }
 
     /// Approve an AI model
-    pub async fn approve_model(&self, model_id: &str, approver: &str, justification: &str) -> Result<()> {
+    pub async fn approve_model(
+        &self,
+        model_id: &str,
+        approver: &str,
+        justification: &str,
+    ) -> Result<()> {
         let mut governance = self.governance.write().await;
         governance.approve(model_id, approver, justification).await
     }
@@ -292,7 +301,7 @@ impl ShadowAIManager {
         // Analyze the usage event for risk indicators
         let risk = self.risk_assessment.read().await;
         let _risk_score = risk.analyze_usage(&event).await?;
-        
+
         // Could trigger alerts based on usage patterns
         Ok(())
     }

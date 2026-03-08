@@ -1,15 +1,15 @@
 //! PQC Configuration Validator
-//! 
+//!
 //! This module provides validation for Post-Quantum Cryptography configuration
 //! to ensure proper algorithm selection, security levels, and compatibility.
 
-use anyhow::{Result, anyhow};
 use super::{Config, ConfigValidator};
+use anyhow::{anyhow, Result};
 
 /// Valid PQC KEM algorithms
 pub const VALID_KEM_ALGORITHMS: &[&str] = &[
     "CrystalsKyber512",
-    "CrystalsKyber768", 
+    "CrystalsKyber768",
     "CrystalsKyber1024",
     "kyber512",
     "kyber768",
@@ -94,7 +94,7 @@ impl PqcConfigValidator {
             allowed_signature_algorithms: Vec::new(),
         }
     }
-    
+
     /// Create a validator with production-ready settings
     pub fn production() -> Self {
         Self {
@@ -111,7 +111,7 @@ impl PqcConfigValidator {
             ],
         }
     }
-    
+
     /// Create a validator for CNSA 2.0 compliance
     pub fn cnsa_2_0() -> Self {
         Self {
@@ -127,25 +127,26 @@ impl PqcConfigValidator {
             ],
         }
     }
-    
+
     /// Set minimum security level
     pub fn with_min_security_level(mut self, level: u8) -> Self {
         self.min_security_level = level.clamp(1, 5);
         self
     }
-    
+
     /// Set hybrid mode requirement
     pub fn with_require_hybrid_mode(mut self, require: bool) -> Self {
         self.require_hybrid_mode = require;
         self
     }
-    
+
     /// Validate KEM algorithm name
     pub fn validate_kem_algorithm(&self, algorithm: &str) -> Result<u8> {
         // Check if algorithm is in valid list
-        let is_valid = VALID_KEM_ALGORITHMS.iter()
+        let is_valid = VALID_KEM_ALGORITHMS
+            .iter()
             .any(|&valid| valid.eq_ignore_ascii_case(algorithm));
-        
+
         if !is_valid {
             return Err(anyhow!(
                 "Invalid PQC KEM algorithm: '{}'. Valid algorithms: {}",
@@ -153,12 +154,14 @@ impl PqcConfigValidator {
                 VALID_KEM_ALGORITHMS.join(", ")
             ));
         }
-        
+
         // Check if algorithm is in allowed list (if specified)
         if !self.allowed_kem_algorithms.is_empty() {
-            let is_allowed = self.allowed_kem_algorithms.iter()
+            let is_allowed = self
+                .allowed_kem_algorithms
+                .iter()
                 .any(|allowed| allowed.eq_ignore_ascii_case(algorithm));
-            
+
             if !is_allowed {
                 return Err(anyhow!(
                     "KEM algorithm '{}' is not in the allowed list: {}",
@@ -167,13 +170,14 @@ impl PqcConfigValidator {
                 ));
             }
         }
-        
+
         // Get security level
-        let security_level = KEM_SECURITY_LEVELS.iter()
+        let security_level = KEM_SECURITY_LEVELS
+            .iter()
             .find(|(alg, _)| alg.eq_ignore_ascii_case(algorithm))
             .map(|&(_, level)| level)
             .unwrap_or(1);
-        
+
         // Check minimum security level
         if security_level < self.min_security_level {
             return Err(anyhow!(
@@ -183,16 +187,17 @@ impl PqcConfigValidator {
                 self.min_security_level
             ));
         }
-        
+
         Ok(security_level)
     }
-    
+
     /// Validate signature algorithm name
     pub fn validate_signature_algorithm(&self, algorithm: &str) -> Result<u8> {
         // Check if algorithm is in valid list
-        let is_valid = VALID_SIGNATURE_ALGORITHMS.iter()
+        let is_valid = VALID_SIGNATURE_ALGORITHMS
+            .iter()
             .any(|&valid| valid.eq_ignore_ascii_case(algorithm));
-        
+
         if !is_valid {
             return Err(anyhow!(
                 "Invalid PQC signature algorithm: '{}'. Valid algorithms: {}",
@@ -200,12 +205,14 @@ impl PqcConfigValidator {
                 VALID_SIGNATURE_ALGORITHMS.join(", ")
             ));
         }
-        
+
         // Check if algorithm is in allowed list (if specified)
         if !self.allowed_signature_algorithms.is_empty() {
-            let is_allowed = self.allowed_signature_algorithms.iter()
+            let is_allowed = self
+                .allowed_signature_algorithms
+                .iter()
                 .any(|allowed| allowed.eq_ignore_ascii_case(algorithm));
-            
+
             if !is_allowed {
                 return Err(anyhow!(
                     "Signature algorithm '{}' is not in the allowed list: {}",
@@ -214,13 +221,14 @@ impl PqcConfigValidator {
                 ));
             }
         }
-        
+
         // Get security level
-        let security_level = SIGNATURE_SECURITY_LEVELS.iter()
+        let security_level = SIGNATURE_SECURITY_LEVELS
+            .iter()
             .find(|(alg, _)| alg.eq_ignore_ascii_case(algorithm))
             .map(|&(_, level)| level)
             .unwrap_or(1);
-        
+
         // Check minimum security level
         if security_level < self.min_security_level {
             return Err(anyhow!(
@@ -230,10 +238,10 @@ impl PqcConfigValidator {
                 self.min_security_level
             ));
         }
-        
+
         Ok(security_level)
     }
-    
+
     /// Validate complete PQC configuration
     pub fn validate_pqc_config(
         &self,
@@ -246,17 +254,20 @@ impl PqcConfigValidator {
     ) -> Result<PqcValidationResult> {
         let mut warnings = Vec::new();
         let mut errors = Vec::new();
-        
+
         if !enable_pqc {
             return Ok(PqcValidationResult {
                 is_valid: true,
                 kem_security_level: None,
                 signature_security_level: None,
-                warnings: vec!["PQC is disabled. Consider enabling for quantum-resistant security.".to_string()],
+                warnings: vec![
+                    "PQC is disabled. Consider enabling for quantum-resistant security."
+                        .to_string(),
+                ],
                 errors: Vec::new(),
             });
         }
-        
+
         // Validate KEM algorithm
         let kem_level = if let Some(kem) = kem_algorithm {
             match self.validate_kem_algorithm(kem) {
@@ -270,7 +281,7 @@ impl PqcConfigValidator {
             errors.push("PQC is enabled but no KEM algorithm is specified".to_string());
             None
         };
-        
+
         // Validate signature algorithm
         let sig_level = if let Some(sig) = signature_algorithm {
             match self.validate_signature_algorithm(sig) {
@@ -284,19 +295,20 @@ impl PqcConfigValidator {
             errors.push("PQC is enabled but no signature algorithm is specified".to_string());
             None
         };
-        
+
         // Check hybrid mode
         if self.require_hybrid_mode && !hybrid_mode {
             errors.push("Hybrid mode is required but not enabled".to_string());
         }
-        
+
         if !hybrid_mode && !fallback_to_classical {
             warnings.push(
                 "Hybrid mode is disabled and fallback is disabled. \
-                 This may cause compatibility issues with non-PQC clients.".to_string()
+                 This may cause compatibility issues with non-PQC clients."
+                    .to_string(),
             );
         }
-        
+
         // Check security level consistency
         if let (Some(kem), Some(sig)) = (kem_level, sig_level) {
             if kem != sig {
@@ -306,7 +318,7 @@ impl PqcConfigValidator {
                     kem, sig
                 ));
             }
-            
+
             let effective_min = min_security_level.max(self.min_security_level);
             if kem < effective_min || sig < effective_min {
                 errors.push(format!(
@@ -315,7 +327,7 @@ impl PqcConfigValidator {
                 ));
             }
         }
-        
+
         Ok(PqcValidationResult {
             is_valid: errors.is_empty(),
             kem_security_level: kem_level,
@@ -342,22 +354,22 @@ impl ConfigValidator for PqcConfigValidator {
             config.network.pqc_fallback_to_classical,
             config.network.pqc_min_security_level,
         )?;
-        
+
         if !result.is_valid {
             return Err(anyhow!(
                 "PQC configuration validation failed: {}",
                 result.errors.join("; ")
             ));
         }
-        
+
         // Log warnings but don't fail
         for warning in &result.warnings {
             tracing::warn!("PQC configuration warning: {}", warning);
         }
-        
+
         Ok(())
     }
-    
+
     fn name(&self) -> &str {
         "pqc_config_validator"
     }
@@ -383,12 +395,12 @@ impl PqcValidationResult {
     pub fn has_warnings(&self) -> bool {
         !self.warnings.is_empty()
     }
-    
+
     /// Check if there are any errors
     pub fn has_errors(&self) -> bool {
         !self.errors.is_empty()
     }
-    
+
     /// Get overall security level (minimum of KEM and signature)
     pub fn overall_security_level(&self) -> Option<u8> {
         match (self.kem_security_level, self.signature_security_level) {
@@ -403,67 +415,97 @@ impl PqcValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_validate_kem_algorithm() {
         let validator = PqcConfigValidator::new();
-        
+
         assert!(validator.validate_kem_algorithm("CrystalsKyber768").is_ok());
         assert!(validator.validate_kem_algorithm("kyber768").is_ok());
         assert!(validator.validate_kem_algorithm("invalid").is_err());
     }
-    
+
     #[test]
     fn test_validate_signature_algorithm() {
         let validator = PqcConfigValidator::new();
-        
-        assert!(validator.validate_signature_algorithm("CrystalsDilithium3").is_ok());
+
+        assert!(validator
+            .validate_signature_algorithm("CrystalsDilithium3")
+            .is_ok());
         assert!(validator.validate_signature_algorithm("dilithium3").is_ok());
         assert!(validator.validate_signature_algorithm("invalid").is_err());
     }
-    
+
     #[test]
     fn test_security_levels() {
         let validator = PqcConfigValidator::new();
-        
-        assert_eq!(validator.validate_kem_algorithm("CrystalsKyber512").unwrap(), 1);
-        assert_eq!(validator.validate_kem_algorithm("CrystalsKyber768").unwrap(), 3);
-        assert_eq!(validator.validate_kem_algorithm("CrystalsKyber1024").unwrap(), 5);
+
+        assert_eq!(
+            validator
+                .validate_kem_algorithm("CrystalsKyber512")
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            validator
+                .validate_kem_algorithm("CrystalsKyber768")
+                .unwrap(),
+            3
+        );
+        assert_eq!(
+            validator
+                .validate_kem_algorithm("CrystalsKyber1024")
+                .unwrap(),
+            5
+        );
     }
-    
+
     #[test]
     fn test_min_security_level() {
-        let validator = PqcConfigValidator::new()
-            .with_min_security_level(3);
-        
+        let validator = PqcConfigValidator::new().with_min_security_level(3);
+
         // Kyber512 is level 1, should fail
-        assert!(validator.validate_kem_algorithm("CrystalsKyber512").is_err());
+        assert!(validator
+            .validate_kem_algorithm("CrystalsKyber512")
+            .is_err());
         // Kyber768 is level 3, should pass
         assert!(validator.validate_kem_algorithm("CrystalsKyber768").is_ok());
     }
-    
+
     #[test]
     fn test_production_validator() {
         let validator = PqcConfigValidator::production();
-        
+
         // Should require hybrid mode
         assert!(validator.require_hybrid_mode);
         // Should require security level 3+
-        assert!(validator.validate_kem_algorithm("CrystalsKyber512").is_err());
+        assert!(validator
+            .validate_kem_algorithm("CrystalsKyber512")
+            .is_err());
         assert!(validator.validate_kem_algorithm("CrystalsKyber768").is_ok());
     }
-    
+
     #[test]
     fn test_cnsa_2_0_validator() {
         let validator = PqcConfigValidator::cnsa_2_0();
-        
+
         // Should allow only Kyber768/1024 and Dilithium3/5
         assert!(validator.validate_kem_algorithm("CrystalsKyber768").is_ok());
-        assert!(validator.validate_kem_algorithm("CrystalsKyber1024").is_ok());
-        assert!(validator.validate_kem_algorithm("CrystalsKyber512").is_err());
-        
-        assert!(validator.validate_signature_algorithm("CrystalsDilithium3").is_ok());
-        assert!(validator.validate_signature_algorithm("CrystalsDilithium5").is_ok());
-        assert!(validator.validate_signature_algorithm("CrystalsDilithium2").is_err());
+        assert!(validator
+            .validate_kem_algorithm("CrystalsKyber1024")
+            .is_ok());
+        assert!(validator
+            .validate_kem_algorithm("CrystalsKyber512")
+            .is_err());
+
+        assert!(validator
+            .validate_signature_algorithm("CrystalsDilithium3")
+            .is_ok());
+        assert!(validator
+            .validate_signature_algorithm("CrystalsDilithium5")
+            .is_ok());
+        assert!(validator
+            .validate_signature_algorithm("CrystalsDilithium2")
+            .is_err());
     }
 }

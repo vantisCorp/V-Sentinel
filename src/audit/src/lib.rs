@@ -1,15 +1,15 @@
 //! SENTINEL Security Audit Module
-//! 
+//!
 //! This module provides security audit tools including vulnerability scanning,
 //! compliance checking, and security assessment capabilities.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
-use std::sync::Arc;
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use tokio::sync::RwLock;
+use tracing::{debug, error, info, warn};
 
 /// Security Audit Manager
 pub struct SecurityAuditManager {
@@ -263,7 +263,7 @@ impl SecurityAuditManager {
     /// Create a new security audit manager
     pub fn new() -> Result<Self> {
         info!("Creating Security Audit Manager...");
-        
+
         Ok(Self {
             vulnerability_scanner: Arc::new(RwLock::new(VulnerabilityScanner::new()?)),
             compliance_checker: Arc::new(RwLock::new(ComplianceChecker::new()?)),
@@ -271,16 +271,23 @@ impl SecurityAuditManager {
             audit_log: Arc::new(RwLock::new(AuditLog::new())),
         })
     }
-    
+
     /// Scan for vulnerabilities
-    pub async fn scan_vulnerabilities(&self, target: &str, scan_type: ScanType) -> Result<ScanResult> {
-        info!("Starting vulnerability scan: target={}, type={:?}", target, scan_type);
-        
+    pub async fn scan_vulnerabilities(
+        &self,
+        target: &str,
+        scan_type: ScanType,
+    ) -> Result<ScanResult> {
+        info!(
+            "Starting vulnerability scan: target={}, type={:?}",
+            target, scan_type
+        );
+
         let start = SystemTime::now();
         let scanner = self.vulnerability_scanner.read().await;
         let result = scanner.scan(target, scan_type).await?;
         let duration = start.elapsed().unwrap_or(Duration::from_secs(0));
-        
+
         // Log audit entry
         let mut log = self.audit_log.write().await;
         log.add_entry(AuditEntry {
@@ -288,28 +295,42 @@ impl SecurityAuditManager {
             timestamp: SystemTime::now(),
             event_type: AuditEventType::VulnerabilityScan,
             source: target.to_string(),
-            details: format!("Vulnerability scan completed: {} vulnerabilities found", result.vulnerabilities.len()),
-            severity: if result.vulnerabilities.iter().any(|v| v.severity == CVSSSeverity::Critical) {
+            details: format!(
+                "Vulnerability scan completed: {} vulnerabilities found",
+                result.vulnerabilities.len()
+            ),
+            severity: if result
+                .vulnerabilities
+                .iter()
+                .any(|v| v.severity == CVSSSeverity::Critical)
+            {
                 AuditSeverity::Critical
-            } else if result.vulnerabilities.iter().any(|v| v.severity == CVSSSeverity::High) {
+            } else if result
+                .vulnerabilities
+                .iter()
+                .any(|v| v.severity == CVSSSeverity::High)
+            {
                 AuditSeverity::Error
             } else {
                 AuditSeverity::Info
             },
         });
-        
-        info!("Vulnerability scan completed: {} vulnerabilities found", result.vulnerabilities.len());
-        
+
+        info!(
+            "Vulnerability scan completed: {} vulnerabilities found",
+            result.vulnerabilities.len()
+        );
+
         Ok(result)
     }
-    
+
     /// Check compliance
     pub async fn check_compliance(&self, framework: &str) -> Result<ComplianceResult> {
         info!("Starting compliance check: framework={}", framework);
-        
+
         let checker = self.compliance_checker.read().await;
         let result = checker.check(framework).await?;
-        
+
         // Log audit entry
         let mut log = self.audit_log.write().await;
         log.add_entry(AuditEntry {
@@ -317,7 +338,10 @@ impl SecurityAuditManager {
             timestamp: SystemTime::now(),
             event_type: AuditEventType::ComplianceCheck,
             source: framework.to_string(),
-            details: format!("Compliance check completed: {:.1}% compliant", result.compliance_percentage),
+            details: format!(
+                "Compliance check completed: {:.1}% compliant",
+                result.compliance_percentage
+            ),
             severity: if result.compliance_percentage < 50.0 {
                 AuditSeverity::Critical
             } else if result.compliance_percentage < 80.0 {
@@ -326,19 +350,25 @@ impl SecurityAuditManager {
                 AuditSeverity::Info
             },
         });
-        
-        info!("Compliance check completed: {:.1}% compliant", result.compliance_percentage);
-        
+
+        info!(
+            "Compliance check completed: {:.1}% compliant",
+            result.compliance_percentage
+        );
+
         Ok(result)
     }
-    
+
     /// Run security assessment
-    pub async fn run_assessment(&self, category: Option<AssessmentCategory>) -> Result<Vec<AssessmentResult>> {
+    pub async fn run_assessment(
+        &self,
+        category: Option<AssessmentCategory>,
+    ) -> Result<Vec<AssessmentResult>> {
         info!("Starting security assessment: category={:?}", category);
-        
+
         let assessor = self.security_assessor.read().await;
         let results = assessor.assess(category).await?;
-        
+
         // Log audit entry
         let mut log = self.audit_log.write().await;
         for result in &results {
@@ -357,30 +387,33 @@ impl SecurityAuditManager {
                 },
             });
         }
-        
-        info!("Security assessment completed: {} categories assessed", results.len());
-        
+
+        info!(
+            "Security assessment completed: {} categories assessed",
+            results.len()
+        );
+
         Ok(results)
     }
-    
+
     /// Get audit log entries
     pub async fn get_audit_log(&self, limit: Option<usize>) -> Vec<AuditEntry> {
         let log = self.audit_log.read().await;
         log.get_entries(limit)
     }
-    
+
     /// Get scan results
     pub async fn get_scan_results(&self) -> Vec<ScanResult> {
         let scanner = self.vulnerability_scanner.read().await;
         scanner.get_results()
     }
-    
+
     /// Get compliance results
     pub async fn get_compliance_results(&self) -> HashMap<String, ComplianceResult> {
         let checker = self.compliance_checker.read().await;
         checker.get_results()
     }
-    
+
     /// Get assessment results
     pub async fn get_assessment_results(&self) -> Vec<AssessmentResult> {
         let assessor = self.security_assessor.read().await;
@@ -395,10 +428,10 @@ impl VulnerabilityScanner {
             scan_results: Arc::new(RwLock::new(Vec::new())),
         })
     }
-    
+
     pub async fn scan(&self, target: &str, scan_type: ScanType) -> Result<ScanResult> {
         let cve_db = self.cve_database.read().await;
-        
+
         // Simulate vulnerability scanning
         let vulnerabilities = match scan_type {
             ScanType::Full => cve_db.get_all_vulnerabilities(),
@@ -406,7 +439,7 @@ impl VulnerabilityScanner {
             ScanType::Targeted => cve_db.get_vulnerabilities_for_component(target),
             ScanType::Compliance => vec![],
         };
-        
+
         let result = ScanResult {
             scan_id: uuid::Uuid::new_v4().to_string(),
             target: target.to_string(),
@@ -415,12 +448,12 @@ impl VulnerabilityScanner {
             timestamp: SystemTime::now(),
             duration: Duration::from_secs(5),
         };
-        
+
         self.scan_results.write().await.push(result.clone());
-        
+
         Ok(result)
     }
-    
+
     pub fn get_results(&self) -> Vec<ScanResult> {
         self.scan_results.blocking_read().clone()
     }
@@ -438,16 +471,17 @@ impl ComplianceChecker {
             check_results: Arc::new(RwLock::new(HashMap::new())),
         })
     }
-    
+
     pub async fn check(&self, framework: &str) -> Result<ComplianceResult> {
-        let framework_obj = self.frameworks
+        let framework_obj = self
+            .frameworks
             .iter()
             .find(|f| f.name.to_lowercase() == framework.to_lowercase())
             .ok_or_else(|| anyhow!("Framework not found: {}", framework))?;
-        
+
         let mut control_results = Vec::new();
         let mut passed = 0;
-        
+
         for control in &framework_obj.controls {
             // Simulate compliance check
             let status = if control.severity == ControlSeverity::Low {
@@ -457,11 +491,11 @@ impl ComplianceChecker {
             } else {
                 ComplianceStatus::NonCompliant
             };
-            
+
             if status == ComplianceStatus::Compliant {
                 passed += 1;
             }
-            
+
             control_results.push(ControlResult {
                 control_id: control.id.clone(),
                 control_name: control.name.clone(),
@@ -469,7 +503,7 @@ impl ComplianceChecker {
                 findings: vec![format!("Check for control {}", control.id)],
             });
         }
-        
+
         let result = ComplianceResult {
             framework: framework_obj.name.clone(),
             version: framework_obj.version.clone(),
@@ -480,16 +514,19 @@ impl ComplianceChecker {
             control_results,
             timestamp: SystemTime::now(),
         };
-        
-        self.check_results.write().await.insert(framework.to_string(), result.clone());
-        
+
+        self.check_results
+            .write()
+            .await
+            .insert(framework.to_string(), result.clone());
+
         Ok(result)
     }
-    
+
     pub fn get_results(&self) -> HashMap<String, ComplianceResult> {
         self.check_results.blocking_read().clone()
     }
-    
+
     fn create_soc2_framework() -> ComplianceFramework {
         ComplianceFramework {
             name: "SOC 2".to_string(),
@@ -498,7 +535,8 @@ impl ComplianceChecker {
                 Control {
                     id: "CC1.1".to_string(),
                     name: "Control Environment".to_string(),
-                    description: "Management establishes principles, procedures, and processes".to_string(),
+                    description: "Management establishes principles, procedures, and processes"
+                        .to_string(),
                     category: "Governance".to_string(),
                     severity: ControlSeverity::High,
                 },
@@ -512,7 +550,7 @@ impl ComplianceChecker {
             ],
         }
     }
-    
+
     fn create_gdpr_framework() -> ComplianceFramework {
         ComplianceFramework {
             name: "GDPR".to_string(),
@@ -535,36 +573,32 @@ impl ComplianceChecker {
             ],
         }
     }
-    
+
     fn create_hipaa_framework() -> ComplianceFramework {
         ComplianceFramework {
             name: "HIPAA".to_string(),
             version: "2003".to_string(),
-            controls: vec![
-                Control {
-                    id: "164.312(a)(1)".to_string(),
-                    name: "Access Control".to_string(),
-                    description: "Implement technical policies and procedures".to_string(),
-                    category: "Access Control".to_string(),
-                    severity: ControlSeverity::Critical,
-                },
-            ],
+            controls: vec![Control {
+                id: "164.312(a)(1)".to_string(),
+                name: "Access Control".to_string(),
+                description: "Implement technical policies and procedures".to_string(),
+                category: "Access Control".to_string(),
+                severity: ControlSeverity::Critical,
+            }],
         }
     }
-    
+
     fn create_pci_dss_framework() -> ComplianceFramework {
         ComplianceFramework {
             name: "PCI DSS".to_string(),
             version: "4.0".to_string(),
-            controls: vec![
-                Control {
-                    id: "REQ.1".to_string(),
-                    name: "Install and Maintain Firewall".to_string(),
-                    description: "Install and maintain network security controls".to_string(),
-                    category: "Network Security".to_string(),
-                    severity: ControlSeverity::Critical,
-                },
-            ],
+            controls: vec![Control {
+                id: "REQ.1".to_string(),
+                name: "Install and Maintain Firewall".to_string(),
+                description: "Install and maintain network security controls".to_string(),
+                category: "Network Security".to_string(),
+                severity: ControlSeverity::Critical,
+            }],
         }
     }
 }
@@ -585,19 +619,22 @@ impl SecurityAssessor {
             assessment_results: Arc::new(RwLock::new(Vec::new())),
         })
     }
-    
-    pub async fn assess(&self, category: Option<AssessmentCategory>) -> Result<Vec<AssessmentResult>> {
+
+    pub async fn assess(
+        &self,
+        category: Option<AssessmentCategory>,
+    ) -> Result<Vec<AssessmentResult>> {
         let mut results = Vec::new();
-        
+
         for rule in &self.assessment_rules {
             if let Some(cat) = category {
                 if rule.category != cat {
                     continue;
                 }
             }
-            
+
             let check_result = (rule.check_fn)();
-            
+
             results.push(AssessmentResult {
                 assessment_id: uuid::Uuid::new_v4().to_string(),
                 category: rule.category,
@@ -609,16 +646,19 @@ impl SecurityAssessor {
                 timestamp: SystemTime::now(),
             });
         }
-        
-        self.assessment_results.write().await.extend(results.clone());
-        
+
+        self.assessment_results
+            .write()
+            .await
+            .extend(results.clone());
+
         Ok(results)
     }
-    
+
     pub fn get_results(&self) -> Vec<AssessmentResult> {
         self.assessment_results.blocking_read().clone()
     }
-    
+
     fn create_network_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "NET-001".to_string(),
@@ -632,7 +672,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_application_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "APP-001".to_string(),
@@ -646,7 +686,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_data_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "DATA-001".to_string(),
@@ -660,7 +700,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_access_control_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "AC-001".to_string(),
@@ -674,7 +714,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_encryption_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "ENC-001".to_string(),
@@ -684,11 +724,13 @@ impl SecurityAssessor {
                 passed: true,
                 score: 95.0,
                 findings: vec!["TLS 1.3 enabled".to_string()],
-                recommendations: vec!["Consider implementing quantum-resistant encryption".to_string()],
+                recommendations: vec![
+                    "Consider implementing quantum-resistant encryption".to_string()
+                ],
             }),
         }
     }
-    
+
     fn create_logging_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "LOG-001".to_string(),
@@ -702,7 +744,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_monitoring_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "MON-001".to_string(),
@@ -716,7 +758,7 @@ impl SecurityAssessor {
             }),
         }
     }
-    
+
     fn create_incident_response_assessment_rules() -> AssessmentRule {
         AssessmentRule {
             id: "IR-001".to_string(),
@@ -738,11 +780,11 @@ impl AuditLog {
             entries: Vec::new(),
         }
     }
-    
+
     pub fn add_entry(&mut self, entry: AuditEntry) {
         self.entries.push(entry);
     }
-    
+
     pub fn get_entries(&self, limit: Option<usize>) -> Vec<AuditEntry> {
         let entries = self.entries.clone();
         match limit {
@@ -775,35 +817,52 @@ impl CVEDatabase {
             ],
         }
     }
-    
+
     pub fn get_all_vulnerabilities(&self) -> Vec<Vulnerability> {
-        self.entries.iter().map(|cve| Vulnerability {
-            cve_id: cve.cve_id.clone(),
-            severity: cve.severity,
-            cvss_score: cve.cvss_score,
-            description: cve.description.clone(),
-            affected_component: cve.affected_components.first().unwrap_or(&"unknown".to_string()).clone(),
-            remediation: "Update to latest version".to_string(),
-        }).collect()
+        self.entries
+            .iter()
+            .map(|cve| Vulnerability {
+                cve_id: cve.cve_id.clone(),
+                severity: cve.severity,
+                cvss_score: cve.cvss_score,
+                description: cve.description.clone(),
+                affected_component: cve
+                    .affected_components
+                    .first()
+                    .unwrap_or(&"unknown".to_string())
+                    .clone(),
+                remediation: "Update to latest version".to_string(),
+            })
+            .collect()
     }
-    
+
     pub fn get_critical_vulnerabilities(&self) -> Vec<Vulnerability> {
-        self.entries.iter()
+        self.entries
+            .iter()
             .filter(|cve| cve.severity == CVSSSeverity::Critical)
             .map(|cve| Vulnerability {
                 cve_id: cve.cve_id.clone(),
                 severity: cve.severity,
                 cvss_score: cve.cvss_score,
                 description: cve.description.clone(),
-                affected_component: cve.affected_components.first().unwrap_or(&"unknown".to_string()).clone(),
+                affected_component: cve
+                    .affected_components
+                    .first()
+                    .unwrap_or(&"unknown".to_string())
+                    .clone(),
                 remediation: "Update to latest version".to_string(),
             })
             .collect()
     }
-    
+
     pub fn get_vulnerabilities_for_component(&self, component: &str) -> Vec<Vulnerability> {
-        self.entries.iter()
-            .filter(|cve| cve.affected_components.iter().any(|c| c.to_lowercase() == component.to_lowercase()))
+        self.entries
+            .iter()
+            .filter(|cve| {
+                cve.affected_components
+                    .iter()
+                    .any(|c| c.to_lowercase() == component.to_lowercase())
+            })
             .map(|cve| Vulnerability {
                 cve_id: cve.cve_id.clone(),
                 severity: cve.severity,
@@ -825,20 +884,26 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_audit_manager_creation() {
         let manager = SecurityAuditManager::new().unwrap();
-        assert!(manager.scan_vulnerabilities("test", ScanType::Quick).await.is_ok());
+        assert!(manager
+            .scan_vulnerabilities("test", ScanType::Quick)
+            .await
+            .is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_vulnerability_scan() {
         let manager = SecurityAuditManager::new().unwrap();
-        let result = manager.scan_vulnerabilities("kernel", ScanType::Targeted).await.unwrap();
+        let result = manager
+            .scan_vulnerabilities("kernel", ScanType::Targeted)
+            .await
+            .unwrap();
         assert!(!result.vulnerabilities.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_compliance_check() {
         let manager = SecurityAuditManager::new().unwrap();
@@ -846,19 +911,22 @@ mod tests {
         assert_eq!(result.framework, "SOC 2");
         assert!(result.compliance_percentage >= 0.0 && result.compliance_percentage <= 100.0);
     }
-    
+
     #[tokio::test]
     async fn test_security_assessment() {
         let manager = SecurityAuditManager::new().unwrap();
         let results = manager.run_assessment(None).await.unwrap();
         assert!(!results.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_audit_log() {
         let manager = SecurityAuditManager::new().unwrap();
-        manager.scan_vulnerabilities("test", ScanType::Quick).await.unwrap();
-        
+        manager
+            .scan_vulnerabilities("test", ScanType::Quick)
+            .await
+            .unwrap();
+
         let entries = manager.get_audit_log(Some(10));
         assert!(!entries.is_empty());
     }

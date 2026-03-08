@@ -9,8 +9,8 @@
 pub mod analysis;
 pub mod authentication;
 pub mod detection;
-pub mod threat_intel;
 pub mod models;
+pub mod threat_intel;
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -22,11 +22,11 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-pub use analysis::{MediaAnalyzer, AnalysisResult, AnalysisType};
-pub use authentication::{ContentAuthenticator, AuthenticationResult, WatermarkConfig};
-pub use detection::{DeepfakeDetector, DetectionResult, DetectionConfig};
-pub use threat_intel::{ThreatIntelIntegration, ThreatInfo, ThreatMatch};
-pub use models::{MediaContent, MediaType, DeepfakeType, ConfidenceLevel, Watermark};
+pub use analysis::{AnalysisResult, AnalysisType, MediaAnalyzer};
+pub use authentication::{AuthenticationResult, ContentAuthenticator, WatermarkConfig};
+pub use detection::{DeepfakeDetector, DetectionConfig, DetectionResult};
+pub use models::{ConfidenceLevel, DeepfakeType, MediaContent, MediaType, Watermark};
+pub use threat_intel::{ThreatInfo, ThreatIntelIntegration, ThreatMatch};
 
 /// Main manager for deepfake detection operations
 pub struct DeepfakeManager {
@@ -71,7 +71,7 @@ impl Default for DeepfakeConfig {
             auto_authenticate: true,
             threat_intel_enabled: true,
             max_media_size: 500 * 1024 * 1024, // 500MB
-            analysis_timeout: 300, // 5 minutes
+            analysis_timeout: 300,             // 5 minutes
             detailed_logging: false,
         }
     }
@@ -99,7 +99,9 @@ impl DeepfakeManager {
     pub fn new(config: DeepfakeConfig) -> Self {
         Self {
             analyzer: Arc::new(RwLock::new(MediaAnalyzer::new())),
-            detector: Arc::new(RwLock::new(DeepfakeDetector::new(DetectionConfig::default()))),
+            detector: Arc::new(RwLock::new(DeepfakeDetector::new(
+                DetectionConfig::default(),
+            ))),
             authenticator: Arc::new(RwLock::new(ContentAuthenticator::new())),
             threat_intel: Arc::new(RwLock::new(ThreatIntelIntegration::new())),
             config,
@@ -144,22 +146,29 @@ impl DeepfakeManager {
         // Step 4: Calculate final result
         let is_deepfake = detection_result.is_deepfake;
         let confidence = detection_result.confidence;
-        
+
         // Update statistics
         stats.total_analyzed += 1;
         if is_deepfake {
             stats.deepfakes_detected += 1;
         }
-        *stats.by_media_type.entry(media.media_type.to_string()).or_insert(0) += 1;
+        *stats
+            .by_media_type
+            .entry(media.media_type.to_string())
+            .or_insert(0) += 1;
         if is_deepfake {
             for df_type in &detection_result.deepfake_types {
-                *stats.by_deepfake_type.entry(df_type.to_string()).or_insert(0) += 1;
+                *stats
+                    .by_deepfake_type
+                    .entry(df_type.to_string())
+                    .or_insert(0) += 1;
             }
         }
-        
+
         let elapsed = start_time.elapsed();
-        stats.avg_analysis_time_ms = 
-            (stats.avg_analysis_time_ms * (stats.total_analyzed - 1) as f64 + elapsed.as_millis() as f64)
+        stats.avg_analysis_time_ms = (stats.avg_analysis_time_ms
+            * (stats.total_analyzed - 1) as f64
+            + elapsed.as_millis() as f64)
             / stats.total_analyzed as f64;
 
         // Generate alert if threshold exceeded
@@ -192,11 +201,11 @@ impl DeepfakeManager {
     ) -> Result<AuthenticationResult> {
         let authenticator = self.authenticator.read().await;
         let result = authenticator.authenticate(media, config).await?;
-        
+
         // Update media with authentication info
         media.authenticated = true;
         media.authentication_id = Some(result.authentication_id.clone());
-        
+
         info!("Content authenticated: {}", result.authentication_id);
         Ok(result)
     }
@@ -218,20 +227,28 @@ impl DeepfakeManager {
 
         if is_deepfake {
             if confidence >= 0.9 {
-                recommendations.push("HIGH CONFIDENCE: Content is likely a deepfake. Do not distribute.".to_string());
+                recommendations.push(
+                    "HIGH CONFIDENCE: Content is likely a deepfake. Do not distribute.".to_string(),
+                );
                 recommendations.push("Report to content moderation team immediately.".to_string());
             } else if confidence >= 0.75 {
-                recommendations.push("LIKELY DEEPFAKE: Manual review recommended before distribution.".to_string());
+                recommendations.push(
+                    "LIKELY DEEPFAKE: Manual review recommended before distribution.".to_string(),
+                );
             } else {
-                recommendations.push("SUSPICIOUS: Additional verification recommended.".to_string());
+                recommendations
+                    .push("SUSPICIOUS: Additional verification recommended.".to_string());
             }
-            
-            recommendations.push("Consider using reverse image search to find original content.".to_string());
+
+            recommendations
+                .push("Consider using reverse image search to find original content.".to_string());
             recommendations.push("Check metadata and source credibility.".to_string());
         } else {
             recommendations.push("Content appears authentic based on analysis.".to_string());
             if confidence < 0.5 {
-                recommendations.push("Note: Low confidence detection. Consider additional analysis.".to_string());
+                recommendations.push(
+                    "Note: Low confidence detection. Consider additional analysis.".to_string(),
+                );
             }
         }
 
@@ -326,7 +343,7 @@ mod tests {
     #[tokio::test]
     async fn test_stats_update() {
         let manager = DeepfakeManager::new(DeepfakeConfig::default());
-        
+
         // Create test media
         let media = MediaContent {
             id: Uuid::new_v4().to_string(),
@@ -340,7 +357,7 @@ mod tests {
 
         let result = manager.analyze_media(&media).await;
         assert!(result.is_ok());
-        
+
         let stats = manager.get_stats().await;
         assert_eq!(stats.total_analyzed, 1);
     }

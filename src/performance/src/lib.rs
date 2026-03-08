@@ -5,48 +5,32 @@
 //! profiling, and bottleneck analysis.
 
 pub mod bottleneck_analyzer;
-pub mod profiler;
 pub mod dashboard;
+pub mod profiler;
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
-use std::sync::Arc;
-use std::collections::HashMap;
-use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::time::{Duration, Instant};
+use anyhow::{anyhow, Result};
 use lru::LruCache;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::num::NonZeroUsize;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
+use tracing::{debug, error, info, warn};
 
 // Re-export benchmarking and profiling modules
 pub use bottleneck_analyzer::{
-    BottleneckAnalyzer,
-    Bottleneck,
-    BottleneckSeverity,
-    BottleneckType,
-    PerformanceProfile,
+    Bottleneck, BottleneckAnalyzer, BottleneckSeverity, BottleneckType, PerformanceProfile,
 };
 
 pub use profiler::{
-    PerformanceProfiler,
-    ProfileEvent,
-    ProfileEventType,
-    Profile,
+    disable_profiling, enable_profiling, get_profiling_report, profile, profile_memory,
+    FunctionStats, MemoryStats, PerformanceProfiler, Profile, ProfileEvent, ProfileEventType,
     ProfileGuard,
-    FunctionStats,
-    MemoryStats,
-    profile,
-    profile_memory,
-    enable_profiling,
-    disable_profiling,
-    get_profiling_report,
 };
 
 pub use dashboard::{
-    PerformanceDashboard,
-    PerformanceMetrics,
-    PerformanceSummary,
-    ComponentSummary,
+    ComponentSummary, PerformanceDashboard, PerformanceMetrics, PerformanceSummary,
 };
 
 /// Performance Manager
@@ -174,7 +158,7 @@ impl PerformanceManager {
     /// Create a new performance manager
     pub fn new() -> Result<Self> {
         info!("Creating Performance Manager...");
-        
+
         Ok(Self {
             cache: Arc::new(RwLock::new(CacheManager::new(1000)?)),
             pool: Arc::new(RwLock::new(ConnectionPool::new(PoolConfig::default())?)),
@@ -183,98 +167,103 @@ impl PerformanceManager {
             profiler: Arc::new(RwLock::new(PerformanceProfiler::new())),
         })
     }
-    
+
     /// Get value from cache
     pub async fn cache_get(&self, key: &str) -> Result<Option<Vec<u8>>> {
         let cache = self.cache.read().await;
         cache.get(key).await
     }
-    
+
     /// Set value in cache
     pub async fn cache_set(&self, key: &str, value: Vec<u8>, ttl: Duration) -> Result<()> {
         let cache = self.cache.read().await;
         cache.set(key, value, ttl).await
     }
-    
+
     /// Delete value from cache
     pub async fn cache_delete(&self, key: &str) -> Result<()> {
         let cache = self.cache.write().await;
         cache.delete(key).await
     }
-    
+
     /// Clear cache
     pub async fn cache_clear(&self) -> Result<()> {
         let cache = self.cache.write().await;
         cache.clear().await
     }
-    
+
     /// Get cache statistics
     pub async fn get_cache_stats(&self) -> CacheStatistics {
         let cache = self.cache.read().await;
         cache.get_stats()
     }
-    
+
     /// Acquire connection from pool
     pub async fn acquire_connection(&self) -> Result<String> {
         let mut pool = self.pool.write().await;
         pool.acquire().await
     }
-    
+
     /// Release connection back to pool
     pub async fn release_connection(&self, connection_id: &str) -> Result<()> {
         let mut pool = self.pool.write().await;
         pool.release(connection_id).await
     }
-    
+
     /// Get pool statistics
     pub async fn get_pool_stats(&self) -> PoolStatistics {
         let pool = self.pool.read().await;
         pool.get_stats()
     }
-    
+
     /// Check rate limit
     pub async fn check_rate_limit(&self, key: &str, tokens: u64) -> Result<bool> {
         let mut limiter = self.limiter.write().await;
         Ok(limiter.check(key, tokens))
     }
-    
+
     /// Configure rate limit
-    pub async fn configure_rate_limit(&self, key: &str, max_tokens: u64, refill_rate: u64) -> Result<()> {
+    pub async fn configure_rate_limit(
+        &self,
+        key: &str,
+        max_tokens: u64,
+        refill_rate: u64,
+    ) -> Result<()> {
         let mut limiter = self.limiter.write().await;
         limiter.configure(key, max_tokens, refill_rate);
         Ok(())
     }
-    
+
     /// Optimize query
     pub async fn optimize_query(&self, query: &str) -> Result<String> {
         let optimizer = self.optimizer.read().await;
         optimizer.optimize(query)
     }
-    
+
     /// Start profiling
     pub async fn start_profiling(&self, name: &str) -> Result<ProfileGuard> {
         let mut profiler = self.profiler.write().await;
         Ok(profiler.start(name))
     }
-    
+
     /// Get profile
     pub async fn get_profile(&self, name: &str) -> Option<Profile> {
         let profiler = self.profiler.read().await;
         profiler.get(name)
     }
-    
+
     /// Get all profiles
     pub async fn get_all_profiles(&self) -> HashMap<String, Profile> {
         let profiler = self.profiler.read().await;
         profiler.get_all()
     }
-    
+
     /// Enable profiling
     pub async fn enable_profiling(&self) {
         let profiler = self.profiler.read().await;
         profiler.enable();
     }
-    
+
     /// Disable profiling
     pub async fn disable_profiling(&self) {
         let profiler = self.profiler.read().await;
@@ -285,15 +274,17 @@ impl PerformanceManager {
 impl CacheManager {
     pub fn new(capacity: usize) -> Result<Self> {
         Ok(Self {
-            memory_cache: Arc::new(RwLock::new(LruCache::new(NonZeroUsize::new(capacity).ok_or_else(|| anyhow!("Invalid capacity"))?))),
+            memory_cache: Arc::new(RwLock::new(LruCache::new(
+                NonZeroUsize::new(capacity).ok_or_else(|| anyhow!("Invalid capacity"))?,
+            ))),
             cache_stats: Arc::new(RwLock::new(CacheStatistics::default())),
         })
     }
-    
+
     pub async fn get(&self, key: &str) -> Result<Option<Vec<u8>>> {
         let mut cache = self.memory_cache.write().await;
         let mut stats = self.cache_stats.write().await;
-        
+
         if let Some(entry) = cache.get_mut(key) {
             // Check TTL
             if entry.created_at.elapsed() > entry.ttl {
@@ -302,7 +293,7 @@ impl CacheManager {
                 stats.update_hit_rate();
                 return Ok(None);
             }
-            
+
             entry.access_count += 1;
             stats.hits += 1;
             stats.update_hit_rate();
@@ -313,36 +304,36 @@ impl CacheManager {
             Ok(None)
         }
     }
-    
+
     pub async fn set(&self, key: &str, value: Vec<u8>, ttl: Duration) -> Result<()> {
         let mut cache = self.memory_cache.write().await;
         let mut stats = self.cache_stats.write().await;
-        
+
         let entry = CacheEntry {
             value,
             created_at: Instant::now(),
             ttl,
             access_count: 0,
         };
-        
+
         cache.put(key.to_string(), entry);
         stats.size = cache.len();
-        
+
         Ok(())
     }
-    
+
     pub async fn delete(&self, key: &str) -> Result<()> {
         let mut cache = self.memory_cache.write().await;
         cache.pop(key);
         Ok(())
     }
-    
+
     pub async fn clear(&self) -> Result<()> {
         let mut cache = self.memory_cache.write().await;
         cache.clear();
         Ok(())
     }
-    
+
     pub fn get_stats(&self) -> CacheStatistics {
         self.cache_stats.blocking_read().clone()
     }
@@ -377,11 +368,11 @@ impl ConnectionPool {
             pool_stats: Arc::new(RwLock::new(PoolStatistics::default())),
         })
     }
-    
+
     pub async fn acquire(&mut self) -> Result<String> {
         let mut connections = self.connections.write().await;
         let mut stats = self.pool_stats.write().await;
-        
+
         // Find idle connection
         for conn in connections.iter_mut() {
             if !conn.in_use {
@@ -392,7 +383,7 @@ impl ConnectionPool {
                 return Ok(conn.id.clone());
             }
         }
-        
+
         // Create new connection if under limit
         if connections.len() < self.pool_config.max_connections {
             let conn = PooledConnection {
@@ -407,26 +398,26 @@ impl ConnectionPool {
             stats.active_connections += 1;
             return Ok(id);
         }
-        
+
         // Pool exhausted
         stats.wait_count += 1;
         Err(anyhow!("Connection pool exhausted"))
     }
-    
+
     pub async fn release(&mut self, connection_id: &str) -> Result<()> {
         let mut connections = self.connections.write().await;
         let mut stats = self.pool_stats.write().await;
-        
+
         if let Some(conn) = connections.iter_mut().find(|c| c.id == connection_id) {
             conn.in_use = false;
             conn.last_used = Instant::now();
             stats.active_connections -= 1;
             stats.idle_connections += 1;
         }
-        
+
         Ok(())
     }
-    
+
     pub fn get_stats(&self) -> PoolStatistics {
         self.pool_stats.blocking_read().clone()
     }
@@ -461,30 +452,36 @@ impl RateLimiter {
             limits: HashMap::new(),
         }
     }
-    
+
     pub fn configure(&mut self, key: &str, max_tokens: u64, refill_rate: u64) {
-        self.limits.insert(key.to_string(), RateLimit {
-            tokens: max_tokens,
-            max_tokens,
-            refill_rate,
-            last_refill: Instant::now(),
-        });
+        self.limits.insert(
+            key.to_string(),
+            RateLimit {
+                tokens: max_tokens,
+                max_tokens,
+                refill_rate,
+                last_refill: Instant::now(),
+            },
+        );
     }
-    
+
     pub fn check(&mut self, key: &str, tokens: u64) -> bool {
-        let limit = self.limits.entry(key.to_string()).or_insert_with(|| RateLimit {
-            tokens: 100,
-            max_tokens: 100,
-            refill_rate: 10,
-            last_refill: Instant::now(),
-        });
-        
+        let limit = self
+            .limits
+            .entry(key.to_string())
+            .or_insert_with(|| RateLimit {
+                tokens: 100,
+                max_tokens: 100,
+                refill_rate: 10,
+                last_refill: Instant::now(),
+            });
+
         // Refill tokens
         let elapsed = limit.last_refill.elapsed();
         let tokens_to_add = (elapsed.as_secs() as u64) * limit.refill_rate;
         limit.tokens = (limit.tokens + tokens_to_add).min(limit.max_tokens);
         limit.last_refill = Instant::now();
-        
+
         // Check if enough tokens
         if limit.tokens >= tokens {
             limit.tokens -= tokens;
@@ -515,16 +512,16 @@ impl QueryOptimizer {
             ],
         }
     }
-    
+
     pub fn optimize(&self, query: &str) -> Result<String> {
         let mut optimized = query.to_string();
-        
+
         for rule in &self.optimization_rules {
             if optimized.contains(&rule.pattern) {
                 optimized = optimized.replace(&rule.pattern, &rule.replacement);
             }
         }
-        
+
         Ok(optimized)
     }
 }
@@ -538,84 +535,93 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_performance_manager_creation() {
         let manager = PerformanceManager::new().unwrap();
-        assert!(manager.cache_set("test", vec![1, 2, 3], Duration::from_secs(60)).await.is_ok());
+        assert!(manager
+            .cache_set("test", vec![1, 2, 3], Duration::from_secs(60))
+            .await
+            .is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_cache_operations() {
         let manager = PerformanceManager::new().unwrap();
-        
-        manager.cache_set("key1", vec![1, 2, 3], Duration::from_secs(60)).await.unwrap();
+
+        manager
+            .cache_set("key1", vec![1, 2, 3], Duration::from_secs(60))
+            .await
+            .unwrap();
         let value = manager.cache_get("key1").await.unwrap();
         assert_eq!(value, Some(vec![1, 2, 3]));
-        
+
         manager.cache_delete("key1").await.unwrap();
         let value = manager.cache_get("key1").await.unwrap();
         assert_eq!(value, None);
     }
-    
+
     #[tokio::test]
     async fn test_cache_statistics() {
         let manager = PerformanceManager::new().unwrap();
-        
-        manager.cache_set("key1", vec![1, 2, 3], Duration::from_secs(60)).await.unwrap();
+
+        manager
+            .cache_set("key1", vec![1, 2, 3], Duration::from_secs(60))
+            .await
+            .unwrap();
         manager.cache_get("key1").await.unwrap();
         manager.cache_get("key2").await.unwrap();
-        
+
         let stats = manager.get_cache_stats().await;
         assert_eq!(stats.hits, 1);
         assert_eq!(stats.misses, 1);
         assert!(stats.hit_rate > 0.0);
     }
-    
+
     #[tokio::test]
     async fn test_connection_pool() {
         let manager = PerformanceManager::new().unwrap();
-        
+
         let conn1 = manager.acquire_connection().await.unwrap();
         let conn2 = manager.acquire_connection().await.unwrap();
-        
+
         assert_ne!(conn1, conn2);
-        
+
         manager.release_connection(&conn1).await.unwrap();
-        
+
         let stats = manager.get_pool_stats().await;
         assert_eq!(stats.total_connections, 2);
     }
-    
+
     #[tokio::test]
     async fn test_rate_limiter() {
         let manager = PerformanceManager::new().unwrap();
-        
+
         manager.configure_rate_limit("test", 10, 1).await.unwrap();
-        
+
         assert!(manager.check_rate_limit("test", 5).await.unwrap());
         assert!(manager.check_rate_limit("test", 5).await.unwrap());
         assert!(!manager.check_rate_limit("test", 1).await.unwrap());
     }
-    
+
     #[tokio::test]
     async fn test_query_optimization() {
         let manager = PerformanceManager::new().unwrap();
-        
+
         let optimized = manager.optimize_query("SELECT * FROM users").await.unwrap();
         assert!(optimized.contains("SELECT id, name FROM"));
     }
-    
+
     #[tokio::test]
     async fn test_profiling() {
         let manager = PerformanceManager::new().unwrap();
         manager.enable_profiling().await;
-        
+
         {
             let _guard = manager.start_profiling("test_operation").await.unwrap();
             tokio::time::sleep(Duration::from_millis(10)).await;
         }
-        
+
         let profile = manager.get_profile("test_operation").await;
         assert!(profile.is_some());
         assert_eq!(profile.unwrap().call_count, 1);

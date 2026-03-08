@@ -1,18 +1,18 @@
 //! Policy Engine Module
-//! 
+//!
 //! Implements the Policy Decision Point (PDP) and Policy Administration Point (PAP)
 //! following XACML and NIST SP 800-207 guidelines.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug, warn};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info, warn};
 
-use super::{AccessRequest, Subject, Resource, Action, RequestContext};
+use super::{AccessRequest, Action, RequestContext, Resource, Subject};
 
 /// Policy Engine
-/// 
+///
 /// Central Policy Decision Point (PDP) that evaluates access requests
 /// against defined policies.
 pub struct PolicyEngine {
@@ -245,7 +245,7 @@ impl PolicyEngine {
             default_decision: DecisionType::Deny,
             statistics: PolicyStatistics::default(),
         };
-        
+
         // Add default policies
         engine.add_default_policies();
         engine
@@ -284,8 +284,9 @@ impl PolicyEngine {
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };
-        
-        self.policies.insert(deny_sensitive.id.clone(), deny_sensitive);
+
+        self.policies
+            .insert(deny_sensitive.id.clone(), deny_sensitive);
 
         // Require MFA for administrative actions
         let require_mfa_admin = Policy {
@@ -324,8 +325,9 @@ impl PolicyEngine {
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };
-        
-        self.policies.insert(require_mfa_admin.id.clone(), require_mfa_admin);
+
+        self.policies
+            .insert(require_mfa_admin.id.clone(), require_mfa_admin);
 
         // Block access from unmanaged devices to sensitive resources
         let block_unmanaged = Policy {
@@ -362,8 +364,9 @@ impl PolicyEngine {
             created_at: chrono::Utc::now(),
             updated_at: chrono::Utc::now(),
         };
-        
-        self.policies.insert(block_unmanaged.id.clone(), block_unmanaged);
+
+        self.policies
+            .insert(block_unmanaged.id.clone(), block_unmanaged);
     }
 
     /// Add a policy
@@ -371,7 +374,7 @@ impl PolicyEngine {
         if self.policies.contains_key(&policy.id) {
             return Err(anyhow!("Policy with ID {} already exists", policy.id));
         }
-        
+
         info!("Adding policy: {} ({})", policy.name, policy.id);
         self.policies.insert(policy.id.clone(), policy);
         Ok(())
@@ -382,7 +385,7 @@ impl PolicyEngine {
         if self.policies.remove(policy_id).is_none() {
             return Err(anyhow!("Policy with ID {} not found", policy_id));
         }
-        
+
         info!("Removed policy: {}", policy_id);
         Ok(())
     }
@@ -392,7 +395,7 @@ impl PolicyEngine {
         if !self.policies.contains_key(&policy.id) {
             return Err(anyhow!("Policy with ID {} not found", policy.id));
         }
-        
+
         info!("Updating policy: {} ({})", policy.name, policy.id);
         self.policies.insert(policy.id.clone(), policy);
         Ok(())
@@ -406,36 +409,36 @@ impl PolicyEngine {
     /// Evaluate an access request against all applicable policies
     pub async fn evaluate(&self, request: &AccessRequest) -> Result<PolicyDecision> {
         let start = std::time::Instant::now();
-        
+
         info!("Evaluating access request {} against policies", request.id);
-        
+
         let mut applicable_policies: Vec<&Policy> = Vec::new();
         let mut matched_rules: Vec<String> = Vec::new();
         let mut obligations: Vec<Obligation> = Vec::new();
         let mut recommendations: Vec<String> = Vec::new();
-        
+
         // Find applicable policies
         for policy in self.policies.values() {
             if policy.status != PolicyStatus::Active {
                 continue;
             }
-            
+
             if self.is_policy_applicable(policy, request) {
                 debug!("Policy {} is applicable", policy.id);
                 applicable_policies.push(policy);
             }
         }
-        
+
         // Evaluate applicable policies using deny-overrides algorithm
         let mut final_decision = DecisionType::Allow;
-        
+
         for policy in &applicable_policies {
             let (rule_decision, rule_id) = self.evaluate_rules(policy, request).await?;
-            
+
             if let Some(rid) = rule_id {
                 matched_rules.push(rid);
             }
-            
+
             match rule_decision {
                 DecisionType::Deny => {
                     final_decision = DecisionType::Deny;
@@ -453,15 +456,15 @@ impl PolicyEngine {
                 _ => {}
             }
         }
-        
+
         // If no applicable policies, use default decision
         if applicable_policies.is_empty() {
             final_decision = self.default_decision;
             recommendations.push("No applicable policy found, using default".to_string());
         }
-        
+
         let evaluation_time = start.elapsed().as_millis() as u64;
-        
+
         Ok(PolicyDecision {
             decision: final_decision,
             applied_policies: applicable_policies.iter().map(|p| p.id.clone()).collect(),
@@ -478,22 +481,22 @@ impl PolicyEngine {
         if !self.matches_subjects(&policy.target.subjects, &request.subject) {
             return false;
         }
-        
+
         // Check resource matches
         if !self.matches_resources(&policy.target.resources, &request.resource) {
             return false;
         }
-        
+
         // Check action matches
         if !self.matches_actions(&policy.target.actions, &request.action) {
             return false;
         }
-        
+
         // Check environment matches
         if !self.matches_environments(&policy.target.environments, &request.context) {
             return false;
         }
-        
+
         true
     }
 
@@ -502,7 +505,7 @@ impl PolicyEngine {
         if matches.is_empty() {
             return true;
         }
-        
+
         matches.iter().all(|m| {
             let value = subject.attributes.get(&m.attribute);
             self.match_value(value, &m.matcher, &m.value)
@@ -514,7 +517,7 @@ impl PolicyEngine {
         if matches.is_empty() {
             return true;
         }
-        
+
         matches.iter().all(|m| {
             let value = match m.attribute.as_str() {
                 "sensitivity" => Some(serde_json::to_value(&resource.sensitivity).unwrap()),
@@ -531,7 +534,7 @@ impl PolicyEngine {
         if matches.is_empty() {
             return true;
         }
-        
+
         matches.iter().all(|m| {
             if let Some(ref action_type) = m.action_type {
                 return action.action_type == *action_type;
@@ -545,18 +548,23 @@ impl PolicyEngine {
         if matches.is_empty() {
             return true;
         }
-        
+
         // For now, return true - would implement full environment matching
         true
     }
 
     /// Match a value against a pattern
-    fn match_value(&self, value: Option<&serde_json::Value>, matcher: &MatchOperator, pattern: &serde_json::Value) -> bool {
+    fn match_value(
+        &self,
+        value: Option<&serde_json::Value>,
+        matcher: &MatchOperator,
+        pattern: &serde_json::Value,
+    ) -> bool {
         let value = match value {
             Some(v) => v,
             None => return false,
         };
-        
+
         match matcher {
             MatchOperator::Equals => value == pattern,
             MatchOperator::NotEquals => value != pattern,
@@ -567,7 +575,9 @@ impl PolicyEngine {
                     } else {
                         false
                     }
-                } else if let (serde_json::Value::String(v), serde_json::Value::String(p)) = (value, pattern) {
+                } else if let (serde_json::Value::String(v), serde_json::Value::String(p)) =
+                    (value, pattern)
+                {
                     v.contains(p)
                 } else {
                     false
@@ -585,24 +595,32 @@ impl PolicyEngine {
     }
 
     /// Evaluate rules within a policy
-    async fn evaluate_rules(&self, policy: &Policy, request: &AccessRequest) -> Result<(DecisionType, Option<String>)> {
+    async fn evaluate_rules(
+        &self,
+        policy: &Policy,
+        request: &AccessRequest,
+    ) -> Result<(DecisionType, Option<String>)> {
         for rule in &policy.rules {
             // Check rule target
             if let Some(ref target) = rule.target {
-                if !self.matches_subjects(&target.subjects, &request.subject) ||
-                   !self.matches_resources(&target.resources, &request.resource) ||
-                   !self.matches_actions(&target.actions, &request.action) {
+                if !self.matches_subjects(&target.subjects, &request.subject)
+                    || !self.matches_resources(&target.resources, &request.resource)
+                    || !self.matches_actions(&target.actions, &request.action)
+                {
                     continue;
                 }
             }
-            
+
             // Check rule condition
             if let Some(ref condition) = rule.condition {
-                if !self.evaluate_condition(&condition.expression, request).await? {
+                if !self
+                    .evaluate_condition(&condition.expression, request)
+                    .await?
+                {
                     continue;
                 }
             }
-            
+
             // Rule matches
             let decision = match rule.effect {
                 Effect::Permit => {
@@ -614,15 +632,19 @@ impl PolicyEngine {
                 }
                 Effect::Deny => DecisionType::Deny,
             };
-            
+
             return Ok((decision, Some(rule.id.clone())));
         }
-        
+
         Ok((DecisionType::NotApplicable, None))
     }
 
     /// Evaluate a condition expression
-    fn evaluate_condition<'a>(&'a self, expression: &'a Expression, request: &'a AccessRequest) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<bool>> + Send + 'a>> {
+    fn evaluate_condition<'a>(
+        &'a self,
+        expression: &'a Expression,
+        request: &'a AccessRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<bool>> + Send + 'a>> {
         Box::pin(async move {
             match expression {
                 Expression::Literal(v) => Ok(v.as_bool().unwrap_or(false)),
@@ -646,9 +668,7 @@ impl PolicyEngine {
                     }
                     Ok(false)
                 }
-                Expression::Not(expr) => {
-                    Ok(!self.evaluate_condition(expr, request).await?)
-                }
+                Expression::Not(expr) => Ok(!self.evaluate_condition(expr, request).await?),
                 Expression::Equals(left, right) => {
                     // Simplified equality check
                     Ok(false)
@@ -684,7 +704,7 @@ impl Default for PolicyEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{SubjectType, ResourceType, SensitivityLevel, ActionType};
+    use crate::{ActionType, ResourceType, SensitivityLevel, SubjectType};
 
     #[test]
     fn test_policy_engine_creation() {
@@ -727,8 +747,10 @@ mod tests {
             },
             timestamp: chrono::Utc::now(),
         };
-        
+
         let decision = engine.evaluate(&request).await.unwrap();
-        assert!(decision.decision == DecisionType::Allow || decision.decision == DecisionType::Deny);
+        assert!(
+            decision.decision == DecisionType::Allow || decision.decision == DecisionType::Deny
+        );
     }
 }

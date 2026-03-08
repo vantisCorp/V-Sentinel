@@ -1,18 +1,18 @@
 //! SENTINEL Configuration Module
-//! 
+//!
 //! This module provides production-ready configuration management
 //! with support for multiple formats, validation, and hot-reloading.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
-use std::sync::Arc;
+use anyhow::{anyhow, Result};
+use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::path::{Path, PathBuf};
 use std::fs;
-use notify::{Watcher, RecursiveMode, RecommendedWatcher, Event, EventKind};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::RwLock;
+use tracing::{debug, error, info, warn};
 
 pub mod pqc_validator;
 
@@ -146,7 +146,7 @@ pub struct NetworkConfig {
     pub enable_rate_limiting: bool,
     /// Rate limit requests per minute
     pub rate_limit_rpm: u64,
-    
+
     // PQC-specific fields
     /// Enable Post-Quantum Cryptography
     pub enable_pqc: bool,
@@ -303,7 +303,7 @@ impl ConfigManager {
     /// Create a new configuration manager
     pub fn new() -> Result<Self> {
         info!("Creating Configuration Manager...");
-        
+
         Ok(Self {
             config: Arc::new(RwLock::new(Config::default())),
             watchers: Arc::new(RwLock::new(Vec::new())),
@@ -311,51 +311,51 @@ impl ConfigManager {
             reload_callbacks: Arc::new(RwLock::new(Vec::new())),
         })
     }
-    
+
     /// Load configuration from file
     pub async fn load_from_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
         info!("Loading configuration from: {:?}", path);
-        
+
         let extension = path
             .extension()
             .and_then(|e| e.to_str())
             .ok_or_else(|| anyhow!("Invalid config file extension"))?;
-        
-        let content = fs::read_to_string(path)
-            .map_err(|e| anyhow!("Failed to read config file: {}", e))?;
-        
+
+        let content =
+            fs::read_to_string(path).map_err(|e| anyhow!("Failed to read config file: {}", e))?;
+
         let config = match extension {
             "toml" => self.load_toml(&content)?,
             "yaml" | "yml" => self.load_yaml(&content)?,
             "json" => self.load_json(&content)?,
             _ => return Err(anyhow!("Unsupported config format: {}", extension)),
         };
-        
+
         // Validate configuration
         self.validate_config(&config).await?;
-        
+
         // Store old config for callbacks
         let old_config = self.config.read().await.clone();
-        
+
         // Update configuration
         *self.config.write().await = config;
-        
+
         // Call reload callbacks
         let new_config = self.config.read().await.clone();
         self.call_reload_callbacks(&old_config, &new_config).await?;
-        
+
         info!("Configuration loaded successfully");
-        
+
         Ok(())
     }
-    
+
     /// Load configuration from environment variables
     pub async fn load_from_env(&self) -> Result<()> {
         info!("Loading configuration from environment variables...");
-        
+
         let mut config = self.config.read().await.clone();
-        
+
         // Override with environment variables
         if let Ok(env) = std::env::var("SENTINEL_ENVIRONMENT") {
             config.core.environment = match env.to_lowercase().as_str() {
@@ -365,11 +365,11 @@ impl ConfigManager {
                 _ => return Err(anyhow!("Invalid environment: {}", env)),
             };
         }
-        
+
         if let Ok(debug) = std::env::var("SENTINEL_DEBUG") {
             config.core.debug = debug.parse().unwrap_or(false);
         }
-        
+
         if let Ok(level) = std::env::var("SENTINEL_LOG_LEVEL") {
             config.logging.level = match level.to_lowercase().as_str() {
                 "trace" => LogLevel::Trace,
@@ -380,77 +380,78 @@ impl ConfigManager {
                 _ => return Err(anyhow!("Invalid log level: {}", level)),
             };
         }
-        
+
         // Validate configuration
         self.validate_config(&config).await?;
-        
+
         *self.config.write().await = config;
-        
+
         info!("Configuration loaded from environment variables");
-        
+
         Ok(())
     }
-    
+
     /// Get current configuration
     pub async fn get_config(&self) -> Config {
         self.config.read().await.clone()
     }
-    
+
     /// Get specific configuration section
     pub async fn get_core_config(&self) -> CoreConfig {
         self.config.read().await.core.clone()
     }
-    
+
     pub async fn get_ai_config(&self) -> AIConfig {
         self.config.read().await.ai.clone()
     }
-    
+
     pub async fn get_gaming_config(&self) -> GamingConfig {
         self.config.read().await.gaming.clone()
     }
-    
+
     pub async fn get_quantum_config(&self) -> QuantumConfig {
         self.config.read().await.quantum.clone()
     }
-    
+
     pub async fn get_network_config(&self) -> NetworkConfig {
         self.config.read().await.network.clone()
     }
-    
+
     pub async fn get_logging_config(&self) -> LoggingConfig {
         self.config.read().await.logging.clone()
     }
-    
+
     pub async fn get_security_config(&self) -> SecurityConfig {
         self.config.read().await.security.clone()
     }
-    
+
     pub async fn get_performance_config(&self) -> PerformanceConfig {
         self.config.read().await.performance.clone()
     }
-    
+
     /// Add configuration validator
     pub async fn add_validator(&self, validator: Box<dyn ConfigValidator>) {
         self.validators.write().await.push(validator);
     }
-    
+
     /// Add reload callback
     pub async fn add_reload_callback(&self, callback: Box<dyn ReloadCallback>) {
         self.reload_callbacks.write().await.push(callback);
     }
-    
+
     /// Watch configuration file for changes
     pub async fn watch_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref().to_path_buf();
         info!("Watching configuration file: {:?}", path);
-        
+
         let (tx, rx) = std::sync::mpsc::channel();
         let mut watcher = RecommendedWatcher::new(tx, notify::Config::default())
             .map_err(|e| anyhow!("Failed to create watcher: {}", e))?;
-        
-        watcher.watch(&path, RecursiveMode::NonRecursive)
+
+        watcher
+            .watch(&path, RecursiveMode::NonRecursive)
             .map_err(|e| anyhow!("Failed to watch file: {}", e))?;
-        
+
         let config_manager = self.clone();
         tokio::spawn(async move {
             while let Ok(Ok(event)) = rx.recv() {
@@ -462,86 +463,89 @@ impl ConfigManager {
                 }
             }
         });
-        
+
         self.watchers.write().await.push(watcher);
-        
+
         info!("Configuration file watcher started");
-        
+
         Ok(())
     }
-    
+
     /// Save configuration to file
     pub async fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
         info!("Saving configuration to: {:?}", path);
-        
+
         let config = self.config.read().await.clone();
-        
+
         let extension = path
             .extension()
             .and_then(|e| e.to_str())
             .ok_or_else(|| anyhow!("Invalid config file extension"))?;
-        
+
         let content = match extension {
             "toml" => self.save_toml(&config)?,
             "yaml" | "yml" => self.save_yaml(&config)?,
             "json" => self.save_json(&config)?,
             _ => return Err(anyhow!("Unsupported config format: {}", extension)),
         };
-        
-        fs::write(path, content)
-            .map_err(|e| anyhow!("Failed to write config file: {}", e))?;
-        
+
+        fs::write(path, content).map_err(|e| anyhow!("Failed to write config file: {}", e))?;
+
         info!("Configuration saved successfully");
-        
+
         Ok(())
     }
-    
+
     fn load_toml(&self, content: &str) -> Result<Config> {
         toml::from_str(content).map_err(|e| anyhow!("Failed to parse TOML: {}", e))
     }
-    
+
     fn load_yaml(&self, content: &str) -> Result<Config> {
         serde_yaml::from_str(content).map_err(|e| anyhow!("Failed to parse YAML: {}", e))
     }
-    
+
     fn load_json(&self, content: &str) -> Result<Config> {
         serde_json::from_str(content).map_err(|e| anyhow!("Failed to parse JSON: {}", e))
     }
-    
+
     fn save_toml(&self, config: &Config) -> Result<String> {
         toml::to_string_pretty(config).map_err(|e| anyhow!("Failed to serialize TOML: {}", e))
     }
-    
+
     fn save_yaml(&self, config: &Config) -> Result<String> {
         serde_yaml::to_string(config).map_err(|e| anyhow!("Failed to serialize YAML: {}", e))
     }
-    
+
     fn save_json(&self, config: &Config) -> Result<String> {
         serde_json::to_string_pretty(config).map_err(|e| anyhow!("Failed to serialize JSON: {}", e))
     }
-    
+
     async fn validate_config(&self, config: &Config) -> Result<()> {
         let validators = self.validators.read().await;
-        
+
         for validator in validators.iter() {
             if let Err(e) = validator.validate(config) {
-                return Err(anyhow!("Validation failed for '{}': {}", validator.name(), e));
+                return Err(anyhow!(
+                    "Validation failed for '{}': {}",
+                    validator.name(),
+                    e
+                ));
             }
         }
-        
+
         Ok(())
     }
-    
+
     async fn call_reload_callbacks(&self, old_config: &Config, new_config: &Config) -> Result<()> {
         let callbacks = self.reload_callbacks.read().await;
-        
+
         for callback in callbacks.iter() {
             if let Err(e) = callback.on_reload(old_config, new_config) {
                 warn!("Reload callback '{}' failed: {}", callback.name(), e);
             }
         }
-        
+
         Ok(())
     }
 }
@@ -708,25 +712,21 @@ pub fn init() -> Result<()> {
 
 // Re-export PQC validator types
 pub use pqc_validator::{
-    PqcConfigValidator,
-    PqcValidationResult,
-    VALID_KEM_ALGORITHMS,
-    VALID_SIGNATURE_ALGORITHMS,
-    KEM_SECURITY_LEVELS,
-    SIGNATURE_SECURITY_LEVELS,
+    PqcConfigValidator, PqcValidationResult, KEM_SECURITY_LEVELS, SIGNATURE_SECURITY_LEVELS,
+    VALID_KEM_ALGORITHMS, VALID_SIGNATURE_ALGORITHMS,
 };
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_config_manager_creation() {
         let manager = ConfigManager::new().unwrap();
         let config = manager.get_config().await;
         assert_eq!(config.core.app_name, "SENTINEL");
     }
-    
+
     #[tokio::test]
     async fn test_default_config() {
         let config = Config::default();
@@ -734,11 +734,11 @@ mod tests {
         assert_eq!(config.core.environment, Environment::Development);
         assert_eq!(config.logging.level, LogLevel::Info);
     }
-    
+
     #[tokio::test]
     async fn test_load_from_json() {
         let manager = ConfigManager::new().unwrap();
-        
+
         let json_config = r#"{
             "core": {
                 "app_name": "TestApp",
@@ -747,31 +747,31 @@ mod tests {
                 "debug": false
             }
         }"#;
-        
+
         let config = manager.load_json(json_config).unwrap();
         assert_eq!(config.core.app_name, "TestApp");
         assert_eq!(config.core.environment, Environment::Production);
     }
-    
+
     #[tokio::test]
     async fn test_save_to_json() {
         let manager = ConfigManager::new().unwrap();
         let config = Config::default();
-        
+
         let json = manager.save_json(&config).unwrap();
         assert!(json.contains("SENTINEL"));
     }
-    
+
     #[tokio::test]
     async fn test_get_config_sections() {
         let manager = ConfigManager::new().unwrap();
-        
+
         let core = manager.get_core_config().await;
         assert_eq!(core.app_name, "SENTINEL");
-        
+
         let ai = manager.get_ai_config().await;
         assert_eq!(ai.model_type, "neural_network");
-        
+
         let gaming = manager.get_gaming_config().await;
         assert!(gaming.enabled);
     }

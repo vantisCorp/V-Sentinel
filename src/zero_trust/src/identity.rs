@@ -1,19 +1,19 @@
 //! Identity Fabric Module
-//! 
+//!
 //! Implements unified identity management following Zero Trust principles.
 //! Provides single source of truth for all identity-related operations.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug, warn};
-use chrono::{DateTime, Utc, Duration};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info, warn};
 
 use super::Subject;
 
 /// Identity Fabric
-/// 
+///
 /// Central identity management system that integrates multiple identity providers
 /// and provides unified identity services
 pub struct IdentityFabric {
@@ -315,8 +315,11 @@ impl IdentityFabric {
         if self.identities.contains_key(&identity.id) {
             return Err(anyhow!("Identity with ID {} already exists", identity.id));
         }
-        
-        info!("Creating identity: {} ({})", identity.display_name, identity.id);
+
+        info!(
+            "Creating identity: {} ({})",
+            identity.display_name, identity.id
+        );
         self.identities.insert(identity.id.clone(), identity);
         Ok(())
     }
@@ -328,7 +331,8 @@ impl IdentityFabric {
 
     /// Get identity by email
     pub fn get_identity_by_email(&self, email: &str) -> Option<&Identity> {
-        self.identities.values()
+        self.identities
+            .values()
             .find(|i| i.emails.iter().any(|e| e.address == email))
     }
 
@@ -337,7 +341,7 @@ impl IdentityFabric {
         if !self.identities.contains_key(&identity.id) {
             return Err(anyhow!("Identity {} not found", identity.id));
         }
-        
+
         info!("Updating identity: {}", identity.id);
         self.identities.insert(identity.id.clone(), identity);
         Ok(())
@@ -348,16 +352,16 @@ impl IdentityFabric {
         if self.identities.remove(id).is_none() {
             return Err(anyhow!("Identity {} not found", id));
         }
-        
+
         // Clean up sessions
         self.sessions.retain(|_, s| s.identity_id != id);
-        
+
         // Clean up links
         self.identity_links.remove(id);
         for links in self.identity_links.values_mut() {
             links.retain(|l| l != id);
         }
-        
+
         info!("Deleted identity: {}", id);
         Ok(())
     }
@@ -372,28 +376,36 @@ impl IdentityFabric {
                 return Ok(false);
             }
         };
-        
+
         if identity.status != IdentityStatus::Active {
-            warn!("Identity {} is not active: {:?}", subject.id, identity.status);
+            warn!(
+                "Identity {} is not active: {:?}",
+                subject.id, identity.status
+            );
             return Ok(false);
         }
-        
+
         // Check assurance level
         if identity.assurance_level < self.config.min_assurance_level {
-            warn!("Identity {} assurance level {:?} below minimum {:?}",
-                  subject.id, identity.assurance_level, self.config.min_assurance_level);
+            warn!(
+                "Identity {} assurance level {:?} below minimum {:?}",
+                subject.id, identity.assurance_level, self.config.min_assurance_level
+            );
             return Ok(false);
         }
-        
+
         // Check if there's an active session
-        let has_active_session = self.sessions.values()
-            .any(|s| s.identity_id == subject.id && s.status == SessionStatus::Active && s.expires_at > Utc::now());
-        
+        let has_active_session = self.sessions.values().any(|s| {
+            s.identity_id == subject.id
+                && s.status == SessionStatus::Active
+                && s.expires_at > Utc::now()
+        });
+
         if !has_active_session {
             debug!("No active session for identity {}", subject.id);
             // Still allow if identity is valid - session may be established later
         }
-        
+
         Ok(true)
     }
 
@@ -403,15 +415,19 @@ impl IdentityFabric {
         provider_id: &str,
         credentials: &ProviderCredentials,
     ) -> Result<IdentitySession> {
-        let provider = self.providers.get(provider_id)
+        let provider = self
+            .providers
+            .get(provider_id)
             .ok_or_else(|| anyhow!("Provider {} not found", provider_id))?;
-        
+
         // Authenticate with provider
         let provider_identity = provider.authenticate(credentials).await?;
-        
+
         // Get or create local identity
-        let identity = self.get_or_create_identity(&provider_identity, provider_id).await?;
-        
+        let identity = self
+            .get_or_create_identity(&provider_identity, provider_id)
+            .await?;
+
         // Create session
         let session = IdentitySession {
             id: uuid::Uuid::new_v4().to_string(),
@@ -431,15 +447,18 @@ impl IdentityFabric {
             device_id: None,
             ip_address: String::new(),
         };
-        
+
         // Update identity last authenticated
         if let Some(id) = self.identities.get_mut(&identity.id) {
             id.last_authenticated = Some(Utc::now());
         }
-        
+
         self.sessions.insert(session.id.clone(), session.clone());
-        
-        info!("Created session {} for identity {}", session.id, identity.id);
+
+        info!(
+            "Created session {} for identity {}",
+            session.id, identity.id
+        );
         Ok(session)
     }
 
@@ -453,20 +472,27 @@ impl IdentityFabric {
         if let Some(existing) = self.identities.get(&provider_identity.id) {
             return Ok(existing.clone());
         }
-        
+
         // Create new identity
         let identity = Identity {
             id: provider_identity.id.clone(),
             primary_identifier: provider_identity.username.clone(),
             identity_type: IdentityType::Human,
-            display_name: provider_identity.display_name.clone().unwrap_or_else(|| provider_identity.username.clone()),
-            emails: provider_identity.email.as_ref()
-                .map(|e| vec![EmailAddress {
-                    address: e.clone(),
-                    is_primary: true,
-                    is_verified: false,
-                    verified_at: None,
-                }])
+            display_name: provider_identity
+                .display_name
+                .clone()
+                .unwrap_or_else(|| provider_identity.username.clone()),
+            emails: provider_identity
+                .email
+                .as_ref()
+                .map(|e| {
+                    vec![EmailAddress {
+                        address: e.clone(),
+                        is_primary: true,
+                        is_verified: false,
+                        verified_at: None,
+                    }]
+                })
                 .unwrap_or_default(),
             phones: vec![],
             attributes: provider_identity.attributes.clone(),
@@ -481,25 +507,28 @@ impl IdentityFabric {
             last_authenticated: Some(Utc::now()),
             risk_score: 0.0,
         };
-        
-        self.identities.insert(identity.id.clone(), identity.clone());
+
+        self.identities
+            .insert(identity.id.clone(), identity.clone());
         Ok(identity)
     }
 
     /// Validate session
     pub fn validate_session(&mut self, session_id: &str) -> Result<bool> {
-        let session = self.sessions.get_mut(session_id)
+        let session = self
+            .sessions
+            .get_mut(session_id)
             .ok_or_else(|| anyhow!("Session {} not found", session_id))?;
-        
+
         if session.status != SessionStatus::Active {
             return Ok(false);
         }
-        
+
         if session.expires_at < Utc::now() {
             session.status = SessionStatus::Expired;
             return Ok(false);
         }
-        
+
         session.last_activity = Utc::now();
         Ok(true)
     }
@@ -521,17 +550,17 @@ impl IdentityFabric {
         if !self.identities.contains_key(identity2) {
             return Err(anyhow!("Identity {} not found", identity2));
         }
-        
+
         self.identity_links
             .entry(identity1.to_string())
             .or_insert_with(Vec::new)
             .push(identity2.to_string());
-        
+
         self.identity_links
             .entry(identity2.to_string())
             .or_insert_with(Vec::new)
             .push(identity1.to_string());
-        
+
         info!("Linked identities {} and {}", identity1, identity2);
         Ok(())
     }
@@ -553,22 +582,23 @@ impl IdentityFabric {
         if !self.config.sync_enabled {
             return Ok(0);
         }
-        
+
         let mut total_synced = 0;
-        
+
         // Collect provider IDs first to avoid borrow conflicts
         let provider_ids: Vec<String> = self.providers.keys().cloned().collect();
-        
+
         for provider_id in provider_ids {
             let identities = match self.providers.get(&provider_id) {
                 Some(provider) => provider.sync().await,
                 None => continue,
             };
-            
+
             match identities {
                 Ok(identities) => {
                     for pi in identities {
-                        if let Ok(_identity) = self.get_or_create_identity(&pi, &provider_id).await {
+                        if let Ok(_identity) = self.get_or_create_identity(&pi, &provider_id).await
+                        {
                             total_synced += 1;
                         }
                     }
@@ -578,7 +608,7 @@ impl IdentityFabric {
                 }
             }
         }
-        
+
         info!("Synced {} identities from all providers", total_synced);
         Ok(total_synced)
     }
@@ -590,7 +620,8 @@ impl IdentityFabric {
 
     /// Get active session count
     pub fn active_session_count(&self) -> usize {
-        self.sessions.values()
+        self.sessions
+            .values()
             .filter(|s| s.status == SessionStatus::Active && s.expires_at > Utc::now())
             .count()
     }
@@ -644,7 +675,7 @@ mod tests {
             last_authenticated: None,
             risk_score: 0.0,
         };
-        
+
         fabric.create_identity(identity).unwrap();
         assert_eq!(fabric.identity_count(), 1);
     }

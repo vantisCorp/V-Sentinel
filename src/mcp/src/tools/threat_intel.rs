@@ -11,15 +11,15 @@ pub struct ThreatIntelParams {
     /// IOC (Indicator of Compromise) to lookup
     #[serde(default)]
     pub ioc: Option<String>,
-    
+
     /// IOC type
     #[serde(default)]
     pub ioc_type: Option<String>,
-    
+
     /// Threat actor name
     #[serde(default)]
     pub threat_actor: Option<String>,
-    
+
     /// Malware family
     #[serde(default)]
     pub malware_family: Option<String>,
@@ -30,28 +30,28 @@ pub struct ThreatIntelParams {
 pub struct ThreatIntel {
     /// IOC value
     pub ioc: String,
-    
+
     /// IOC type (ip, domain, hash, url)
     pub ioc_type: String,
-    
+
     /// Threat actor (if known)
     pub threat_actor: Option<String>,
-    
+
     /// Malware family (if known)
     pub malware_family: Option<String>,
-    
+
     /// First seen timestamp
     pub first_seen: String,
-    
+
     /// Last seen timestamp
     pub last_seen: String,
-    
+
     /// Confidence score (0-100)
     pub confidence: u8,
-    
+
     /// Severity (critical, high, medium, low)
     pub severity: String,
-    
+
     /// Additional context
     pub context: Vec<String>,
 }
@@ -64,7 +64,9 @@ impl ToolTrait for ThreatIntelTool {
     fn get_tool(&self) -> Tool {
         Tool {
             name: "sentinel_threat_intel".to_string(),
-            description: "Query threat intelligence database for IOCs, threat actors, and malware families".to_string(),
+            description:
+                "Query threat intelligence database for IOCs, threat actors, and malware families"
+                    .to_string(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -91,24 +93,28 @@ impl ToolTrait for ThreatIntelTool {
             requires_auth: true,
         }
     }
-    
+
     async fn execute(&self, params: serde_json::Value) -> MCPResult<ToolResult> {
-        let params: ThreatIntelParams = serde_json::from_value(params)
-            .map_err(|e| crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e)))?;
-        
+        let params: ThreatIntelParams = serde_json::from_value(params).map_err(|e| {
+            crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e))
+        })?;
+
         let threat_intel = self.mock_query_threat_intel(&params).await?;
-        
+
         let result = serde_json::json!({
             "threat_intel": threat_intel,
             "total": threat_intel.len()
         });
-        
+
         Ok(ToolResult::success(result))
     }
 }
 
 impl ThreatIntelTool {
-    async fn mock_query_threat_intel(&self, params: &ThreatIntelParams) -> Result<Vec<ThreatIntel>, crate::error::MCPError> {
+    async fn mock_query_threat_intel(
+        &self,
+        params: &ThreatIntelParams,
+    ) -> Result<Vec<ThreatIntel>, crate::error::MCPError> {
         let threat_intel = vec![
             ThreatIntel {
                 ioc: "192.168.1.100".to_string(),
@@ -156,7 +162,7 @@ impl ThreatIntelTool {
                 ],
             },
         ];
-        
+
         Ok(threat_intel)
     }
 }

@@ -4,11 +4,11 @@
 //! malicious activities based on process behavior patterns.
 
 use anyhow::Result;
-use tracing::{info, debug, warn, error};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
+use tracing::{debug, error, info, warn};
 
 /// Behavioral Analysis Engine
 pub struct BehavioralAnalysisEngine {
@@ -25,7 +25,7 @@ impl BehavioralAnalysisEngine {
     /// Create a new behavioral analysis engine
     pub fn new() -> Result<Self> {
         info!("Creating Behavioral Analysis Engine...");
-        
+
         Ok(Self {
             initialized: Arc::new(RwLock::new(false)),
             active_monitoring: Arc::new(RwLock::new(false)),
@@ -36,100 +36,108 @@ impl BehavioralAnalysisEngine {
             threat_count: Arc::new(RwLock::new(0)),
         })
     }
-    
+
     /// Initialize the behavioral analysis engine
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing Behavioral Analysis Engine...");
-        
+
         // TODO: Implement actual initialization
         // This would involve:
         // 1. Loading behavioral patterns
         // 2. Initializing anomaly detection models
         // 3. Setting up monitoring hooks
         // 4. Configuring thresholds
-        
+
         *self.initialized.write().await = true;
-        
+
         info!("Behavioral Analysis Engine initialized successfully");
-        
+
         Ok(())
     }
-    
+
     /// Start behavioral monitoring
     pub async fn start_monitoring(&self) -> Result<()> {
         if !*self.initialized.read().await {
-            return Err(anyhow::anyhow!("Behavioral Analysis Engine not initialized"));
+            return Err(anyhow::anyhow!(
+                "Behavioral Analysis Engine not initialized"
+            ));
         }
-        
+
         info!("Starting behavioral monitoring...");
-        
+
         *self.active_monitoring.write().await = true;
-        
+
         info!("Behavioral monitoring started");
-        
+
         Ok(())
     }
-    
+
     /// Stop behavioral monitoring
     pub async fn stop_monitoring(&self) -> Result<()> {
         info!("Stopping behavioral monitoring...");
-        
+
         *self.active_monitoring.write().await = false;
-        
+
         info!("Behavioral monitoring stopped");
-        
+
         Ok(())
     }
-    
+
     /// Record process behavior
     pub async fn record_behavior(&self, process_id: u32, behavior: BehaviorEvent) -> Result<()> {
         if !*self.active_monitoring.read().await {
             return Err(anyhow::anyhow!("Monitoring not active"));
         }
-        
-        debug!("Recording behavior for process {}: {:?}", process_id, behavior.event_type);
-        
+
+        debug!(
+            "Recording behavior for process {}: {:?}",
+            process_id, behavior.event_type
+        );
+
         let mut behaviors = self.process_behaviors.write().await;
-        let process_behavior = behaviors.entry(process_id).or_insert_with(|| ProcessBehavior::new(process_id));
+        let process_behavior = behaviors
+            .entry(process_id)
+            .or_insert_with(|| ProcessBehavior::new(process_id));
         process_behavior.add_event(behavior);
-        
+
         Ok(())
     }
-    
+
     /// Analyze process behavior
     pub async fn analyze_process(&self, process_id: u32) -> Result<BehavioralAnalysisResult> {
         if !*self.active_monitoring.read().await {
             return Err(anyhow::anyhow!("Monitoring not active"));
         }
-        
+
         debug!("Analyzing behavior for process {}", process_id);
-        
+
         let behaviors = self.process_behaviors.read().await;
-        let process_behavior = behaviors.get(&process_id)
+        let process_behavior = behaviors
+            .get(&process_id)
             .ok_or_else(|| anyhow::anyhow!("Process {} not found", process_id))?;
-        
+
         // Pattern matching
         let mut pattern_matcher = self.pattern_matcher.write().await;
         let pattern_matches = pattern_matcher.match_patterns(process_behavior)?;
-        
+
         // Anomaly detection
         let mut anomaly_detector = self.anomaly_detector.write().await;
         let anomalies = anomaly_detector.detect_anomalies(process_behavior)?;
-        
+
         // Calculate risk score
         let risk_score = self.calculate_risk_score(&pattern_matches, &anomalies);
-        
+
         // Update statistics
         {
             let mut count = self.analysis_count.write().await;
             *count += 1;
         }
-        
+
         if risk_score > 0.7 {
             let mut count = self.threat_count.write().await;
             *count += 1;
         }
-        
+
         let result = BehavioralAnalysisResult {
             process_id,
             is_malicious: risk_score > 0.7,
@@ -138,26 +146,29 @@ impl BehavioralAnalysisEngine {
             anomalies,
             confidence: 0.95,
         };
-        
-        debug!("Behavioral analysis complete for process {}: risk_score={:.2}", 
-            process_id, risk_score);
-        
+
+        debug!(
+            "Behavioral analysis complete for process {}: risk_score={:.2}",
+            process_id, risk_score
+        );
+
         Ok(result)
     }
-    
+
     /// Calculate risk score from pattern matches and anomalies
     fn calculate_risk_score(&self, pattern_matches: &[PatternMatch], anomalies: &[Anomaly]) -> f64 {
-        let pattern_score = pattern_matches.iter()
+        let pattern_score = pattern_matches
+            .iter()
             .map(|m| m.severity.value())
-            .sum::<f64>() / (pattern_matches.len() as f64 + 1.0);
-        
-        let anomaly_score = anomalies.iter()
-            .map(|a| a.severity.value())
-            .sum::<f64>() / (anomalies.len() as f64 + 1.0);
-        
+            .sum::<f64>()
+            / (pattern_matches.len() as f64 + 1.0);
+
+        let anomaly_score = anomalies.iter().map(|a| a.severity.value()).sum::<f64>()
+            / (anomalies.len() as f64 + 1.0);
+
         (pattern_score + anomaly_score) / 2.0
     }
-    
+
     /// Get statistics
     pub async fn get_stats(&self) -> BehavioralAnalysisStats {
         BehavioralAnalysisStats {
@@ -239,7 +250,7 @@ impl PatternMatcher {
             patterns: Self::load_default_patterns(),
         }
     }
-    
+
     fn load_default_patterns() -> Vec<BehaviorPattern> {
         vec![
             BehaviorPattern {
@@ -282,10 +293,10 @@ impl PatternMatcher {
             },
         ]
     }
-    
+
     pub fn match_patterns(&self, process_behavior: &ProcessBehavior) -> Result<Vec<PatternMatch>> {
         let mut matches = Vec::new();
-        
+
         for pattern in &self.patterns {
             if self.matches_pattern(process_behavior, pattern) {
                 matches.push(PatternMatch {
@@ -296,26 +307,32 @@ impl PatternMatcher {
                 });
             }
         }
-        
+
         Ok(matches)
     }
-    
-    fn matches_pattern(&self, process_behavior: &ProcessBehavior, pattern: &BehaviorPattern) -> bool {
+
+    fn matches_pattern(
+        &self,
+        process_behavior: &ProcessBehavior,
+        pattern: &BehaviorPattern,
+    ) -> bool {
         // Check event count
         if process_behavior.event_count() < pattern.min_event_count {
             return false;
         }
-        
+
         // Check duration
         if process_behavior.duration() > pattern.max_duration {
             return false;
         }
-        
+
         // Check event types
-        let matching_events = process_behavior.events.iter()
+        let matching_events = process_behavior
+            .events
+            .iter()
             .filter(|e| pattern.event_types.contains(&e.event_type))
             .count();
-        
+
         matching_events >= pattern.min_event_count
     }
 }
@@ -373,7 +390,7 @@ impl AnomalyDetector {
             baseline: Self::load_baseline(),
         }
     }
-    
+
     fn load_baseline() -> HashMap<BehaviorEventType, f64> {
         // Default baseline values (events per minute)
         let mut baseline = HashMap::new();
@@ -384,19 +401,21 @@ impl AnomalyDetector {
         baseline.insert(BehaviorEventType::ApiCall, 100.0);
         baseline
     }
-    
+
     pub fn detect_anomalies(&self, process_behavior: &ProcessBehavior) -> Result<Vec<Anomaly>> {
         let mut anomalies = Vec::new();
-        
+
         let duration_minutes = process_behavior.duration().as_secs_f64() / 60.0;
-        
+
         for (event_type, baseline_rate) in &self.baseline {
-            let actual_count = process_behavior.events.iter()
+            let actual_count = process_behavior
+                .events
+                .iter()
                 .filter(|e| e.event_type == *event_type)
                 .count();
-            
+
             let actual_rate = actual_count as f64 / duration_minutes.max(0.1);
-            
+
             // Check if rate is significantly higher than baseline
             if actual_rate > baseline_rate * 5.0 {
                 anomalies.push(Anomaly {
@@ -411,7 +430,7 @@ impl AnomalyDetector {
                 });
             }
         }
-        
+
         Ok(anomalies)
     }
 }
@@ -474,34 +493,34 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_behavioral_analysis_initialization() {
         let engine = BehavioralAnalysisEngine::new().unwrap();
         assert!(engine.initialize().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_behavior_recording() {
         let engine = BehavioralAnalysisEngine::new().unwrap();
         engine.initialize().await.unwrap();
         engine.start_monitoring().await.unwrap();
-        
+
         let behavior = BehaviorEvent {
             event_type: BehaviorEventType::FileCreated,
             timestamp: chrono::Utc::now(),
             details: "Created file".to_string(),
         };
-        
+
         assert!(engine.record_behavior(1234, behavior).await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_process_analysis() {
         let engine = BehavioralAnalysisEngine::new().unwrap();
         engine.initialize().await.unwrap();
         engine.start_monitoring().await.unwrap();
-        
+
         // Record multiple behaviors
         for i in 0..15 {
             let behavior = BehaviorEvent {
@@ -515,16 +534,16 @@ mod tests {
             };
             engine.record_behavior(1234, behavior).await.unwrap();
         }
-        
+
         let result = engine.analyze_process(1234).await.unwrap();
         assert!(!result.pattern_matches.is_empty() || !result.anomalies.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_pattern_matching() {
         let pattern_matcher = PatternMatcher::new();
         let mut process_behavior = ProcessBehavior::new(1234);
-        
+
         // Add events matching ransomware pattern
         for i in 0..10 {
             process_behavior.add_event(BehaviorEvent {
@@ -533,16 +552,16 @@ mod tests {
                 details: format!("Event {}", i),
             });
         }
-        
+
         let matches = pattern_matcher.match_patterns(&process_behavior).unwrap();
         assert!(!matches.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_anomaly_detection() {
         let anomaly_detector = AnomalyDetector::new();
         let mut process_behavior = ProcessBehavior::new(1234);
-        
+
         // Add many file creation events (anomaly)
         for i in 0..50 {
             process_behavior.add_event(BehaviorEvent {
@@ -551,8 +570,10 @@ mod tests {
                 details: format!("Event {}", i),
             });
         }
-        
-        let anomalies = anomaly_detector.detect_anomalies(&process_behavior).unwrap();
+
+        let anomalies = anomaly_detector
+            .detect_anomalies(&process_behavior)
+            .unwrap();
         assert!(!anomalies.is_empty());
     }
 }

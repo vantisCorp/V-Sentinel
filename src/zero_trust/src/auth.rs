@@ -1,19 +1,19 @@
 //! Continuous Authentication Module
-//! 
+//!
 //! Implements multi-factor authentication, behavioral biometrics,
 //! and risk-based authentication following Zero Trust principles.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug, warn};
-use chrono::{DateTime, Utc, Duration};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info, warn};
 
 use super::Subject;
 
 /// Authenticator
-/// 
+///
 /// Main authentication coordinator supporting multiple authentication methods
 pub struct Authenticator {
     methods: Vec<Box<dyn AuthenticationMethod + Send + Sync>>,
@@ -307,7 +307,10 @@ impl Authenticator {
 
     /// Register an authentication method
     pub fn register_method(&mut self, method: Box<dyn AuthenticationMethod + Send + Sync>) {
-        info!("Registering authentication method: {:?}", method.method_type());
+        info!(
+            "Registering authentication method: {:?}",
+            method.method_type()
+        );
         self.methods.push(method);
     }
 
@@ -318,7 +321,7 @@ impl Authenticator {
         credentials: &AuthCredentials,
     ) -> Result<AuthContext> {
         info!("Authenticating subject: {}", subject.id);
-        
+
         // Check lockout status
         if self.is_locked_out(&subject.id) {
             warn!("Subject {} is locked out", subject.id);
@@ -333,37 +336,38 @@ impl Authenticator {
                 claims: HashMap::new(),
             });
         }
-        
+
         // Find applicable authentication methods
-        let applicable_methods: Vec<_> = self.methods
+        let applicable_methods: Vec<_> = self
+            .methods
             .iter()
             .filter(|m| m.is_available(subject))
             .collect();
-        
+
         if applicable_methods.is_empty() {
             return Err(anyhow!("No authentication methods available for subject"));
         }
-        
+
         // Authenticate using the strongest method first
         let mut best_result = AuthResult::Failed;
         let mut best_strength = 0;
         let mut best_method = AuthMethod::Password;
-        
+
         for method in applicable_methods {
             let result = method.authenticate(credentials).await?;
             let strength = method.strength();
-            
+
             if strength > best_strength {
                 best_result = result;
                 best_strength = strength;
                 best_method = method.method_type();
             }
-            
+
             if result == AuthResult::Success && strength >= self.config.min_auth_strength {
                 break;
             }
         }
-        
+
         // Determine if MFA is required
         let final_result = if best_result == AuthResult::Success {
             if self.config.mfa_required && best_strength < 3 {
@@ -374,14 +378,17 @@ impl Authenticator {
         } else {
             best_result
         };
-        
+
         // Create session on successful auth
         let session_id = if final_result == AuthResult::Success {
-            Some(self.create_session(subject, best_method.clone(), best_strength).await?)
+            Some(
+                self.create_session(subject, best_method.clone(), best_strength)
+                    .await?,
+            )
         } else {
             None
         };
-        
+
         Ok(AuthContext {
             subject: subject.clone(),
             method: best_method,
@@ -398,9 +405,11 @@ impl Authenticator {
     pub async fn verify(&self, subject: &Subject) -> Result<bool> {
         // Check if subject has an active session
         let has_active_session = self.sessions.values().any(|s| {
-            s.subject_id == subject.id && s.status == SessionStatus::Active && s.expires_at > Utc::now()
+            s.subject_id == subject.id
+                && s.status == SessionStatus::Active
+                && s.expires_at > Utc::now()
         });
-        
+
         Ok(has_active_session)
     }
 
@@ -413,7 +422,7 @@ impl Authenticator {
     ) -> Result<String> {
         let session_id = uuid::Uuid::new_v4().to_string();
         let now = Utc::now();
-        
+
         let session = Session {
             id: session_id.clone(),
             subject_id: subject.id.clone(),
@@ -428,10 +437,10 @@ impl Authenticator {
             risk_score: 0.0,
             reauth_required: false,
         };
-        
+
         self.sessions.insert(session_id.clone(), session);
         info!("Created session {} for subject {}", session_id, subject.id);
-        
+
         Ok(session_id)
     }
 
@@ -451,10 +460,14 @@ impl Authenticator {
             status: ChallengeStatus::Pending,
             delivery_info: None,
         };
-        
-        self.mfa_challenges.insert(challenge.id.clone(), challenge.clone());
-        info!("Issued MFA challenge {} for subject {}", challenge.id, subject_id);
-        
+
+        self.mfa_challenges
+            .insert(challenge.id.clone(), challenge.clone());
+        info!(
+            "Issued MFA challenge {} for subject {}",
+            challenge.id, subject_id
+        );
+
         Ok(challenge)
     }
 
@@ -464,30 +477,32 @@ impl Authenticator {
         challenge_id: &str,
         response: &str,
     ) -> Result<bool> {
-        let challenge = self.mfa_challenges.get_mut(challenge_id)
+        let challenge = self
+            .mfa_challenges
+            .get_mut(challenge_id)
             .ok_or_else(|| anyhow!("Challenge not found"))?;
-        
+
         if challenge.status != ChallengeStatus::Pending {
             return Ok(false);
         }
-        
+
         if challenge.expires_at < Utc::now() {
             challenge.status = ChallengeStatus::Expired;
             return Ok(false);
         }
-        
+
         challenge.attempts += 1;
-        
+
         // In real implementation, verify the response
         // For now, accept any non-empty response
         let verified = !response.is_empty();
-        
+
         challenge.status = if verified {
             ChallengeStatus::Verified
         } else {
             ChallengeStatus::Failed
         };
-        
+
         Ok(verified)
     }
 
@@ -513,27 +528,30 @@ impl Authenticator {
 
     /// Validate session
     pub fn validate_session(&mut self, session_id: &str) -> Result<bool> {
-        let session = self.sessions.get_mut(session_id)
+        let session = self
+            .sessions
+            .get_mut(session_id)
             .ok_or_else(|| anyhow!("Session not found"))?;
-        
+
         if session.status != SessionStatus::Active {
             return Ok(false);
         }
-        
+
         if session.expires_at < Utc::now() {
             session.status = SessionStatus::Expired;
             return Ok(false);
         }
-        
+
         // Update last activity
         session.last_activity = Utc::now();
-        
+
         Ok(true)
     }
 
     /// Get active session count
     pub fn active_session_count(&self) -> usize {
-        self.sessions.values()
+        self.sessions
+            .values()
             .filter(|s| s.status == SessionStatus::Active)
             .count()
     }
@@ -559,16 +577,16 @@ impl AuthenticationMethod for PasswordAuthMethod {
     fn method_type(&self) -> AuthMethod {
         AuthMethod::Password
     }
-    
+
     fn strength(&self) -> u32 {
         1
     }
-    
+
     async fn authenticate(&self, _credentials: &AuthCredentials) -> Result<AuthResult> {
         // In real implementation, verify password hash
         Ok(AuthResult::Success)
     }
-    
+
     fn is_available(&self, _subject: &Subject) -> bool {
         true
     }
@@ -588,11 +606,11 @@ impl AuthenticationMethod for TOTPAuthMethod {
     fn method_type(&self) -> AuthMethod {
         AuthMethod::TOTP
     }
-    
+
     fn strength(&self) -> u32 {
         3
     }
-    
+
     async fn authenticate(&self, credentials: &AuthCredentials) -> Result<AuthResult> {
         if let Some(code) = credentials.credentials.get("totp_code") {
             // In real implementation, verify TOTP code
@@ -601,7 +619,7 @@ impl AuthenticationMethod for TOTPAuthMethod {
             Ok(AuthResult::Failed)
         }
     }
-    
+
     fn is_available(&self, _subject: &Subject) -> bool {
         true
     }
@@ -614,11 +632,15 @@ pub struct BiometricAuthMethod {
 
 impl BiometricAuthMethod {
     pub fn fingerprint() -> Self {
-        Self { biometric_type: AuthMethod::BiometricFingerprint }
+        Self {
+            biometric_type: AuthMethod::BiometricFingerprint,
+        }
     }
-    
+
     pub fn face() -> Self {
-        Self { biometric_type: AuthMethod::BiometricFace }
+        Self {
+            biometric_type: AuthMethod::BiometricFace,
+        }
     }
 }
 
@@ -627,11 +649,11 @@ impl AuthenticationMethod for BiometricAuthMethod {
     fn method_type(&self) -> AuthMethod {
         self.biometric_type.clone()
     }
-    
+
     fn strength(&self) -> u32 {
         3
     }
-    
+
     async fn authenticate(&self, credentials: &AuthCredentials) -> Result<AuthResult> {
         if credentials.credentials.contains_key("biometric_template") {
             // In real implementation, verify biometric template
@@ -640,7 +662,7 @@ impl AuthenticationMethod for BiometricAuthMethod {
             Ok(AuthResult::Failed)
         }
     }
-    
+
     fn is_available(&self, _subject: &Subject) -> bool {
         true
     }
@@ -668,7 +690,10 @@ mod tests {
             device: None,
         };
 
-        let session_id = auth.create_session(&subject, AuthMethod::Password, 1).await.unwrap();
+        let session_id = auth
+            .create_session(&subject, AuthMethod::Password, 1)
+            .await
+            .unwrap();
         assert!(!session_id.is_empty());
         assert!(auth.get_session(&session_id).is_some());
     }

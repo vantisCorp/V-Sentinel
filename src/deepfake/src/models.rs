@@ -45,13 +45,14 @@ impl MediaContent {
 
     /// Get file extension based on media type
     pub fn extension(&self) -> &str {
-        self.metadata.get("extension").map(|s| s.as_str()).unwrap_or_else(|| {
-            match self.media_type {
+        self.metadata
+            .get("extension")
+            .map(|s| s.as_str())
+            .unwrap_or_else(|| match self.media_type {
                 MediaType::Image => "jpg",
                 MediaType::Video => "mp4",
                 MediaType::Audio => "mp3",
-            }
-        })
+            })
     }
 }
 
@@ -341,7 +342,7 @@ impl DetectionIndicators {
             + self.metadata_inconsistencies
             + self.compression_artifacts
             + self.gan_artifacts;
-        
+
         // Normalize to 0.0 - 1.0 range (assuming max ~100 indicators)
         (total as f32 / 100.0).min(1.0)
     }

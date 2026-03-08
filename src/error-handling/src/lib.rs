@@ -1,16 +1,16 @@
 //! SENTINEL Error Handling Module
-//! 
+//!
 //! This module provides comprehensive error handling and recovery capabilities
 //! including retry logic, circuit breakers, and recovery mechanisms.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
-use std::sync::Arc;
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::time::{Duration, Instant};
 use std::future::Future;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
+use tracing::{debug, error, info, warn};
 
 /// Error Handler
 pub struct ErrorHandler {
@@ -150,7 +150,7 @@ impl ErrorHandler {
     /// Create a new error handler
     pub fn new() -> Result<Self> {
         info!("Creating Error Handler...");
-        
+
         Ok(Self {
             retry_manager: Arc::new(RwLock::new(RetryManager::new())),
             circuit_breaker: Arc::new(RwLock::new(CircuitBreakerManager::new())),
@@ -158,27 +158,23 @@ impl ErrorHandler {
             error_log: Arc::new(RwLock::new(ErrorLog::new())),
         })
     }
-    
+
     /// Execute with retry
-    pub async fn execute_with_retry<F, T, E>(
-        &self,
-        operation_name: &str,
-        operation: F,
-    ) -> Result<T>
+    pub async fn execute_with_retry<F, T, E>(&self, operation_name: &str, operation: F) -> Result<T>
     where
         F: Fn() -> Result<T, E> + Send + Sync,
         E: std::error::Error + Send + Sync + 'static,
     {
         let retry_manager = self.retry_manager.read().await;
         let policy = retry_manager.get_policy(operation_name);
-        
+
         let mut last_error = None;
         let mut attempt = 0;
         let mut delay = policy.initial_delay;
-        
+
         while attempt < policy.max_attempts {
             attempt += 1;
-            
+
             match operation() {
                 Ok(result) => {
                     // Log successful retry
@@ -191,29 +187,41 @@ impl ErrorHandler {
                 }
                 Err(e) => {
                     last_error = Some(e);
-                    
+
                     if attempt < policy.max_attempts {
-                        warn!("Operation {} failed (attempt {}/{}), retrying in {:?}: {}",
-                            operation_name, attempt, policy.max_attempts, delay, last_error.as_ref().unwrap());
-                        
+                        warn!(
+                            "Operation {} failed (attempt {}/{}), retrying in {:?}: {}",
+                            operation_name,
+                            attempt,
+                            policy.max_attempts,
+                            delay,
+                            last_error.as_ref().unwrap()
+                        );
+
                         tokio::time::sleep(delay).await;
                         delay = Duration::from_millis(
-                            (delay.as_millis() as f64 * policy.backoff_multiplier).min(policy.max_delay.as_millis() as f64) as u64
+                            (delay.as_millis() as f64 * policy.backoff_multiplier)
+                                .min(policy.max_delay.as_millis() as f64)
+                                as u64,
                         );
                     }
                 }
             }
         }
-        
+
         // All retries failed
         let mut stats = retry_manager.retry_stats.write().await;
         stats.failed_retries += 1;
         stats.total_retries += 1;
-        
-        Err(anyhow!("Operation {} failed after {} attempts: {}",
-            operation_name, attempt, last_error.unwrap()))
+
+        Err(anyhow!(
+            "Operation {} failed after {} attempts: {}",
+            operation_name,
+            attempt,
+            last_error.unwrap()
+        ))
     }
-    
+
     /// Execute with circuit breaker
     pub async fn execute_with_circuit_breaker<F, T, E>(
         &self,
@@ -225,12 +233,12 @@ impl ErrorHandler {
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut circuit_manager = self.circuit_breaker.write().await;
-        
+
         // Check circuit state
         if !circuit_manager.can_execute(circuit_name) {
             return Err(anyhow!("Circuit breaker {} is open", circuit_name));
         }
-        
+
         // Execute operation
         match operation() {
             Ok(result) => {
@@ -243,11 +251,15 @@ impl ErrorHandler {
             }
         }
     }
-    
+
     /// Handle error with recovery
-    pub async fn handle_error(&self, error: &str, context: HashMap<String, String>) -> Result<RecoveryAction> {
+    pub async fn handle_error(
+        &self,
+        error: &str,
+        context: HashMap<String, String>,
+    ) -> Result<RecoveryAction> {
         let recovery_manager = self.recovery_manager.read().await;
-        
+
         // Log error
         let mut log = self.error_log.write().await;
         log.add_entry(ErrorEntry {
@@ -259,49 +271,54 @@ impl ErrorHandler {
             context: context.clone(),
             recovered: false,
         });
-        
+
         // Determine recovery action
         let action = recovery_manager.determine_recovery(error, context)?;
-        
+
         // Update recovery statistics
         let mut stats = recovery_manager.recovery_stats.write().await;
         stats.total_recoveries += 1;
-        
+
         Ok(action)
     }
-    
+
     /// Add retry policy
     pub async fn add_retry_policy(&self, name: String, policy: RetryPolicy) -> Result<()> {
         let mut retry_manager = self.retry_manager.write().await;
         retry_manager.add_policy(name, policy);
         Ok(())
     }
-    
+
     /// Add circuit breaker
-    pub async fn add_circuit_breaker(&self, name: String, failure_threshold: u32, timeout: Duration) -> Result<()> {
+    pub async fn add_circuit_breaker(
+        &self,
+        name: String,
+        failure_threshold: u32,
+        timeout: Duration,
+    ) -> Result<()> {
         let mut circuit_manager = self.circuit_breaker.write().await;
         circuit_manager.add_breaker(name, failure_threshold, timeout);
         Ok(())
     }
-    
+
     /// Get error log entries
     pub async fn get_error_log(&self, limit: Option<usize>) -> Vec<ErrorEntry> {
         let log = self.error_log.read().await;
         log.get_entries(limit)
     }
-    
+
     /// Get retry statistics
     pub async fn get_retry_stats(&self) -> RetryStatistics {
         let retry_manager = self.retry_manager.read().await;
         retry_manager.get_stats()
     }
-    
+
     /// Get circuit breaker states
     pub async fn get_circuit_states(&self) -> HashMap<String, CircuitState> {
         let circuit_manager = self.circuit_breaker.read().await;
         circuit_manager.get_states()
     }
-    
+
     /// Get recovery statistics
     pub async fn get_recovery_stats(&self) -> RecoveryStatistics {
         let recovery_manager = self.recovery_manager.read().await;
@@ -316,15 +333,18 @@ impl RetryManager {
             retry_stats: Arc::new(RwLock::new(RetryStatistics::default())),
         }
     }
-    
+
     pub fn add_policy(&mut self, name: String, policy: RetryPolicy) {
         self.retry_policies.insert(name, policy);
     }
-    
+
     pub fn get_policy(&self, name: &str) -> RetryPolicy {
-        self.retry_policies.get(name).cloned().unwrap_or_else(|| RetryPolicy::default())
+        self.retry_policies
+            .get(name)
+            .cloned()
+            .unwrap_or_else(|| RetryPolicy::default())
     }
-    
+
     pub fn get_stats(&self) -> RetryStatistics {
         self.retry_stats.blocking_read().clone()
     }
@@ -346,7 +366,8 @@ impl RetryStatistics {
     fn update_average_retry_count(&mut self, count: u32) {
         let total = self.successful_retries + self.failed_retries;
         if total > 0 {
-            self.average_retry_count = (self.average_retry_count * (total - 1) as f64 + count as f64) / total as f64;
+            self.average_retry_count =
+                (self.average_retry_count * (total - 1) as f64 + count as f64) / total as f64;
         }
     }
 }
@@ -368,33 +389,40 @@ impl CircuitBreakerManager {
             breakers: HashMap::new(),
         }
     }
-    
+
     pub fn add_breaker(&mut self, name: String, failure_threshold: u32, timeout: Duration) {
-        self.breakers.insert(name.clone(), CircuitBreaker::new(name, failure_threshold, timeout));
+        self.breakers.insert(
+            name.clone(),
+            CircuitBreaker::new(name, failure_threshold, timeout),
+        );
     }
-    
+
     pub fn can_execute(&mut self, name: &str) -> bool {
-        let breaker = self.breakers.entry(name.to_string()).or_insert_with(|| {
-            CircuitBreaker::new(name.to_string(), 5, Duration::from_secs(60))
-        });
-        
+        let breaker = self
+            .breakers
+            .entry(name.to_string())
+            .or_insert_with(|| CircuitBreaker::new(name.to_string(), 5, Duration::from_secs(60)));
+
         breaker.can_execute()
     }
-    
+
     pub fn record_success(&mut self, name: &str) {
         if let Some(breaker) = self.breakers.get_mut(name) {
             breaker.record_success();
         }
     }
-    
+
     pub fn record_failure(&mut self, name: &str) {
         if let Some(breaker) = self.breakers.get_mut(name) {
             breaker.record_failure();
         }
     }
-    
+
     pub fn get_states(&self) -> HashMap<String, CircuitState> {
-        self.breakers.iter().map(|(name, breaker)| (name.clone(), breaker.state)).collect()
+        self.breakers
+            .iter()
+            .map(|(name, breaker)| (name.clone(), breaker.state))
+            .collect()
     }
 }
 
@@ -412,7 +440,7 @@ impl CircuitBreaker {
             last_state_change: Instant::now(),
         }
     }
-    
+
     pub fn can_execute(&mut self) -> bool {
         match self.state {
             CircuitState::Closed => true,
@@ -429,7 +457,7 @@ impl CircuitBreaker {
             CircuitState::HalfOpen => true,
         }
     }
-    
+
     pub fn record_success(&mut self) {
         match self.state {
             CircuitState::Closed => {
@@ -444,11 +472,11 @@ impl CircuitBreaker {
             CircuitState::Open => {}
         }
     }
-    
+
     pub fn record_failure(&mut self) {
         self.failure_count += 1;
         self.last_failure_time = Some(Instant::now());
-        
+
         match self.state {
             CircuitState::Closed => {
                 if self.failure_count >= self.failure_threshold {
@@ -461,13 +489,13 @@ impl CircuitBreaker {
             CircuitState::Open => {}
         }
     }
-    
+
     fn transition_to_open(&mut self) {
         self.state = CircuitState::Open;
         self.last_state_change = Instant::now();
         warn!("Circuit breaker {} transitioned to OPEN", self.name);
     }
-    
+
     fn transition_to_closed(&mut self) {
         self.state = CircuitState::Closed;
         self.failure_count = 0;
@@ -475,7 +503,7 @@ impl CircuitBreaker {
         self.last_state_change = Instant::now();
         info!("Circuit breaker {} transitioned to CLOSED", self.name);
     }
-    
+
     fn transition_to_half_open(&mut self) {
         self.state = CircuitState::HalfOpen;
         self.success_count = 0;
@@ -491,8 +519,12 @@ impl RecoveryManager {
             recovery_stats: Arc::new(RwLock::new(RecoveryStatistics::default())),
         }
     }
-    
-    pub fn determine_recovery(&self, error: &str, _context: HashMap<String, String>) -> Result<RecoveryAction> {
+
+    pub fn determine_recovery(
+        &self,
+        error: &str,
+        _context: HashMap<String, String>,
+    ) -> Result<RecoveryAction> {
         // Simple recovery logic based on error type
         if error.contains("timeout") || error.contains("connection") {
             Ok(RecoveryAction::Retry)
@@ -504,7 +536,7 @@ impl RecoveryManager {
             Ok(RecoveryAction::Ignore)
         }
     }
-    
+
     pub fn get_stats(&self) -> RecoveryStatistics {
         self.recovery_stats.blocking_read().clone()
     }
@@ -527,11 +559,11 @@ impl ErrorLog {
             entries: Vec::new(),
         }
     }
-    
+
     pub fn add_entry(&mut self, entry: ErrorEntry) {
         self.entries.push(entry);
     }
-    
+
     pub fn get_entries(&self, limit: Option<usize>) -> Vec<ErrorEntry> {
         let entries = self.entries.clone();
         match limit {
@@ -550,79 +582,95 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_error_handler_creation() {
         let handler = ErrorHandler::new().unwrap();
-        assert!(handler.handle_error("test error", HashMap::new()).await.is_ok());
+        assert!(handler
+            .handle_error("test error", HashMap::new())
+            .await
+            .is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_retry_logic() {
         let handler = ErrorHandler::new().unwrap();
         let mut attempt_count = 0;
-        
-        let result = handler.execute_with_retry("test_operation", || {
-            attempt_count += 1;
-            if attempt_count < 3 {
-                Err(anyhow::anyhow!("Temporary error"))
-            } else {
-                Ok("success")
-            }
-        }).await;
-        
+
+        let result = handler
+            .execute_with_retry("test_operation", || {
+                attempt_count += 1;
+                if attempt_count < 3 {
+                    Err(anyhow::anyhow!("Temporary error"))
+                } else {
+                    Ok("success")
+                }
+            })
+            .await;
+
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
         assert_eq!(attempt_count, 3);
     }
-    
+
     #[tokio::test]
     async fn test_circuit_breaker() {
         let handler = ErrorHandler::new().unwrap();
-        handler.add_circuit_breaker("test_circuit".to_string(), 3, Duration::from_secs(5)).await.unwrap();
-        
+        handler
+            .add_circuit_breaker("test_circuit".to_string(), 3, Duration::from_secs(5))
+            .await
+            .unwrap();
+
         // Record failures
         for _ in 0..3 {
-            let result = handler.execute_with_circuit_breaker("test_circuit", || {
-                Err::<(), _>(anyhow::anyhow!("Error"))
-            }).await;
+            let result = handler
+                .execute_with_circuit_breaker("test_circuit", || {
+                    Err::<(), _>(anyhow::anyhow!("Error"))
+                })
+                .await;
             assert!(result.is_err());
         }
-        
+
         // Circuit should be open now
-        let result = handler.execute_with_circuit_breaker("test_circuit", || {
-            Ok::<(), _>(())
-        }).await;
+        let result = handler
+            .execute_with_circuit_breaker("test_circuit", || Ok::<(), _>(()))
+            .await;
         assert!(result.is_err());
-        
+
         let states = handler.get_circuit_states().await;
         assert_eq!(states.get("test_circuit"), Some(&CircuitState::Open));
     }
-    
+
     #[tokio::test]
     async fn test_error_logging() {
         let handler = ErrorHandler::new().unwrap();
-        handler.handle_error("test error", HashMap::new()).await.unwrap();
-        
+        handler
+            .handle_error("test error", HashMap::new())
+            .await
+            .unwrap();
+
         let entries = handler.get_error_log(Some(10));
         assert!(!entries.is_empty());
         assert_eq!(entries[0].error_message, "test error");
     }
-    
+
     #[tokio::test]
     async fn test_retry_statistics() {
         let handler = ErrorHandler::new().unwrap();
         let mut attempt_count = 0;
-        
-        handler.execute_with_retry("test_operation", || {
-            attempt_count += 1;
-            if attempt_count < 2 {
-                Err(anyhow::anyhow!("Temporary error"))
-            } else {
-                Ok("success")
-            }
-        }).await.unwrap();
-        
+
+        handler
+            .execute_with_retry("test_operation", || {
+                attempt_count += 1;
+                if attempt_count < 2 {
+                    Err(anyhow::anyhow!("Temporary error"))
+                } else {
+                    Ok("success")
+                }
+            })
+            .await
+            .unwrap();
+
         let stats = handler.get_retry_stats().await;
         assert_eq!(stats.successful_retries, 1);
     }

@@ -1,5 +1,5 @@
 //! V-Sentinel CLI - AI-Powered Security Sentinel System
-//! 
+//!
 //! A comprehensive command-line interface for the V-Sentinel security platform.
 
 use anyhow::Result;
@@ -148,7 +148,7 @@ struct StatusInfo {
 
 fn setup_logging(verbose: bool) {
     let filter_level = if verbose { "debug" } else { "info" };
-    
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(filter_level))
         .with(tracing_subscriber::fmt::layer())
@@ -157,29 +157,29 @@ fn setup_logging(verbose: bool) {
 
 async fn handle_start(daemon: bool) -> Result<()> {
     println!("🛡️  Starting V-Sentinel Security Agent...");
-    
+
     if daemon {
         println!("   Running in daemon mode (background)");
         println!("   PID file: /var/run/v-sentinel.pid");
     }
-    
+
     println!("✅ V-Sentinel started successfully");
     println!("   Monitoring: Active");
     println!("   Threat Intelligence: Synchronized");
     println!("   Zero Trust: Enabled");
-    
+
     Ok(())
 }
 
 async fn handle_stop(force: bool) -> Result<()> {
     println!("🛑 Stopping V-Sentinel Security Agent...");
-    
+
     if force {
         println!("   Force stopping...");
     }
-    
+
     println!("✅ V-Sentinel stopped successfully");
-    
+
     Ok(())
 }
 
@@ -191,7 +191,7 @@ async fn handle_status(json: bool) -> Result<()> {
         threats_blocked: 42,
         last_scan: Some(chrono::Utc::now().to_rfc3339()),
     };
-    
+
     if json {
         println!("{}", serde_json::to_string_pretty(&status)?);
     } else {
@@ -203,18 +203,22 @@ async fn handle_status(json: bool) -> Result<()> {
             println!("   Last Scan: {}", last_scan);
         }
     }
-    
+
     Ok(())
 }
 
-async fn handle_scan(path: Option<PathBuf>, scan_type: &str, output: Option<PathBuf>) -> Result<()> {
+async fn handle_scan(
+    path: Option<PathBuf>,
+    scan_type: &str,
+    output: Option<PathBuf>,
+) -> Result<()> {
     let target = path
         .as_ref()
         .map(|p| p.display().to_string())
         .unwrap_or_else(|| "system".to_string());
-    
+
     println!("🔍 Running {} scan on: {}", scan_type, target);
-    
+
     let result = ScanResult {
         timestamp: chrono::Utc::now().to_rfc3339(),
         scan_type: scan_type.to_string(),
@@ -222,16 +226,16 @@ async fn handle_scan(path: Option<PathBuf>, scan_type: &str, output: Option<Path
         threats_found: 0,
         status: "completed".to_string(),
     };
-    
+
     println!("✅ Scan completed");
     println!("   Threats found: {}", result.threats_found);
-    
+
     if let Some(output_path) = output {
         let json = serde_json::to_string_pretty(&result)?;
         std::fs::write(&output_path, json)?;
         println!("   Results saved to: {}", output_path.display());
     }
-    
+
     Ok(())
 }
 
@@ -247,21 +251,24 @@ async fn handle_threat_intel(update: bool, search: Option<&str>) -> Result<()> {
         println!("   Last update: {}", chrono::Utc::now().to_rfc3339());
         println!("   Total signatures: 1,234,567");
     }
-    
+
     Ok(())
 }
 
 async fn handle_deepfake(input: &PathBuf, output: Option<PathBuf>) -> Result<()> {
-    println!("🎭 Analyzing file for deepfake detection: {}", input.display());
+    println!(
+        "🎭 Analyzing file for deepfake detection: {}",
+        input.display()
+    );
     println!("   Processing with AI models...");
     println!("✅ Analysis complete");
     println!("   Deepfake probability: 0.02 (Low)");
     println!("   Confidence: 99.8%");
-    
+
     if let Some(output_path) = output {
         println!("   Report saved to: {}", output_path.display());
     }
-    
+
     Ok(())
 }
 
@@ -277,7 +284,7 @@ async fn handle_shadow_ai(scan: bool, network: Option<&str>) -> Result<()> {
         println!("   Known AI services: 15");
         println!("   Blocked services: 3");
     }
-    
+
     Ok(())
 }
 
@@ -297,7 +304,7 @@ async fn handle_zero_trust(verify: bool, device_id: Option<&str>) -> Result<()> 
         println!("   Enrolled devices: 5");
         println!("   Trust policies: 12");
     }
-    
+
     Ok(())
 }
 
@@ -322,42 +329,38 @@ async fn handle_config(show: bool, set: Option<&str>, reset: bool) -> Result<()>
     } else {
         println!("⚙️  Configuration file: /etc/v-sentinel/config.yaml");
     }
-    
+
     Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    
+
     setup_logging(cli.verbose);
-    
+
     match cli.command {
         Commands::Start { daemon } => handle_start(daemon).await?,
         Commands::Stop { force } => handle_stop(force).await?,
         Commands::Status { json } => handle_status(json).await?,
-        Commands::Scan { path, scan_type, output } => {
-            handle_scan(path, &scan_type, output).await?
-        }
+        Commands::Scan {
+            path,
+            scan_type,
+            output,
+        } => handle_scan(path, &scan_type, output).await?,
         Commands::ThreatIntel { update, search } => {
             handle_threat_intel(update, search.as_deref()).await?
         }
-        Commands::Deepfake { input, output } => {
-            handle_deepfake(&input, output).await?
-        }
-        Commands::ShadowAi { scan, network } => {
-            handle_shadow_ai(scan, network.as_deref()).await?
-        }
+        Commands::Deepfake { input, output } => handle_deepfake(&input, output).await?,
+        Commands::ShadowAi { scan, network } => handle_shadow_ai(scan, network.as_deref()).await?,
         Commands::ZeroTrust { verify, device_id } => {
             handle_zero_trust(verify, device_id.as_deref()).await?
         }
-        Commands::Config { show, set, reset } => {
-            handle_config(show, set.as_deref(), reset).await?
-        }
+        Commands::Config { show, set, reset } => handle_config(show, set.as_deref(), reset).await?,
         Commands::Version => {
             println!("v-sentinel {}", env!("CARGO_PKG_VERSION"));
         }
     }
-    
+
     Ok(())
 }

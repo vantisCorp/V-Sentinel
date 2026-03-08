@@ -10,15 +10,15 @@ use serde::{Deserialize, Serialize};
 pub struct DetectionsParams {
     /// Search query (FQL - Falcon Query Language style)
     pub query: String,
-    
+
     /// Time range
     #[serde(default)]
     pub time_range: Option<String>,
-    
+
     /// Maximum number of results
     #[serde(default = "default_limit")]
     pub limit: usize,
-    
+
     /// Sort field
     #[serde(default)]
     pub sort_by: Option<String>,
@@ -33,19 +33,19 @@ fn default_limit() -> usize {
 pub struct Detection {
     /// Detection ID
     pub id: String,
-    
+
     /// Detection name
     pub name: String,
-    
+
     /// Severity level
     pub severity: String,
-    
+
     /// Timestamp
     pub timestamp: String,
-    
+
     /// Host identifier
     pub host_id: String,
-    
+
     /// Detection details
     pub details: serde_json::Value,
 }
@@ -88,35 +88,39 @@ impl ToolTrait for DetectionsTool {
             requires_auth: true,
         }
     }
-    
+
     async fn execute(&self, params: serde_json::Value) -> MCPResult<ToolResult> {
         // Parse parameters
-        let params: DetectionsParams = serde_json::from_value(params)
-            .map_err(|e| crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e)))?;
-        
+        let params: DetectionsParams = serde_json::from_value(params).map_err(|e| {
+            crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e))
+        })?;
+
         // Validate query
         if params.query.is_empty() {
             return Ok(ToolResult::error("Query cannot be empty".to_string()));
         }
-        
+
         // TODO: Integrate with actual V-Sentinel threat-intel module
         // For now, return mock data
         let detections = self.mock_search_detections(&params).await?;
-        
+
         let result = serde_json::json!({
             "detections": detections,
             "total": detections.len(),
             "query": params.query,
             "time_range": params.time_range.unwrap_or_else(|| "24h".to_string())
         });
-        
+
         Ok(ToolResult::success(result))
     }
 }
 
 impl DetectionsTool {
     /// Mock detection search (to be replaced with real implementation)
-    async fn mock_search_detections(&self, params: &DetectionsParams) -> Result<Vec<Detection>, crate::error::MCPError> {
+    async fn mock_search_detections(
+        &self,
+        params: &DetectionsParams,
+    ) -> Result<Vec<Detection>, crate::error::MCPError> {
         // Simulate detection data
         let detections = vec![
             Detection {
@@ -157,7 +161,7 @@ impl DetectionsTool {
                 }),
             },
         ];
-        
+
         Ok(detections)
     }
 }

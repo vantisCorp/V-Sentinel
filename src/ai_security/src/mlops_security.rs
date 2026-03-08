@@ -75,7 +75,9 @@ impl MLOpsSecurityManager {
 
         // Secure deployments
         if !system.api_endpoints.is_empty() {
-            self.deployment_security.secure(&system.api_endpoints).await?;
+            self.deployment_security
+                .secure(&system.api_endpoints)
+                .await?;
             result.deployment_secured = true;
         }
 
@@ -88,16 +90,18 @@ impl MLOpsSecurityManager {
         stats.deployments_secured += 1;
 
         // Log audit event
-        self.audit_logger.log(MLOpsAuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: MLOpsEventType::SystemSecured,
-            system_id: Some(system.id.clone()),
-            model_id: None,
-            pipeline_id: None,
-            description: format!("MLOps security configured for system {}", system.id),
-            timestamp: Utc::now(),
-            metadata: HashMap::new(),
-        }).await?;
+        self.audit_logger
+            .log(MLOpsAuditEvent {
+                id: uuid::Uuid::new_v4().to_string(),
+                event_type: MLOpsEventType::SystemSecured,
+                system_id: Some(system.id.clone()),
+                model_id: None,
+                pipeline_id: None,
+                description: format!("MLOps security configured for system {}", system.id),
+                timestamp: Utc::now(),
+                metadata: HashMap::new(),
+            })
+            .await?;
 
         Ok(result)
     }
@@ -105,27 +109,32 @@ impl MLOpsSecurityManager {
     /// Register a model
     pub async fn register_model(&self, model: &AIModel) -> Result<ModelRegistrationResult> {
         let result = self.model_registry.register(model).await?;
-        
+
         let mut stats = self.stats.write().await;
         stats.models_registered += 1;
-        
+
         // Audit log
-        self.audit_logger.log(MLOpsAuditEvent {
-            id: uuid::Uuid::new_v4().to_string(),
-            event_type: MLOpsEventType::ModelRegistered,
-            system_id: None,
-            model_id: Some(model.id.clone()),
-            pipeline_id: None,
-            description: format!("Model {} registered", model.name),
-            timestamp: Utc::now(),
-            metadata: HashMap::new(),
-        }).await?;
+        self.audit_logger
+            .log(MLOpsAuditEvent {
+                id: uuid::Uuid::new_v4().to_string(),
+                event_type: MLOpsEventType::ModelRegistered,
+                system_id: None,
+                model_id: Some(model.id.clone()),
+                pipeline_id: None,
+                description: format!("Model {} registered", model.name),
+                timestamp: Utc::now(),
+                metadata: HashMap::new(),
+            })
+            .await?;
 
         Ok(result)
     }
 
     /// Verify model for deployment
-    pub async fn verify_for_deployment(&self, model: &AIModel) -> Result<DeploymentVerificationResult> {
+    pub async fn verify_for_deployment(
+        &self,
+        model: &AIModel,
+    ) -> Result<DeploymentVerificationResult> {
         self.deployment_security.verify_model(model).await
     }
 
@@ -229,7 +238,7 @@ impl PipelineSecurity {
 
         let mut pipelines = self.pipelines.write().await;
         pipelines.insert(pipeline.id.clone(), secured);
-        
+
         info!("Pipeline {} secured", pipeline.id);
         Ok(())
     }
@@ -237,17 +246,24 @@ impl PipelineSecurity {
     /// Check pipeline access
     pub async fn check_access(&self, pipeline_id: &str, principal: &str) -> Result<bool> {
         let pipelines = self.pipelines.read().await;
-        
+
         if let Some(pipeline) = pipelines.get(pipeline_id) {
             // Check denied list first
-            if pipeline.access_policy.denied_principals.contains(&principal.to_string()) {
+            if pipeline
+                .access_policy
+                .denied_principals
+                .contains(&principal.to_string())
+            {
                 return Ok(false);
             }
-            
+
             // Check allowed list
-            return Ok(pipeline.access_policy.allowed_principals.contains(&principal.to_string()));
+            return Ok(pipeline
+                .access_policy
+                .allowed_principals
+                .contains(&principal.to_string()));
         }
-        
+
         // Default deny
         Ok(false)
     }
@@ -395,7 +411,7 @@ impl ModelRegistry {
             created_by: "system".to_string(),
             created_at: Utc::now(),
         };
-        
+
         let mut provenance = self.provenance.write().await;
         provenance.insert(model_id, prov);
 
@@ -697,7 +713,7 @@ mod tests {
     async fn test_model_registration() {
         let manager = MLOpsSecurityManager::new();
         let model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
-        
+
         let result = manager.register_model(&model).await.unwrap();
         assert_eq!(result.status, ModelStatus::Ready);
     }
@@ -706,7 +722,7 @@ mod tests {
     async fn test_deployment_verification() {
         let manager = MLOpsSecurityManager::new();
         let model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
-        
+
         let result = manager.verify_for_deployment(&model).await.unwrap();
         // Model is not encrypted or watermarked
         assert!(!result.passed);
@@ -716,13 +732,19 @@ mod tests {
     async fn test_pipeline_security() {
         let security = PipelineSecurity::new();
         let pipeline = DataPipeline::new("Test Pipeline", PipelineType::Training);
-        
+
         security.secure(&pipeline).await.unwrap();
-        
-        let result = security.check_access(&pipeline.id, "ml-team").await.unwrap();
+
+        let result = security
+            .check_access(&pipeline.id, "ml-team")
+            .await
+            .unwrap();
         assert!(result);
-        
-        let result = security.check_access(&pipeline.id, "unknown").await.unwrap();
+
+        let result = security
+            .check_access(&pipeline.id, "unknown")
+            .await
+            .unwrap();
         assert!(!result);
     }
 
@@ -730,9 +752,9 @@ mod tests {
     async fn test_audit_logging() {
         let manager = MLOpsSecurityManager::new();
         let model = AIModel::new("TestModel", "1.0", ModelType::Transformer);
-        
+
         manager.register_model(&model).await.unwrap();
-        
+
         let logs = manager.get_audit_log(10).await;
         assert!(!logs.is_empty());
     }

@@ -1,10 +1,10 @@
 //! AI Model Definitions
-//! 
+//!
 //! Core data structures for AI models in the Shadow AI system.
 
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// AI Model
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -50,19 +50,19 @@ pub struct AIModel {
 /// AI Model types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AIModelType {
-    LLM,              // Large Language Models (GPT, Claude, LLaMA)
-    Embedding,        // Embedding models
-    Image,            // Image generation (DALL-E, Midjourney, Stable Diffusion)
-    Audio,            // Audio processing (Whisper, TTS)
-    Video,            // Video generation
-    Transformer,      // General transformer models
-    Diffusion,        // Diffusion models
-    GAN,              // Generative Adversarial Networks
-    RAG,              // Retrieval-Augmented Generation
-    FineTuned,        // Fine-tuned models
-    MultiModal,       // Multi-modal models
-    Agent,            // AI Agents
-    Custom(String),   // Custom model type
+    LLM,            // Large Language Models (GPT, Claude, LLaMA)
+    Embedding,      // Embedding models
+    Image,          // Image generation (DALL-E, Midjourney, Stable Diffusion)
+    Audio,          // Audio processing (Whisper, TTS)
+    Video,          // Video generation
+    Transformer,    // General transformer models
+    Diffusion,      // Diffusion models
+    GAN,            // Generative Adversarial Networks
+    RAG,            // Retrieval-Augmented Generation
+    FineTuned,      // Fine-tuned models
+    MultiModal,     // Multi-modal models
+    Agent,          // AI Agents
+    Custom(String), // Custom model type
 }
 
 /// AI Model status
@@ -201,7 +201,7 @@ mod tests {
             AIModelType::LLM,
             "OpenAI".to_string(),
         );
-        
+
         assert_eq!(model.id, "test-1");
         assert_eq!(model.name, "Test Model");
         assert_eq!(model.status, AIModelStatus::Pending);
@@ -215,9 +215,9 @@ mod tests {
             AIModelType::LLM,
             "OpenAI".to_string(),
         );
-        
+
         assert!(!model.is_approved());
-        
+
         model.set_status(AIModelStatus::Approved);
         assert!(model.is_approved());
         assert!(model.is_active());

@@ -1,19 +1,19 @@
 //! SENTINEL Quantum Cryptography Module
-//! 
+//!
 //! This module provides quantum-resistant cryptographic algorithms
 //! including post-quantum KEM, signatures, and hybrid cryptography.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug};
+use anyhow::{anyhow, Result};
+use pqc_kyber::{decapsulate, encapsulate, keypair, KyberError};
+use rand::{rngs::OsRng, RngCore};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256, Sha512};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Sha512, Digest};
-use rand::{RngCore, rngs::OsRng};
-use pqc_kyber::{keypair, encapsulate, decapsulate, KyberError};
+use tracing::{debug, info};
 
 pub mod config;
-pub use config::{PqcConfig, KemAlgorithm, SigAlgorithm};
+pub use config::{KemAlgorithm, PqcConfig, SigAlgorithm};
 
 /// Quantum Cryptography Manager
 pub struct QuantumCryptoManager {
@@ -56,34 +56,34 @@ impl KyberKEM {
     pub fn new(algorithm: KemAlgorithm) -> Self {
         Self { algorithm }
     }
-    
+
     pub fn generate_keypair(&self) -> Result<Keypair> {
         let mut rng = OsRng;
         let kp = keypair(&mut rng)
             .map_err(|e: KyberError| anyhow!("Failed to generate keypair: {:?}", e))?;
-        
+
         Ok(Keypair {
             public: kp.public.to_vec(),
             secret: kp.secret.to_vec(),
             algorithm: self.algorithm,
         })
     }
-    
+
     pub fn encapsulate(&self, public_key: &[u8]) -> Result<EncapsulationResult> {
         let mut rng = OsRng;
         let (ciphertext, shared_secret) = encapsulate(public_key, &mut rng)
             .map_err(|e| anyhow!("Encapsulation failed: {:?}", e))?;
-        
+
         Ok(EncapsulationResult {
             ciphertext: ciphertext.to_vec(),
             shared_secret: shared_secret.to_vec(),
         })
     }
-    
+
     pub fn decapsulate(&self, ciphertext: &[u8], secret_key: &[u8]) -> Result<Vec<u8>> {
         let shared_secret = decapsulate(ciphertext, secret_key)
             .map_err(|e| anyhow!("Decapsulation failed: {:?}", e))?;
-        
+
         Ok(shared_secret.to_vec())
     }
 }
@@ -91,7 +91,7 @@ impl KyberKEM {
 impl QuantumCryptoManager {
     pub fn new() -> Result<Self> {
         info!("Initializing Quantum Cryptography Manager...");
-        
+
         Ok(Self {
             kem_enabled: Arc::new(RwLock::new(false)),
             signature_enabled: Arc::new(RwLock::new(false)),
@@ -99,7 +99,7 @@ impl QuantumCryptoManager {
             statistics: Arc::new(RwLock::new(CryptoStatistics::default())),
         })
     }
-    
+
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing quantum cryptography...");
         *self.kem_enabled.write().await = true;
@@ -107,28 +107,37 @@ impl QuantumCryptoManager {
         *self.hybrid_enabled.write().await = true;
         Ok(())
     }
-    
+
     pub async fn generate_kem_keypair(&self, algorithm: KemAlgorithm) -> Result<Keypair> {
         let kem = KyberKEM::new(algorithm);
         let keypair = kem.generate_keypair()?;
         self.statistics.write().await.kem_operations += 1;
         Ok(keypair)
     }
-    
-    pub async fn encapsulate(&self, public_key: &[u8], algorithm: KemAlgorithm) -> Result<EncapsulationResult> {
+
+    pub async fn encapsulate(
+        &self,
+        public_key: &[u8],
+        algorithm: KemAlgorithm,
+    ) -> Result<EncapsulationResult> {
         let kem = KyberKEM::new(algorithm);
         let result = kem.encapsulate(public_key)?;
         self.statistics.write().await.kem_operations += 1;
         Ok(result)
     }
-    
-    pub async fn decapsulate(&self, ciphertext: &[u8], secret_key: &[u8], algorithm: KemAlgorithm) -> Result<Vec<u8>> {
+
+    pub async fn decapsulate(
+        &self,
+        ciphertext: &[u8],
+        secret_key: &[u8],
+        algorithm: KemAlgorithm,
+    ) -> Result<Vec<u8>> {
         let kem = KyberKEM::new(algorithm);
         let result = kem.decapsulate(ciphertext, secret_key)?;
         self.statistics.write().await.kem_operations += 1;
         Ok(result)
     }
-    
+
     pub async fn get_statistics(&self) -> CryptoStatistics {
         self.statistics.read().await.clone()
     }
@@ -151,7 +160,7 @@ pub fn hash_sha512(data: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_kyber_kem() {
         let kem = KyberKEM::new(KemAlgorithm::CrystalsKyber768);
@@ -159,7 +168,7 @@ mod tests {
         assert!(!keypair.public.is_empty());
         assert!(!keypair.secret.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_encapsulation() {
         let kem = KyberKEM::new(KemAlgorithm::CrystalsKyber768);
@@ -168,13 +177,15 @@ mod tests {
         assert!(!result.ciphertext.is_empty());
         assert!(!result.shared_secret.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_decapsulation() {
         let kem = KyberKEM::new(KemAlgorithm::CrystalsKyber768);
         let keypair = kem.generate_keypair().unwrap();
         let result = kem.encapsulate(&keypair.public).unwrap();
-        let secret = kem.decapsulate(&result.ciphertext, &keypair.secret).unwrap();
+        let secret = kem
+            .decapsulate(&result.ciphertext, &keypair.secret)
+            .unwrap();
         assert_eq!(secret, result.shared_secret);
     }
 }

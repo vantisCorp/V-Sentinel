@@ -6,10 +6,10 @@
 //! - AI API Security: Prompt injection detection, input validation, rate limiting
 //! - MLOps Security: Pipeline security, model registry, deployment controls
 
-pub mod data_security;
-pub mod model_security;
 pub mod api_security;
+pub mod data_security;
 pub mod mlops_security;
+pub mod model_security;
 pub mod models;
 
 use anyhow::Result;
@@ -22,12 +22,14 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
+pub use api_security::{APISecurityManager, InputValidator, PromptInjectionDetector};
 pub use data_security::DataSecurityManager;
-pub use models::{DataPipeline, DataClassification};
-pub use model_security::{ModelSecurityManager, ModelEncryption, ModelWatermark};
-pub use api_security::{APISecurityManager, PromptInjectionDetector, InputValidator};
-pub use mlops_security::{MLOpsSecurityManager, PipelineSecurity, ModelRegistry};
-pub use models::{AISystem, AIModel, SecurityPolicy, SecurityEvent, SecurityEventType, ThreatLevel};
+pub use mlops_security::{MLOpsSecurityManager, ModelRegistry, PipelineSecurity};
+pub use model_security::{ModelEncryption, ModelSecurityManager, ModelWatermark};
+pub use models::{
+    AIModel, AISystem, SecurityEvent, SecurityEventType, SecurityPolicy, ThreatLevel,
+};
+pub use models::{DataClassification, DataPipeline};
 
 /// Main AI Security Manager
 pub struct AISecurityManager {
@@ -163,7 +165,8 @@ impl AISecurityManager {
             severity: ThreatLevel::Info,
             timestamp: Utc::now(),
             metadata: HashMap::new(),
-        }).await?;
+        })
+        .await?;
 
         Ok(result)
     }
@@ -171,9 +174,9 @@ impl AISecurityManager {
     /// Secure data pipelines
     async fn secure_data_pipelines(&self, system: &AISystem) -> Result<DataSecurityResult> {
         let data_security = self.data_security.read().await;
-        
+
         let mut result = DataSecurityResult::default();
-        
+
         for pipeline in &system.data_pipelines {
             let pipeline_result = data_security.secure_pipeline(pipeline).await?;
             if pipeline_result.encrypted {
@@ -191,9 +194,9 @@ impl AISecurityManager {
     /// Secure models
     async fn secure_models(&self, system: &AISystem) -> Result<ModelSecurityResult> {
         let model_security = self.model_security.read().await;
-        
+
         let mut result = ModelSecurityResult::default();
-        
+
         for model in &system.models {
             let model_result = model_security.protect_model(model).await?;
             if model_result.encrypted {
@@ -215,7 +218,7 @@ impl AISecurityManager {
     /// Configure API security
     async fn configure_api_security(&self, system: &AISystem) -> Result<APISecurityResult> {
         let api_security = self.api_security.read().await;
-        
+
         let result = APISecurityResult {
             prompt_injection_enabled: self.config.prompt_injection_detection,
             input_validation_enabled: self.config.input_validation,
@@ -231,14 +234,18 @@ impl AISecurityManager {
     /// Setup MLOps security
     async fn setup_mlops_security(&self, system: &AISystem) -> Result<MLOpsSecurityResult> {
         let mlops_security = self.mlops_security.read().await;
-        
+
         let result = mlops_security.setup_pipeline_security(system).await?;
 
         Ok(result)
     }
 
     /// Validate input for security threats
-    pub async fn validate_input(&self, input: &str, context: &SecurityContext) -> Result<InputValidationResult> {
+    pub async fn validate_input(
+        &self,
+        input: &str,
+        context: &SecurityContext,
+    ) -> Result<InputValidationResult> {
         let mut stats = self.stats.write().await;
         stats.total_requests += 1;
         drop(stats);
@@ -262,7 +269,7 @@ impl AISecurityManager {
         if self.config.prompt_injection_detection {
             let api_security = self.api_security.read().await;
             let injection_result = api_security.detect_prompt_injection(input).await?;
-            
+
             if injection_result.detected {
                 let mut stats = self.stats.write().await;
                 stats.blocked_requests += 1;
@@ -275,15 +282,22 @@ impl AISecurityManager {
                     event_type: SecurityEventType::PromptInjectionDetected,
                     system_id: context.system_id.clone(),
                     model_id: context.model_id.clone(),
-                    description: format!("Prompt injection attempt detected: {}", injection_result.attack_type),
+                    description: format!(
+                        "Prompt injection attempt detected: {}",
+                        injection_result.attack_type
+                    ),
                     severity: ThreatLevel::High,
                     timestamp: Utc::now(),
                     metadata: HashMap::new(),
-                }).await?;
+                })
+                .await?;
 
                 return Ok(InputValidationResult {
                     valid: false,
-                    reason: Some(format!("Prompt injection detected: {}", injection_result.attack_type)),
+                    reason: Some(format!(
+                        "Prompt injection detected: {}",
+                        injection_result.attack_type
+                    )),
                     threat_level: ThreatLevel::High,
                     detected_threats: injection_result.indicators,
                     sanitized_input: None,
@@ -305,7 +319,7 @@ impl AISecurityManager {
         if self.config.audit_logging {
             let mut event_log = self.event_log.write().await;
             event_log.push(event);
-            
+
             let mut stats = self.stats.write().await;
             stats.security_events += 1;
         }
@@ -337,7 +351,11 @@ impl AISecurityManager {
     }
 
     /// Encrypt model
-    pub async fn encrypt_model(&self, model: &mut AIModel, key: Option<&[u8]>) -> Result<ModelEncryptionResult> {
+    pub async fn encrypt_model(
+        &self,
+        model: &mut AIModel,
+        key: Option<&[u8]>,
+    ) -> Result<ModelEncryptionResult> {
         let model_security = self.model_security.read().await;
         model_security.encrypt_model(model, key).await
     }
@@ -349,7 +367,11 @@ impl AISecurityManager {
     }
 
     /// Watermark model
-    pub async fn watermark_model(&self, model: &mut AIModel, watermark: &ModelWatermark) -> Result<()> {
+    pub async fn watermark_model(
+        &self,
+        model: &mut AIModel,
+        watermark: &ModelWatermark,
+    ) -> Result<()> {
         let model_security = self.model_security.read().await;
         model_security.apply_watermark(model, watermark).await
     }
@@ -509,8 +531,11 @@ mod tests {
     async fn test_validate_input() {
         let manager = AISecurityManager::new(AISecurityConfig::default());
         let context = SecurityContext::default();
-        
-        let result = manager.validate_input("Hello, world!", &context).await.unwrap();
+
+        let result = manager
+            .validate_input("Hello, world!", &context)
+            .await
+            .unwrap();
         assert!(result.valid);
     }
 
@@ -522,8 +547,11 @@ mod tests {
         };
         let manager = AISecurityManager::new(config);
         let context = SecurityContext::default();
-        
-        let result = manager.validate_input("This is a very long input string", &context).await.unwrap();
+
+        let result = manager
+            .validate_input("This is a very long input string", &context)
+            .await
+            .unwrap();
         assert!(!result.valid);
     }
 }

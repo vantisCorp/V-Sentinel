@@ -1,18 +1,18 @@
 //! SENTINEL Blockchain Module
-//! 
+//!
 //! This module provides blockchain-based threat reputation system,
 //! immutable audit logs, smart contracts for security automation,
 //! and decentralized consensus for threat intelligence sharing.
 
-use anyhow::{Result, anyhow};
-use tracing::{info, debug, warn, error};
+use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
+use rand::{rngs::OsRng, RngCore};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256, Sha512};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use sha2::{Sha256, Sha512, Digest};
-use rand::{RngCore, rngs::OsRng};
-use chrono::{DateTime, Utc};
-use std::collections::HashMap;
+use tracing::{debug, error, info, warn};
 
 /// Blockchain Manager
 pub struct BlockchainManager {
@@ -291,7 +291,7 @@ impl BlockchainManager {
     /// Create a new blockchain manager
     pub fn new() -> Result<Self> {
         info!("Creating Blockchain Manager...");
-        
+
         Ok(Self {
             chain: Arc::new(RwLock::new(Vec::new())),
             mempool: Arc::new(RwLock::new(Vec::new())),
@@ -302,34 +302,34 @@ impl BlockchainManager {
             statistics: Arc::new(RwLock::new(BlockchainStatistics::default())),
         })
     }
-    
+
     /// Initialize blockchain with genesis block
     pub async fn initialize(&self) -> Result<()> {
         info!("Initializing Blockchain...");
-        
+
         // Create genesis block
         let genesis = self.create_genesis_block().await?;
-        
+
         {
             let mut chain = self.chain.write().await;
             chain.push(genesis);
         }
-        
+
         // Initialize wallet
         {
             let mut wallet = self.wallet.write().await;
             wallet.generate_keys()?;
         }
-        
+
         info!("Blockchain initialized with genesis block");
         Ok(())
     }
-    
+
     /// Submit threat intelligence
     pub async fn submit_threat(&self, threat: ThreatEntry) -> Result<String> {
         let wallet = self.wallet.read().await;
         let sender = wallet.address.clone();
-        
+
         // Create transaction
         let tx = Transaction {
             id: self.generate_tx_id().await,
@@ -342,28 +342,33 @@ impl BlockchainManager {
             gas: 100_000,
             gas_price: 1,
         };
-        
+
         // Add to mempool
         {
             let mut mempool = self.mempool.write().await;
             mempool.push(tx);
         }
-        
+
         info!("Submitted threat: {}", threat.threat_id);
-        
+
         Ok(threat.threat_id)
     }
-    
+
     /// Get threat by ID
     pub async fn get_threat(&self, threat_id: &str) -> Result<Option<ThreatEntry>> {
         let registry = self.threat_registry.read().await;
         Ok(registry.threats.get(threat_id).cloned())
     }
-    
+
     /// Attest to threat
-    pub async fn attest_threat(&self, threat_id: &str, is_valid: bool, confidence: f64) -> Result<String> {
+    pub async fn attest_threat(
+        &self,
+        threat_id: &str,
+        is_valid: bool,
+        confidence: f64,
+    ) -> Result<String> {
         let wallet = self.wallet.read().await;
-        
+
         let attestation = Attestation {
             attestation_id: self.generate_id().await,
             threat_id: threat_id.to_string(),
@@ -373,7 +378,7 @@ impl BlockchainManager {
             timestamp: Utc::now().timestamp(),
             signature: wallet.sign(threat_id.as_bytes())?,
         };
-        
+
         // Update threat registry
         {
             let mut registry = self.threat_registry.write().await;
@@ -384,20 +389,24 @@ impl BlockchainManager {
                     threat.challenges += 1;
                 }
             }
-            registry.attestations.entry(threat_id.to_string()).or_default().push(attestation.clone());
+            registry
+                .attestations
+                .entry(threat_id.to_string())
+                .or_default()
+                .push(attestation.clone());
         }
-        
+
         // Update reputation
         self.update_reputation(&wallet.address, is_valid).await?;
-        
+
         Ok(attestation.attestation_id)
     }
-    
+
     /// Deploy smart contract
     pub async fn deploy_contract(&self, code: Vec<u8>, abi: ContractABI) -> Result<String> {
         let wallet = self.wallet.read().await;
         let address = self.generate_contract_address().await;
-        
+
         let contract = SmartContract {
             address: address.clone(),
             code,
@@ -407,38 +416,53 @@ impl BlockchainManager {
             gas_limit: 10_000_000,
             abi,
         };
-        
+
         {
             let mut contracts = self.smart_contracts.write().await;
             contracts.insert(address.clone(), contract);
         }
-        
+
         info!("Deployed contract at: {}", address);
         Ok(address)
     }
-    
+
     /// Execute smart contract
-    pub async fn execute_contract(&self, address: &str, function: &str, args: Vec<Vec<u8>>) -> Result<Vec<u8>> {
+    pub async fn execute_contract(
+        &self,
+        address: &str,
+        function: &str,
+        args: Vec<Vec<u8>>,
+    ) -> Result<Vec<u8>> {
         let mut contracts = self.smart_contracts.write().await;
-        let contract = contracts.get_mut(address).ok_or_else(|| anyhow!("Contract not found"))?;
-        
+        let contract = contracts
+            .get_mut(address)
+            .ok_or_else(|| anyhow!("Contract not found"))?;
+
         // Find function in ABI
-        let func = contract.abi.functions.iter()
+        let func = contract
+            .abi
+            .functions
+            .iter()
             .find(|f| f.name == function)
             .ok_or_else(|| anyhow!("Function not found: {}", function))?;
-        
+
         // Execute contract (simplified)
-        let result = self.execute_contract_function(contract, function, args).await?;
-        
+        let result = self
+            .execute_contract_function(contract, function, args)
+            .await?;
+
         Ok(result)
     }
-    
+
     /// Add block to chain
     pub async fn add_block(&self, transactions: Vec<Transaction>) -> Result<String> {
         let (height, previous_hash) = {
             let chain = self.chain.read().await;
             let previous_block = chain.last().ok_or_else(|| anyhow!("No genesis block"))?;
-            (previous_block.header.height + 1, previous_block.hash.clone())
+            (
+                previous_block.header.height + 1,
+                previous_block.hash.clone(),
+            )
         };
 
         let wallet = self.wallet.read().await;
@@ -453,25 +477,25 @@ impl BlockchainManager {
             difficulty: 1,
             validator: wallet.address.clone(),
         };
-        
+
         let block_hash = self.calculate_block_hash(&header).await;
         let signature = wallet.sign(block_hash.as_bytes())?;
-        
+
         let block = Block {
             header,
             transactions: transactions.clone(),
             hash: block_hash.clone(),
             signature,
         };
-        
+
         {
             let mut chain = self.chain.write().await;
             chain.push(block);
         }
-        
+
         // Process transactions
         self.process_transactions(&transactions).await?;
-        
+
         {
             let mut stats = self.statistics.write().await;
             stats.total_blocks += 1;
@@ -482,53 +506,62 @@ impl BlockchainManager {
 
         Ok(block_hash)
     }
-    
+
     /// Get block by height
     pub async fn get_block(&self, height: u64) -> Result<Option<Block>> {
         let chain = self.chain.read().await;
         Ok(chain.get(height as usize).cloned())
     }
-    
+
     /// Get current chain height
     pub async fn get_height(&self) -> u64 {
         let chain = self.chain.read().await;
         chain.len() as u64 - 1
     }
-    
+
     /// Get threat reputation score
     pub async fn get_reputation(&self, address: &str) -> f64 {
         let registry = self.threat_registry.read().await;
-        registry.reputation_scores.get(address).copied().unwrap_or(50.0)
+        registry
+            .reputation_scores
+            .get(address)
+            .copied()
+            .unwrap_or(50.0)
     }
-    
+
     /// Get blockchain statistics
     pub async fn get_statistics(&self) -> BlockchainStatistics {
         self.statistics.read().await.clone()
     }
-    
+
     /// Get threat statistics
     pub async fn get_threat_statistics(&self) -> Result<ThreatStatistics> {
         let registry = self.threat_registry.read().await;
-        
+
         let mut by_type: HashMap<ThreatType, u64> = HashMap::new();
         let mut by_severity: HashMap<Severity, u64> = HashMap::new();
-        
+
         for threat in registry.threats.values() {
             *by_type.entry(threat.threat_type).or_insert(0) += 1;
             *by_severity.entry(threat.severity).or_insert(0) += 1;
         }
-        
+
         Ok(ThreatStatistics {
             total_threats: registry.threats.len() as u64,
-            total_attestations: registry.attestations.values().map(|v| v.len() as u64).sum::<u64>(),
+            total_attestations: registry
+                .attestations
+                .values()
+                .map(|v| v.len() as u64)
+                .sum::<u64>(),
             by_type,
             by_severity,
-            average_confidence: registry.threats.values().map(|t| t.confidence).sum::<f64>() / registry.threats.len().max(1) as f64,
+            average_confidence: registry.threats.values().map(|t| t.confidence).sum::<f64>()
+                / registry.threats.len().max(1) as f64,
         })
     }
-    
+
     // Private helper methods
-    
+
     async fn create_genesis_block(&self) -> Result<Block> {
         let header = BlockHeader {
             version: 1,
@@ -540,9 +573,9 @@ impl BlockchainManager {
             difficulty: 1,
             validator: "GENESIS".to_string(),
         };
-        
+
         let hash = self.calculate_block_hash(&header).await;
-        
+
         Ok(Block {
             header,
             transactions: Vec::new(),
@@ -550,7 +583,7 @@ impl BlockchainManager {
             signature: String::new(),
         })
     }
-    
+
     async fn calculate_block_hash(&self, header: &BlockHeader) -> String {
         let mut hasher = Sha256::new();
         hasher.update(header.version.to_be_bytes());
@@ -561,16 +594,14 @@ impl BlockchainManager {
         hasher.update(header.nonce.to_be_bytes());
         format!("{:x}", hasher.finalize())
     }
-    
+
     async fn calculate_merkle_root(&self, transactions: &[Transaction]) -> String {
         if transactions.is_empty() {
             return "0".repeat(64);
         }
-        
-        let mut hashes: Vec<String> = transactions.iter()
-            .map(|tx| tx.id.clone())
-            .collect();
-        
+
+        let mut hashes: Vec<String> = transactions.iter().map(|tx| tx.id.clone()).collect();
+
         while hashes.len() > 1 {
             let mut new_hashes = Vec::new();
             for chunk in hashes.chunks(2) {
@@ -585,24 +616,24 @@ impl BlockchainManager {
             }
             hashes = new_hashes;
         }
-        
+
         hashes.into_iter().next().unwrap_or_else(|| "0".repeat(64))
     }
-    
+
     async fn generate_tx_id(&self) -> String {
         self.generate_id().await
     }
-    
+
     async fn generate_id(&self) -> String {
         let mut bytes = [0u8; 32];
         OsRng.fill_bytes(&mut bytes);
         format!("{:x}", Sha256::digest(&bytes))
     }
-    
+
     async fn generate_contract_address(&self) -> String {
         self.generate_id().await
     }
-    
+
     async fn process_transactions(&self, transactions: &[Transaction]) -> Result<()> {
         for tx in transactions {
             match tx.transaction_type {
@@ -610,28 +641,39 @@ impl BlockchainManager {
                     let threat: ThreatEntry = serde_json::from_slice(&tx.payload)?;
                     let mut registry = self.threat_registry.write().await;
                     registry.threats.insert(threat.threat_id.clone(), threat);
-                    registry.reputation_scores.entry(tx.sender.clone()).or_insert(50.0);
+                    registry
+                        .reputation_scores
+                        .entry(tx.sender.clone())
+                        .or_insert(50.0);
                 }
                 _ => {}
             }
         }
         Ok(())
     }
-    
+
     async fn update_reputation(&self, address: &str, correct: bool) -> Result<()> {
         let mut registry = self.threat_registry.write().await;
-        let score = registry.reputation_scores.entry(address.to_string()).or_insert(50.0);
-        
+        let score = registry
+            .reputation_scores
+            .entry(address.to_string())
+            .or_insert(50.0);
+
         if correct {
             *score = (*score + 5.0).min(100.0);
         } else {
             *score = (*score - 10.0).max(0.0);
         }
-        
+
         Ok(())
     }
-    
-    async fn execute_contract_function(&self, contract: &mut SmartContract, function: &str, args: Vec<Vec<u8>>) -> Result<Vec<u8>> {
+
+    async fn execute_contract_function(
+        &self,
+        contract: &mut SmartContract,
+        function: &str,
+        args: Vec<Vec<u8>>,
+    ) -> Result<Vec<u8>> {
         // Simplified contract execution
         match function {
             "get" => {
@@ -649,7 +691,7 @@ impl BlockchainManager {
             }
             _ => {}
         }
-        
+
         Ok(vec![])
     }
 }
@@ -664,11 +706,11 @@ impl ConsensusEngine {
             votes: HashMap::new(),
         }
     }
-    
+
     pub fn add_validator(&mut self, validator: Validator) {
         self.validators.push(validator);
     }
-    
+
     pub fn get_validators(&self) -> &[Validator] {
         &self.validators
     }
@@ -682,28 +724,28 @@ impl Wallet {
             address: String::new(),
         }
     }
-    
+
     pub fn generate_keys(&mut self) -> Result<()> {
         OsRng.fill_bytes(&mut self.private_key);
-        
+
         // Derive public key (simplified)
         let mut hasher = Sha256::new();
         hasher.update(&self.private_key);
         self.public_key = hasher.finalize().to_vec();
-        
+
         // Derive address
         self.address = format!("{:x}", Sha256::digest(&self.public_key));
-        
+
         Ok(())
     }
-    
+
     pub fn sign(&self, message: &[u8]) -> Result<String> {
         let mut hasher = Sha512::new();
         hasher.update(&self.private_key);
         hasher.update(message);
         Ok(format!("{:x}", hasher.finalize()))
     }
-    
+
     pub fn verify(&self, message: &[u8], signature: &str) -> bool {
         let expected = self.sign(message).unwrap_or_default();
         signature == expected
@@ -739,19 +781,19 @@ pub fn init() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_blockchain_initialization() {
         let manager = BlockchainManager::new().unwrap();
         assert!(manager.initialize().await.is_ok());
         assert_eq!(manager.get_height().await, 0);
     }
-    
+
     #[tokio::test]
     async fn test_threat_submission() {
         let manager = BlockchainManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let threat = ThreatEntry {
             threat_id: "THREAT-001".to_string(),
             threat_type: ThreatType::Malware,
@@ -765,26 +807,26 @@ mod tests {
             endorsements: 0,
             challenges: 0,
         };
-        
+
         let id = manager.submit_threat(threat).await.unwrap();
         assert_eq!(id, "THREAT-001");
     }
-    
+
     #[tokio::test]
     async fn test_block_addition() {
         let manager = BlockchainManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let block_hash = manager.add_block(vec![]).await.unwrap();
         assert!(!block_hash.is_empty());
         assert_eq!(manager.get_height().await, 1);
     }
-    
+
     #[tokio::test]
     async fn test_contract_deployment() {
         let manager = BlockchainManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let abi = ContractABI {
             functions: vec![ContractFunction {
                 name: "get".to_string(),
@@ -794,16 +836,16 @@ mod tests {
             }],
             events: vec![],
         };
-        
+
         let address = manager.deploy_contract(vec![1, 2, 3], abi).await.unwrap();
         assert!(!address.is_empty());
     }
-    
+
     #[tokio::test]
     async fn test_reputation_system() {
         let manager = BlockchainManager::new().unwrap();
         manager.initialize().await.unwrap();
-        
+
         let threat = ThreatEntry {
             threat_id: "THREAT-002".to_string(),
             threat_type: ThreatType::Phishing,
@@ -817,10 +859,13 @@ mod tests {
             endorsements: 0,
             challenges: 0,
         };
-        
+
         manager.submit_threat(threat).await.unwrap();
-        manager.attest_threat("THREAT-002", true, 0.9).await.unwrap();
-        
+        manager
+            .attest_threat("THREAT-002", true, 0.9)
+            .await
+            .unwrap();
+
         let retrieved = manager.get_threat("THREAT-002").await.unwrap().unwrap();
         assert_eq!(retrieved.endorsements, 1);
     }

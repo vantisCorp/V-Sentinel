@@ -1,18 +1,18 @@
 //! Governance Engine Module
-//! 
+//!
 //! Implements AI governance policies, approval workflows, and enforcement.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
-use tracing::{info, debug, warn};
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use tracing::{debug, info, warn};
 
 use super::models::{AIModel, AIModelStatus};
 use super::ShadowAIStatistics;
 
 /// Governance Engine
-/// 
+///
 /// Manages AI governance policies and approval workflows
 pub struct GovernanceEngine {
     policies: HashMap<String, AIPolicy>,
@@ -320,7 +320,7 @@ impl GovernanceEngine {
             registered_models: HashMap::new(),
             audit_log: Vec::new(),
         };
-        
+
         engine.add_default_policies();
         engine.add_default_workflows();
         engine
@@ -357,8 +357,9 @@ impl GovernanceEngine {
             created_by: "system".to_string(),
             is_active: true,
         };
-        self.policies.insert(approval_policy.id.clone(), approval_policy);
-        
+        self.policies
+            .insert(approval_policy.id.clone(), approval_policy);
+
         // Policy: Block sensitive data with external AI
         let sensitive_data_policy = AIPolicy {
             id: "block-sensitive-external".to_string(),
@@ -401,8 +402,9 @@ impl GovernanceEngine {
             created_by: "system".to_string(),
             is_active: true,
         };
-        self.policies.insert(sensitive_data_policy.id.clone(), sensitive_data_policy);
-        
+        self.policies
+            .insert(sensitive_data_policy.id.clone(), sensitive_data_policy);
+
         // Policy: Allowed providers
         let allowed_providers_policy = AIPolicy {
             id: "allowed-providers".to_string(),
@@ -432,7 +434,10 @@ impl GovernanceEngine {
             created_by: "system".to_string(),
             is_active: true,
         };
-        self.policies.insert(allowed_providers_policy.id.clone(), allowed_providers_policy);
+        self.policies.insert(
+            allowed_providers_policy.id.clone(),
+            allowed_providers_policy,
+        );
     }
 
     /// Add default workflows
@@ -468,8 +473,9 @@ impl GovernanceEngine {
             triggers: vec![WorkflowTrigger::NewAIRegistration],
             is_active: true,
         };
-        self.workflows.insert(standard_workflow.id.clone(), standard_workflow);
-        
+        self.workflows
+            .insert(standard_workflow.id.clone(), standard_workflow);
+
         // High-risk approval workflow
         let high_risk_workflow = ApprovalWorkflow {
             id: "high-risk-approval".to_string(),
@@ -508,13 +514,14 @@ impl GovernanceEngine {
             triggers: vec![WorkflowTrigger::HighRiskAI],
             is_active: true,
         };
-        self.workflows.insert(high_risk_workflow.id.clone(), high_risk_workflow);
+        self.workflows
+            .insert(high_risk_workflow.id.clone(), high_risk_workflow);
     }
 
     /// Register an AI model
     pub async fn register(&mut self, model: AIModel) -> Result<()> {
         info!("Registering AI model: {} ({})", model.name, model.id);
-        
+
         let registered = RegisteredModel {
             model: model.clone(),
             registration_date: Utc::now(),
@@ -524,58 +531,67 @@ impl GovernanceEngine {
             status: RegistrationStatus::Pending,
             conditions: vec![],
         };
-        
+
         self.registered_models.insert(model.id.clone(), registered);
-        
+
         self.add_audit_entry(
             GovernanceAction::Register,
             &model.id,
             "system",
             vec![("model_name", serde_json::json!(model.name))],
         );
-        
+
         Ok(())
     }
 
     /// Approve an AI model
-    pub async fn approve(&mut self, model_id: &str, approver: &str, justification: &str) -> Result<()> {
-        let registered = self.registered_models.get_mut(model_id)
+    pub async fn approve(
+        &mut self,
+        model_id: &str,
+        approver: &str,
+        justification: &str,
+    ) -> Result<()> {
+        let registered = self
+            .registered_models
+            .get_mut(model_id)
             .ok_or_else(|| anyhow!("Model {} not found", model_id))?;
-        
+
         registered.status = RegistrationStatus::Active;
         registered.approved_by = Some(approver.to_string());
         registered.approval_date = Some(Utc::now());
         registered.model.status = AIModelStatus::Approved;
-        
+
         info!("Approved AI model {} by {}", model_id, approver);
-        
+
         self.add_audit_entry(
             GovernanceAction::Approve,
             model_id,
             approver,
             vec![("justification", serde_json::json!(justification))],
         );
-        
+
         Ok(())
     }
 
     /// Block an AI model
     pub async fn block(&mut self, model_id: &str, reason: &str) -> Result<()> {
-        let registered = self.registered_models.get_mut(model_id)
+        let registered = self
+            .registered_models
+            .get_mut(model_id)
             .ok_or_else(|| anyhow!("Model {} not found", model_id))?;
-        
+
         registered.status = RegistrationStatus::Suspended;
         registered.model.status = AIModelStatus::Blocked;
-        
+
         warn!("Blocked AI model {}: {}", model_id, reason);
-        
+
         self.add_audit_entry(
             GovernanceAction::Block,
             model_id,
             "system",
             vec![("reason", serde_json::json!(reason))],
         );
-        
+
         Ok(())
     }
 
@@ -598,7 +614,7 @@ impl GovernanceEngine {
         if self.approvals.contains_key(&request.id) {
             return Err(anyhow!("Approval request {} already exists", request.id));
         }
-        
+
         info!("Creating approval request for model {}", request.model_id);
         self.approvals.insert(request.id.clone(), request);
         Ok(())
@@ -607,17 +623,19 @@ impl GovernanceEngine {
     /// Get statistics
     pub async fn get_statistics(&self) -> ShadowAIStatistics {
         let mut stats = ShadowAIStatistics::default();
-        
+
         for registered in self.registered_models.values() {
             stats.total_discovered += 1;
             match registered.status {
                 RegistrationStatus::Active => stats.approved_count += 1,
                 RegistrationStatus::Pending => stats.pending_count += 1,
-                RegistrationStatus::Suspended | RegistrationStatus::Revoked => stats.blocked_count += 1,
+                RegistrationStatus::Suspended | RegistrationStatus::Revoked => {
+                    stats.blocked_count += 1
+                }
                 RegistrationStatus::Expired => stats.unapproved_count += 1,
             }
         }
-        
+
         stats
     }
 
@@ -635,11 +653,14 @@ impl GovernanceEngine {
             model_id: model_id.to_string(),
             actor: actor.to_string(),
             timestamp: Utc::now(),
-            details: details.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
+            details: details
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), v))
+                .collect(),
             previous_state: None,
             new_state: None,
         };
-        
+
         self.audit_log.push(entry);
     }
 

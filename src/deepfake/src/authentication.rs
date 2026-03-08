@@ -299,9 +299,10 @@ impl ContentAuthenticator {
 
     /// Sign content
     fn sign_content(&self, data: &[u8], auth_id: &str) -> Result<DigitalSignature> {
-        let key = self.signing_key.as_ref().ok_or_else(|| {
-            anyhow::anyhow!("No signing key configured")
-        })?;
+        let key = self
+            .signing_key
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No signing key configured"))?;
 
         let mut mac = HmacSha256::new_from_slice(key)?;
         mac.update(data);
@@ -436,12 +437,16 @@ impl BlockchainAnchor {
             network: self.network.clone(),
         };
 
-        self.transactions.insert(content_hash.to_string(), tx.clone());
+        self.transactions
+            .insert(content_hash.to_string(), tx.clone());
         Ok(tx)
     }
 
     /// Verify blockchain anchor
-    pub async fn verify_anchor(&self, content_hash: &str) -> Result<Option<&BlockchainTransaction>> {
+    pub async fn verify_anchor(
+        &self,
+        content_hash: &str,
+    ) -> Result<Option<&BlockchainTransaction>> {
         Ok(self.transactions.get(content_hash))
     }
 }
@@ -469,10 +474,10 @@ mod tests {
     async fn test_authenticate_content() {
         let mut authenticator = ContentAuthenticator::new();
         authenticator.set_signing_key(b"test-key".to_vec());
-        
+
         let mut media = MediaContent::new(MediaType::Image, vec![0u8; 100]);
         let result = authenticator.authenticate(&mut media, None).await.unwrap();
-        
+
         assert!(!result.authentication_id.is_empty());
         assert!(media.authenticated);
     }
@@ -483,7 +488,7 @@ mod tests {
         let mut media = MediaContent::new(MediaType::Image, vec![0u8; 100]);
         media.authenticated = true;
         media.authentication_id = Some("test-auth-id".to_string());
-        
+
         let result = authenticator.verify(&media).await.unwrap();
         assert!(result.watermark_intact);
     }

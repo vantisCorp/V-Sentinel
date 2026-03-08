@@ -2,10 +2,10 @@
 //!
 //! A flexible plugin architecture for third-party integrations.
 
-use std::collections::HashMap;
-use std::sync::Arc;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
 use thiserror::Error;
 
 // ============================================================================
@@ -16,22 +16,22 @@ use thiserror::Error;
 pub enum PluginError {
     #[error("Plugin not found: {0}")]
     NotFound(String),
-    
+
     #[error("Plugin initialization failed: {0}")]
     InitializationFailed(String),
-    
+
     #[error("Plugin execution failed: {0}")]
     ExecutionFailed(String),
-    
+
     #[error("Invalid plugin configuration: {0}")]
     InvalidConfiguration(String),
-    
+
     #[error("Plugin dependency not met: {0}")]
     DependencyNotMet(String),
-    
+
     #[error("Plugin version mismatch: {0}")]
     VersionMismatch(String),
-    
+
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 }
@@ -265,22 +265,31 @@ pub enum EventSeverity {
 pub trait Plugin: Send + Sync {
     /// Get plugin metadata
     fn metadata(&self) -> &PluginMetadata;
-    
+
     /// Initialize the plugin
     async fn initialize(&mut self, config: PluginConfig) -> Result<(), PluginError>;
-    
+
     /// Shutdown the plugin
     async fn shutdown(&mut self) -> Result<(), PluginError>;
-    
+
     /// Handle an event
-    async fn handle_event(&self, event: &PluginEvent, context: &PluginContext) -> Result<(), PluginError>;
-    
+    async fn handle_event(
+        &self,
+        event: &PluginEvent,
+        context: &PluginContext,
+    ) -> Result<(), PluginError>;
+
     /// Execute a command
-    async fn execute(&self, command: &str, args: &[serde_json::Value], context: &PluginContext) -> Result<serde_json::Value, PluginError>;
-    
+    async fn execute(
+        &self,
+        command: &str,
+        args: &[serde_json::Value],
+        context: &PluginContext,
+    ) -> Result<serde_json::Value, PluginError>;
+
     /// Health check
     async fn health_check(&self) -> Result<PluginHealth, PluginError>;
-    
+
     /// Get plugin statistics
     fn get_stats(&self) -> PluginStats;
 }
@@ -333,24 +342,28 @@ impl PluginRegistry {
             configs: HashMap::new(),
         }
     }
-    
+
     /// Register a plugin
-    pub fn register<P: Plugin + 'static>(&mut self, plugin: P, config: PluginConfig) -> Result<(), PluginError> {
+    pub fn register<P: Plugin + 'static>(
+        &mut self,
+        plugin: P,
+        config: PluginConfig,
+    ) -> Result<(), PluginError> {
         let metadata = plugin.metadata();
         let plugin_id = metadata.id.clone();
-        
+
         // Validate dependencies
         self.validate_dependencies(&metadata.dependencies)?;
-        
+
         // Store config
         self.configs.insert(plugin_id.clone(), config);
-        
+
         // Store plugin
         self.plugins.insert(plugin_id, Box::new(plugin));
-        
+
         Ok(())
     }
-    
+
     /// Unregister a plugin
     pub fn unregister(&mut self, plugin_id: &str) -> Result<(), PluginError> {
         if self.plugins.remove(plugin_id).is_none() {
@@ -359,17 +372,17 @@ impl PluginRegistry {
         self.configs.remove(plugin_id);
         Ok(())
     }
-    
+
     /// Get a plugin by ID
     pub fn get(&self, plugin_id: &str) -> Option<&dyn Plugin> {
         self.plugins.get(plugin_id).map(|p| p.as_ref())
     }
-    
+
     /// List all registered plugins
     pub fn list(&self) -> Vec<&PluginMetadata> {
         self.plugins.values().map(|p| p.metadata()).collect()
     }
-    
+
     /// Initialize all plugins
     pub async fn initialize_all(&mut self) -> Result<(), PluginError> {
         for (plugin_id, plugin) in &mut self.plugins {
@@ -378,7 +391,7 @@ impl PluginRegistry {
         }
         Ok(())
     }
-    
+
     /// Shutdown all plugins
     pub async fn shutdown_all(&mut self) -> Result<(), PluginError> {
         for plugin in self.plugins.values_mut() {
@@ -386,7 +399,7 @@ impl PluginRegistry {
         }
         Ok(())
     }
-    
+
     /// Validate plugin dependencies
     fn validate_dependencies(&self, dependencies: &[PluginDependency]) -> Result<(), PluginError> {
         for dep in dependencies {
@@ -426,18 +439,26 @@ impl PluginManager {
             event_tx,
         }
     }
-    
+
     /// Register a plugin
-    pub async fn register<P: Plugin + 'static>(&self, plugin: P, config: PluginConfig) -> Result<(), PluginError> {
+    pub async fn register<P: Plugin + 'static>(
+        &self,
+        plugin: P,
+        config: PluginConfig,
+    ) -> Result<(), PluginError> {
         let mut registry = self.registry.write().await;
         registry.register(plugin, config)
     }
-    
+
     /// Dispatch an event to all plugins
-    pub async fn dispatch_event(&self, event: &PluginEvent, context: &PluginContext) -> Result<(), PluginError> {
+    pub async fn dispatch_event(
+        &self,
+        event: &PluginEvent,
+        context: &PluginContext,
+    ) -> Result<(), PluginError> {
         // Broadcast event
         let _ = self.event_tx.send(event.clone());
-        
+
         // Process with plugins
         let registry = self.registry.read().await;
         for plugin in registry.plugins.values() {
@@ -445,24 +466,36 @@ impl PluginManager {
                 tracing::warn!("Plugin event handling failed: {}", e);
             }
         }
-        
+
         Ok(())
     }
-    
+
     /// Execute a command on a specific plugin
-    pub async fn execute_command(&self, plugin_id: &str, command: &str, args: &[serde_json::Value], context: &PluginContext) -> Result<serde_json::Value, PluginError> {
+    pub async fn execute_command(
+        &self,
+        plugin_id: &str,
+        command: &str,
+        args: &[serde_json::Value],
+        context: &PluginContext,
+    ) -> Result<serde_json::Value, PluginError> {
         let registry = self.registry.read().await;
-        let plugin = registry.plugins.get(plugin_id).ok_or_else(|| PluginError::NotFound(plugin_id.to_string()))?;
+        let plugin = registry
+            .plugins
+            .get(plugin_id)
+            .ok_or_else(|| PluginError::NotFound(plugin_id.to_string()))?;
         plugin.execute(command, args, context).await
     }
-    
+
     /// Get plugin health
     pub async fn get_health(&self, plugin_id: &str) -> Result<PluginHealth, PluginError> {
         let registry = self.registry.read().await;
-        let plugin = registry.plugins.get(plugin_id).ok_or_else(|| PluginError::NotFound(plugin_id.to_string()))?;
+        let plugin = registry
+            .plugins
+            .get(plugin_id)
+            .ok_or_else(|| PluginError::NotFound(plugin_id.to_string()))?;
         plugin.health_check().await
     }
-    
+
     /// Get all plugin health statuses
     pub async fn get_all_health(&self) -> HashMap<String, PluginHealth> {
         let registry = self.registry.read().await;
@@ -474,7 +507,7 @@ impl PluginManager {
         }
         health
     }
-    
+
     /// Subscribe to events
     pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<PluginEvent> {
         self.event_tx.subscribe()
@@ -529,31 +562,43 @@ impl Plugin for ExamplePlugin {
     fn metadata(&self) -> &PluginMetadata {
         &self.metadata
     }
-    
+
     async fn initialize(&mut self, config: PluginConfig) -> Result<(), PluginError> {
         self.config = Some(config);
         tracing::info!("Example plugin initialized");
         Ok(())
     }
-    
+
     async fn shutdown(&mut self) -> Result<(), PluginError> {
         tracing::info!("Example plugin shutting down");
         Ok(())
     }
-    
-    async fn handle_event(&self, event: &PluginEvent, _context: &PluginContext) -> Result<(), PluginError> {
+
+    async fn handle_event(
+        &self,
+        event: &PluginEvent,
+        _context: &PluginContext,
+    ) -> Result<(), PluginError> {
         tracing::debug!("Example plugin handling event: {:?}", event.event_type);
         Ok(())
     }
-    
-    async fn execute(&self, command: &str, args: &[serde_json::Value], _context: &PluginContext) -> Result<serde_json::Value, PluginError> {
+
+    async fn execute(
+        &self,
+        command: &str,
+        args: &[serde_json::Value],
+        _context: &PluginContext,
+    ) -> Result<serde_json::Value, PluginError> {
         match command {
             "ping" => Ok(serde_json::json!({"pong": true})),
             "echo" => Ok(serde_json::json!({"echo": args})),
-            _ => Err(PluginError::ExecutionFailed(format!("Unknown command: {}", command))),
+            _ => Err(PluginError::ExecutionFailed(format!(
+                "Unknown command: {}",
+                command
+            ))),
         }
     }
-    
+
     async fn health_check(&self) -> Result<PluginHealth, PluginError> {
         Ok(PluginHealth {
             healthy: true,
@@ -562,7 +607,7 @@ impl Plugin for ExamplePlugin {
             last_check: chrono::Utc::now(),
         })
     }
-    
+
     fn get_stats(&self) -> PluginStats {
         self.stats.clone()
     }
@@ -577,7 +622,7 @@ mod tests {
         let mut registry = PluginRegistry::new();
         let plugin = ExamplePlugin::new();
         let config = PluginConfig::default();
-        
+
         assert!(registry.register(plugin, config).is_ok());
         assert_eq!(registry.list().len(), 1);
     }
@@ -590,9 +635,9 @@ mod tests {
             plugin_id: "example-plugin".to_string(),
             ..Default::default()
         };
-        
+
         assert!(manager.register(plugin, config).await.is_ok());
-        
+
         let health = manager.get_health("example-plugin").await;
         assert!(health.is_ok());
         assert!(health.unwrap().healthy);

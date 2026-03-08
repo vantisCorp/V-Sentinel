@@ -11,11 +11,11 @@ pub struct HostsParams {
     /// Host ID or hostname
     #[serde(default)]
     pub host_id: Option<String>,
-    
+
     /// Filter by state
     #[serde(default)]
     pub state: Option<String>,
-    
+
     /// Filter by platform
     #[serde(default)]
     pub platform: Option<String>,
@@ -26,25 +26,25 @@ pub struct HostsParams {
 pub struct Host {
     /// Host ID
     pub id: String,
-    
+
     /// Hostname
     pub hostname: String,
-    
+
     /// Platform (Windows, Linux, macOS)
     pub platform: String,
-    
+
     /// OS version
     pub os_version: String,
-    
+
     /// IP address
     pub local_ip: String,
-    
+
     /// Host state (online, offline, unknown)
     pub state: String,
-    
+
     /// Last seen timestamp
     pub last_seen: String,
-    
+
     /// Agent version
     pub agent_version: String,
 }
@@ -57,7 +57,9 @@ impl ToolTrait for HostsTool {
     fn get_tool(&self) -> Tool {
         Tool {
             name: "sentinel_list_hosts".to_string(),
-            description: "List and search hosts in V-Sentinel environment with filtering capabilities".to_string(),
+            description:
+                "List and search hosts in V-Sentinel environment with filtering capabilities"
+                    .to_string(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -81,25 +83,29 @@ impl ToolTrait for HostsTool {
             requires_auth: true,
         }
     }
-    
+
     async fn execute(&self, params: serde_json::Value) -> MCPResult<ToolResult> {
-        let params: HostsParams = serde_json::from_value(params)
-            .map_err(|e| crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e)))?;
-        
+        let params: HostsParams = serde_json::from_value(params).map_err(|e| {
+            crate::error::MCPError::InvalidParameters(format!("Invalid parameters: {}", e))
+        })?;
+
         // TODO: Integrate with actual V-Sentinel core module
         let hosts = self.mock_list_hosts(&params).await?;
-        
+
         let result = serde_json::json!({
             "hosts": hosts,
             "total": hosts.len()
         });
-        
+
         Ok(ToolResult::success(result))
     }
 }
 
 impl HostsTool {
-    async fn mock_list_hosts(&self, params: &HostsParams) -> Result<Vec<Host>, crate::error::MCPError> {
+    async fn mock_list_hosts(
+        &self,
+        params: &HostsParams,
+    ) -> Result<Vec<Host>, crate::error::MCPError> {
         let hosts = vec![
             Host {
                 id: "host_001".to_string(),
@@ -132,7 +138,7 @@ impl HostsTool {
                 agent_version: "1.0.0".to_string(),
             },
         ];
-        
+
         Ok(hosts)
     }
 }

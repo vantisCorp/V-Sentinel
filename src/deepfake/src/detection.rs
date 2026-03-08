@@ -7,7 +7,7 @@
 
 use crate::analysis::AnalysisResult;
 use crate::models::*;
-use crate::{DetectionModel, DeepfakeType};
+use crate::{DeepfakeType, DetectionModel};
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -166,7 +166,10 @@ impl DeepfakeDetector {
                 name: "GAN Fingerprint Detector".to_string(),
                 version: "1.0".to_string(),
                 model_type: "statistical".to_string(),
-                target_types: vec![DeepfakeType::ImageManipulation, DeepfakeType::VideoManipulation],
+                target_types: vec![
+                    DeepfakeType::ImageManipulation,
+                    DeepfakeType::VideoManipulation,
+                ],
                 accuracy: 0.78,
                 model_path: Some("models/gan_detector.onnx".to_string()),
                 active: true,
@@ -201,7 +204,10 @@ impl DeepfakeDetector {
             .collect();
 
         if active_models.is_empty() {
-            warn!("No active detection models for media type: {:?}", media.media_type);
+            warn!(
+                "No active detection models for media type: {:?}",
+                media.media_type
+            );
             return Ok(DetectionResult {
                 is_deepfake: false,
                 confidence: 0.0,
@@ -220,7 +226,7 @@ impl DeepfakeDetector {
         }
 
         // Aggregate results
-        let (is_deepfake, confidence, deepfake_types, details) = 
+        let (is_deepfake, confidence, deepfake_types, details) =
             self.aggregate_results(&model_results, analysis);
 
         // Update statistics
@@ -229,9 +235,9 @@ impl DeepfakeDetector {
         if is_deepfake {
             stats.deepfakes_found += 1;
         }
-        stats.avg_detection_time_ms = (stats.avg_detection_time_ms 
-            * (stats.total_detections - 1) as f64 
-            + start_time.elapsed().as_millis() as f64) 
+        stats.avg_detection_time_ms = (stats.avg_detection_time_ms
+            * (stats.total_detections - 1) as f64
+            + start_time.elapsed().as_millis() as f64)
             / stats.total_detections as f64;
         drop(stats);
 
@@ -250,18 +256,24 @@ impl DeepfakeDetector {
         match media.media_type {
             MediaType::Image => {
                 model.target_types.contains(&DeepfakeType::FaceSwap)
-                    || model.target_types.contains(&DeepfakeType::ImageManipulation)
+                    || model
+                        .target_types
+                        .contains(&DeepfakeType::ImageManipulation)
                     || model.target_types.contains(&DeepfakeType::LipSync)
             }
             MediaType::Video => {
                 model.target_types.contains(&DeepfakeType::FaceSwap)
-                    || model.target_types.contains(&DeepfakeType::VideoManipulation)
+                    || model
+                        .target_types
+                        .contains(&DeepfakeType::VideoManipulation)
                     || model.target_types.contains(&DeepfakeType::LipSync)
                     || model.target_types.contains(&DeepfakeType::RealTime)
             }
             MediaType::Audio => {
                 model.target_types.contains(&DeepfakeType::VoiceClone)
-                    || model.target_types.contains(&DeepfakeType::AudioManipulation)
+                    || model
+                        .target_types
+                        .contains(&DeepfakeType::AudioManipulation)
                     || model.target_types.contains(&DeepfakeType::TextToSpeech)
             }
         }
@@ -312,7 +324,8 @@ impl DeepfakeDetector {
         let confidence = combined_score.min(1.0);
 
         // Determine types based on indicators and model targets
-        let types: Vec<DeepfakeType> = model.target_types
+        let types: Vec<DeepfakeType> = model
+            .target_types
             .iter()
             .filter(|t| detected && self.should_detect_type(**t, analysis))
             .cloned()
@@ -328,17 +341,17 @@ impl DeepfakeDetector {
                 !analysis.faces.is_empty() && analysis.indicators.texture_anomalies > 0
             }
             DeepfakeType::ImageManipulation | DeepfakeType::VideoManipulation => {
-                analysis.indicators.gan_artifacts > 0 || analysis.indicators.color_inconsistencies > 0
+                analysis.indicators.gan_artifacts > 0
+                    || analysis.indicators.color_inconsistencies > 0
             }
-            DeepfakeType::VoiceClone | DeepfakeType::AudioManipulation | DeepfakeType::TextToSpeech => {
-                analysis.audio_analysis
-                    .as_ref()
-                    .map(|a| a.synthesis_probability > 0.5)
-                    .unwrap_or(false)
-            }
-            DeepfakeType::RealTime => {
-                analysis.indicators.temporal_inconsistencies > 5
-            }
+            DeepfakeType::VoiceClone
+            | DeepfakeType::AudioManipulation
+            | DeepfakeType::TextToSpeech => analysis
+                .audio_analysis
+                .as_ref()
+                .map(|a| a.synthesis_probability > 0.5)
+                .unwrap_or(false),
+            DeepfakeType::RealTime => analysis.indicators.temporal_inconsistencies > 5,
             _ => false,
         }
     }
@@ -368,7 +381,12 @@ impl DeepfakeDetector {
         analysis: &AnalysisResult,
     ) -> (bool, f32, Vec<DeepfakeType>, String) {
         if model_results.is_empty() {
-            return (false, 0.0, vec![], "No model results to aggregate".to_string());
+            return (
+                false,
+                0.0,
+                vec![],
+                "No model results to aggregate".to_string(),
+            );
         }
 
         // Count detections and calculate weighted confidence
@@ -387,7 +405,8 @@ impl DeepfakeDetector {
 
         // Determine if deepfake based on ensemble rules
         let is_deepfake = if self.config.ensemble_detection {
-            agreement_ratio >= self.config.agreement_threshold && weighted_confidence >= self.config.confidence_threshold
+            agreement_ratio >= self.config.agreement_threshold
+                && weighted_confidence >= self.config.confidence_threshold
         } else {
             detection_count > 0 && weighted_confidence >= self.config.confidence_threshold
         };
@@ -428,7 +447,7 @@ impl DeepfakeDetector {
     /// Add a custom detection model
     pub async fn add_model(&mut self, model: DetectionModel) -> Result<()> {
         let mut models = self.models.write().await;
-        
+
         // Check for duplicate ID
         if models.iter().any(|m| m.id == model.id) {
             return Err(anyhow::anyhow!("Model with ID {} already exists", model.id));
@@ -444,7 +463,7 @@ impl DeepfakeDetector {
         let mut models = self.models.write().await;
         let initial_len = models.len();
         models.retain(|m| m.id != model_id);
-        
+
         if models.len() == initial_len {
             return Err(anyhow::anyhow!("Model {} not found", model_id));
         }
@@ -461,7 +480,7 @@ impl DeepfakeDetector {
     /// Update model weights based on feedback
     pub async fn update_model_weights(&self, model_id: &str, correct: bool) -> Result<()> {
         let mut stats = self.stats.write().await;
-        
+
         if correct {
             stats.true_positives += 1;
         } else {
@@ -469,7 +488,10 @@ impl DeepfakeDetector {
         }
 
         // Update model accuracy tracking
-        let entry = stats.model_accuracy.entry(model_id.to_string()).or_insert(0.85);
+        let entry = stats
+            .model_accuracy
+            .entry(model_id.to_string())
+            .or_insert(0.85);
         *entry = (*entry * 0.95) + if correct { 0.05 } else { 0.0 };
 
         Ok(())

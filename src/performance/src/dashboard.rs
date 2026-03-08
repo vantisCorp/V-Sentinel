@@ -1,12 +1,12 @@
 // Performance Dashboard and Monitoring for SENTINEL Security System
 // Provides real-time performance monitoring and visualization
 
+use prometheus::{Counter, Encoder, Gauge, Histogram, Registry, TextEncoder};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use prometheus::{Counter, Histogram, Gauge, Registry, TextEncoder, Encoder};
 
 /// Performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,7 +35,7 @@ pub struct PerformanceDashboard {
 impl PerformanceDashboard {
     pub fn new() -> Self {
         let registry = Registry::new();
-        
+
         Self {
             metrics: Arc::new(RwLock::new(Vec::new())),
             registry,
@@ -65,7 +65,7 @@ impl PerformanceDashboard {
 
         let mut metrics = self.metrics.write().await;
         metrics.push(metric);
-        
+
         // Keep only last 10,000 metrics
         if metrics.len() > 10_000 {
             let len = metrics.len();
@@ -73,16 +73,22 @@ impl PerformanceDashboard {
         }
     }
 
-    pub async fn get_metrics(&self, component: &str, operation: Option<&str>) -> Vec<PerformanceMetrics> {
+    pub async fn get_metrics(
+        &self,
+        component: &str,
+        operation: Option<&str>,
+    ) -> Vec<PerformanceMetrics> {
         let metrics = self.metrics.read().await;
-        
+
         if let Some(op) = operation {
-            metrics.iter()
+            metrics
+                .iter()
                 .filter(|m| m.component == component && m.operation == op)
                 .cloned()
                 .collect()
         } else {
-            metrics.iter()
+            metrics
+                .iter()
                 .filter(|m| m.component == component)
                 .cloned()
                 .collect()
@@ -96,26 +102,30 @@ impl PerformanceDashboard {
 
     pub async fn get_summary(&self) -> PerformanceSummary {
         let metrics = self.metrics.read().await;
-        
+
         if metrics.is_empty() {
             return PerformanceSummary::default();
         }
 
         let total_duration: f64 = metrics.iter().map(|m| m.duration_ms).sum();
         let avg_duration = total_duration / metrics.len() as f64;
-        
+
         let mut durations: Vec<f64> = metrics.iter().map(|m| m.duration_ms).collect();
         durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         let p50 = durations[durations.len() / 2];
         let p95 = durations[(durations.len() as f64 * 0.95) as usize];
         let p99 = durations[(durations.len() as f64 * 0.99) as usize];
-        
-        let avg_cpu = metrics.iter().map(|m| m.cpu_usage_percent).sum::<f64>() / metrics.len() as f64;
-        let avg_memory = metrics.iter().map(|m| m.memory_usage_mb).sum::<f64>() / metrics.len() as f64;
-        let avg_cache_hit = metrics.iter().map(|m| m.cache_hit_rate).sum::<f64>() / metrics.len() as f64;
+
+        let avg_cpu =
+            metrics.iter().map(|m| m.cpu_usage_percent).sum::<f64>() / metrics.len() as f64;
+        let avg_memory =
+            metrics.iter().map(|m| m.memory_usage_mb).sum::<f64>() / metrics.len() as f64;
+        let avg_cache_hit =
+            metrics.iter().map(|m| m.cache_hit_rate).sum::<f64>() / metrics.len() as f64;
         let total_errors = metrics.iter().map(|m| m.error_count).sum::<u64>();
-        let avg_throughput = metrics.iter().map(|m| m.throughput).sum::<f64>() / metrics.len() as f64;
+        let avg_throughput =
+            metrics.iter().map(|m| m.throughput).sum::<f64>() / metrics.len() as f64;
 
         PerformanceSummary {
             total_metrics: metrics.len(),
@@ -133,28 +143,38 @@ impl PerformanceDashboard {
 
     pub async fn get_component_summary(&self, component: &str) -> ComponentSummary {
         let metrics = self.metrics.read().await;
-        let component_metrics: Vec<_> = metrics.iter()
+        let component_metrics: Vec<_> = metrics
+            .iter()
             .filter(|m| m.component == component)
             .collect();
-        
+
         if component_metrics.is_empty() {
             return ComponentSummary::default();
         }
 
         let total_duration: f64 = component_metrics.iter().map(|m| m.duration_ms).sum();
         let avg_duration = total_duration / component_metrics.len() as f64;
-        
+
         let mut durations: Vec<f64> = component_metrics.iter().map(|m| m.duration_ms).collect();
         durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         let p50 = durations[durations.len() / 2];
         let p95 = durations[(durations.len() as f64 * 0.95) as usize];
         let p99 = durations[(durations.len() as f64 * 0.99) as usize];
-        
-        let avg_cpu = component_metrics.iter().map(|m| m.cpu_usage_percent).sum::<f64>() / component_metrics.len() as f64;
-        let avg_memory = component_metrics.iter().map(|m| m.memory_usage_mb).sum::<f64>() / component_metrics.len() as f64;
+
+        let avg_cpu = component_metrics
+            .iter()
+            .map(|m| m.cpu_usage_percent)
+            .sum::<f64>()
+            / component_metrics.len() as f64;
+        let avg_memory = component_metrics
+            .iter()
+            .map(|m| m.memory_usage_mb)
+            .sum::<f64>()
+            / component_metrics.len() as f64;
         let total_errors = component_metrics.iter().map(|m| m.error_count).sum::<u64>();
-        let avg_throughput = component_metrics.iter().map(|m| m.throughput).sum::<f64>() / component_metrics.len() as f64;
+        let avg_throughput = component_metrics.iter().map(|m| m.throughput).sum::<f64>()
+            / component_metrics.len() as f64;
 
         ComponentSummary {
             component: component.to_string(),
@@ -174,18 +194,18 @@ impl PerformanceDashboard {
         let encoder = TextEncoder::new();
         let metric_families = self.registry.gather();
         let mut buffer = Vec::new();
-        
+
         if let Err(e) = encoder.encode(&metric_families, &mut buffer) {
             return format!("# Error encoding metrics: {}\n", e);
         }
-        
+
         String::from_utf8(buffer).unwrap_or_else(|_| "# Error encoding metrics\n".to_string())
     }
 
     pub async fn generate_dashboard_html(&self) -> String {
         let summary = self.get_summary().await;
         let component_summaries = self.get_all_component_summaries().await;
-        
+
         format!(
             r#"<!DOCTYPE html>
 <html>
@@ -275,29 +295,41 @@ impl PerformanceDashboard {
     async fn get_all_component_summaries(&self) -> Vec<ComponentSummary> {
         let metrics = self.metrics.read().await;
         let mut components: HashMap<String, Vec<&PerformanceMetrics>> = HashMap::new();
-        
+
         for metric in metrics.iter() {
-            components.entry(metric.component.clone())
+            components
+                .entry(metric.component.clone())
                 .or_insert_with(Vec::new)
                 .push(metric);
         }
-        
-        components.into_iter()
+
+        components
+            .into_iter()
             .map(|(component, component_metrics)| {
                 let total_duration: f64 = component_metrics.iter().map(|m| m.duration_ms).sum();
                 let avg_duration = total_duration / component_metrics.len() as f64;
-                
-                let mut durations: Vec<f64> = component_metrics.iter().map(|m| m.duration_ms).collect();
+
+                let mut durations: Vec<f64> =
+                    component_metrics.iter().map(|m| m.duration_ms).collect();
                 durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
-                
+
                 let p50 = durations[durations.len() / 2];
                 let p95 = durations[(durations.len() as f64 * 0.95) as usize];
                 let p99 = durations[(durations.len() as f64 * 0.99) as usize];
-                
-                let avg_cpu = component_metrics.iter().map(|m| m.cpu_usage_percent).sum::<f64>() / component_metrics.len() as f64;
-                let avg_memory = component_metrics.iter().map(|m| m.memory_usage_mb).sum::<f64>() / component_metrics.len() as f64;
+
+                let avg_cpu = component_metrics
+                    .iter()
+                    .map(|m| m.cpu_usage_percent)
+                    .sum::<f64>()
+                    / component_metrics.len() as f64;
+                let avg_memory = component_metrics
+                    .iter()
+                    .map(|m| m.memory_usage_mb)
+                    .sum::<f64>()
+                    / component_metrics.len() as f64;
                 let total_errors = component_metrics.iter().map(|m| m.error_count).sum::<u64>();
-                let avg_throughput = component_metrics.iter().map(|m| m.throughput).sum::<f64>() / component_metrics.len() as f64;
+                let avg_throughput = component_metrics.iter().map(|m| m.throughput).sum::<f64>()
+                    / component_metrics.len() as f64;
 
                 ComponentSummary {
                     component,
@@ -317,7 +349,7 @@ impl PerformanceDashboard {
 
     fn generate_component_html(&self, summaries: &[ComponentSummary]) -> String {
         let mut html = String::new();
-        
+
         for summary in summaries {
             html.push_str(&format!(
                 r#"<div class="component-section">
@@ -378,12 +410,20 @@ impl PerformanceDashboard {
                 summary.avg_cpu_usage_percent,
                 summary.avg_memory_usage_mb,
                 summary.total_errors,
-                if summary.total_errors > 0 { "status-error" } else { "status-good" },
-                if summary.total_errors > 0 { "✗" } else { "✓" },
+                if summary.total_errors > 0 {
+                    "status-error"
+                } else {
+                    "status-good"
+                },
+                if summary.total_errors > 0 {
+                    "✗"
+                } else {
+                    "✓"
+                },
                 summary.avg_throughput
             ));
         }
-        
+
         html
     }
 
@@ -476,7 +516,7 @@ mod tests {
     #[tokio::test]
     async fn test_metric_recording() {
         let dashboard = PerformanceDashboard::new();
-        
+
         let metric = PerformanceMetrics {
             timestamp: chrono::Utc::now().timestamp() as u64,
             component: "Test".to_string(),
@@ -488,9 +528,9 @@ mod tests {
             error_count: 0,
             throughput: 1000.0,
         };
-        
+
         dashboard.record_metric(metric).await;
-        
+
         let metrics = dashboard.get_metrics("Test", Some("Operation")).await;
         assert_eq!(metrics.len(), 1);
     }
@@ -498,7 +538,7 @@ mod tests {
     #[tokio::test]
     async fn test_summary_generation() {
         let dashboard = PerformanceDashboard::new();
-        
+
         for i in 0..10 {
             let metric = PerformanceMetrics {
                 timestamp: chrono::Utc::now().timestamp() as u64,
@@ -513,7 +553,7 @@ mod tests {
             };
             dashboard.record_metric(metric).await;
         }
-        
+
         let summary = dashboard.get_summary().await;
         assert_eq!(summary.total_metrics, 10);
         assert!(summary.avg_duration_ms > 0.0);
@@ -522,7 +562,7 @@ mod tests {
     #[tokio::test]
     async fn test_dashboard_html_generation() {
         let dashboard = PerformanceDashboard::new();
-        
+
         let metric = PerformanceMetrics {
             timestamp: chrono::Utc::now().timestamp() as u64,
             component: "Test".to_string(),
@@ -534,9 +574,9 @@ mod tests {
             error_count: 0,
             throughput: 1000.0,
         };
-        
+
         dashboard.record_metric(metric).await;
-        
+
         let html = dashboard.generate_dashboard_html().await;
         assert!(html.contains("SENTINEL Performance Dashboard"));
         assert!(html.contains("Test"));

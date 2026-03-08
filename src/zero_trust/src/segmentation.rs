@@ -1,18 +1,18 @@
 //! Micro-Segmentation Module
-//! 
+//!
 //! Implements network, application, and data segmentation following
 //! Zero Trust principles. Each segment has its own access policies.
 
-use anyhow::{Result, anyhow};
-use serde::{Serialize, Deserialize};
+use anyhow::{anyhow, Result};
+use chrono::{DateTime, Datelike, Timelike, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use tracing::{info, debug, warn};
-use chrono::{DateTime, Utc, Timelike, Datelike};
+use tracing::{debug, info, warn};
 
-use super::{Subject, Resource, SensitivityLevel};
+use super::{Resource, SensitivityLevel, Subject};
 
 /// Segmentation Engine
-/// 
+///
 /// Manages segments and enforces segmentation policies
 pub struct SegmentationEngine {
     segments: HashMap<String, Segment>,
@@ -204,7 +204,7 @@ impl SegmentationEngine {
             resource_memberships: HashMap::new(),
             traffic_rules: Vec::new(),
         };
-        
+
         // Add default segments
         engine.add_default_segments();
         engine
@@ -227,7 +227,7 @@ impl SegmentationEngine {
             is_active: true,
         };
         self.segments.insert(dmz.id.clone(), dmz);
-        
+
         // Production segment
         let production = Segment {
             id: "production".to_string(),
@@ -243,7 +243,7 @@ impl SegmentationEngine {
             is_active: true,
         };
         self.segments.insert(production.id.clone(), production);
-        
+
         // Development segment
         let development = Segment {
             id: "development".to_string(),
@@ -259,7 +259,7 @@ impl SegmentationEngine {
             is_active: true,
         };
         self.segments.insert(development.id.clone(), development);
-        
+
         // Data segment
         let data = Segment {
             id: "data".to_string(),
@@ -269,13 +269,16 @@ impl SegmentationEngine {
             sensitivity: SensitivityLevel::Restricted,
             members: HashSet::new(),
             allowed_connections: ["production".to_string()].iter().cloned().collect(),
-            denied_connections: ["development".to_string(), "dmz".to_string()].iter().cloned().collect(),
+            denied_connections: ["development".to_string(), "dmz".to_string()]
+                .iter()
+                .cloned()
+                .collect(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             is_active: true,
         };
         self.segments.insert(data.id.clone(), data);
-        
+
         // Admin segment
         let admin = Segment {
             id: "admin".to_string(),
@@ -284,14 +287,17 @@ impl SegmentationEngine {
             description: "Administrative access".to_string(),
             sensitivity: SensitivityLevel::TopSecret,
             members: HashSet::new(),
-            allowed_connections: ["production".to_string(), "data".to_string()].iter().cloned().collect(),
+            allowed_connections: ["production".to_string(), "data".to_string()]
+                .iter()
+                .cloned()
+                .collect(),
             denied_connections: HashSet::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
             is_active: true,
         };
         self.segments.insert(admin.id.clone(), admin);
-        
+
         // Add default traffic rules
         self.traffic_rules = vec![
             TrafficRule {
@@ -319,9 +325,13 @@ impl SegmentationEngine {
                 time_restrictions: vec![TimeRestriction {
                     start_hour: 8,
                     end_hour: 18,
-                    days: vec![chrono::Weekday::Mon, chrono::Weekday::Tue, 
-                               chrono::Weekday::Wed, chrono::Weekday::Thu, 
-                               chrono::Weekday::Fri],
+                    days: vec![
+                        chrono::Weekday::Mon,
+                        chrono::Weekday::Tue,
+                        chrono::Weekday::Wed,
+                        chrono::Weekday::Thu,
+                        chrono::Weekday::Fri,
+                    ],
                 }],
             },
             TrafficRule {
@@ -348,7 +358,7 @@ impl SegmentationEngine {
         if self.segments.contains_key(&segment.id) {
             return Err(anyhow!("Segment with ID {} already exists", segment.id));
         }
-        
+
         info!("Creating segment: {} ({})", segment.name, segment.id);
         self.segments.insert(segment.id.clone(), segment);
         Ok(())
@@ -359,7 +369,7 @@ impl SegmentationEngine {
         if self.segments.remove(segment_id).is_none() {
             return Err(anyhow!("Segment {} not found", segment_id));
         }
-        
+
         // Clean up memberships
         for memberships in self.subject_memberships.values_mut() {
             memberships.remove(segment_id);
@@ -367,7 +377,7 @@ impl SegmentationEngine {
         for memberships in self.resource_memberships.values_mut() {
             memberships.remove(segment_id);
         }
-        
+
         info!("Deleted segment: {}", segment_id);
         Ok(())
     }
@@ -377,17 +387,17 @@ impl SegmentationEngine {
         if !self.segments.contains_key(segment_id) {
             return Err(anyhow!("Segment {} not found", segment_id));
         }
-        
+
         self.subject_memberships
             .entry(subject_id.to_string())
             .or_insert_with(HashSet::new)
             .insert(segment_id.to_string());
-        
+
         // Also add to segment's member list
         if let Some(segment) = self.segments.get_mut(segment_id) {
             segment.members.insert(subject_id.to_string());
         }
-        
+
         debug!("Added subject {} to segment {}", subject_id, segment_id);
         Ok(())
     }
@@ -397,17 +407,17 @@ impl SegmentationEngine {
         if !self.segments.contains_key(segment_id) {
             return Err(anyhow!("Segment {} not found", segment_id));
         }
-        
+
         self.resource_memberships
             .entry(resource_id.to_string())
             .or_insert_with(HashSet::new)
             .insert(segment_id.to_string());
-        
+
         // Also add to segment's member list
         if let Some(segment) = self.segments.get_mut(segment_id) {
             segment.members.insert(resource_id.to_string());
         }
-        
+
         debug!("Added resource {} to segment {}", resource_id, segment_id);
         Ok(())
     }
@@ -416,11 +426,7 @@ impl SegmentationEngine {
     pub fn get_subject_segments(&self, subject_id: &str) -> Vec<&Segment> {
         self.subject_memberships
             .get(subject_id)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| self.segments.get(id))
-                    .collect()
-            })
+            .map(|ids| ids.iter().filter_map(|id| self.segments.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -428,11 +434,7 @@ impl SegmentationEngine {
     pub fn get_resource_segments(&self, resource_id: &str) -> Vec<&Segment> {
         self.resource_memberships
             .get(resource_id)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| self.segments.get(id))
-                    .collect()
-            })
+            .map(|ids| ids.iter().filter_map(|id| self.segments.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -440,51 +442,61 @@ impl SegmentationEngine {
     pub async fn check_access(&self, subject: &Subject, resource: &Resource) -> Result<bool> {
         let subject_segments = self.get_subject_segments(&subject.id);
         let resource_segments = self.get_resource_segments(&resource.id);
-        
+
         // If no segments defined, use resource sensitivity for default segment
         if subject_segments.is_empty() && resource_segments.is_empty() {
             return Ok(true); // Default allow if no segmentation configured
         }
-        
+
         // Check each subject segment against each resource segment
         for subject_seg in &subject_segments {
             for resource_seg in &resource_segments {
-                let result = self.check_segment_access(subject_seg.id.as_str(), resource_seg.id.as_str()).await?;
+                let result = self
+                    .check_segment_access(subject_seg.id.as_str(), resource_seg.id.as_str())
+                    .await?;
                 if result.allowed {
                     return Ok(true);
                 }
             }
         }
-        
+
         // Check if resource has a segment assigned
         if let Some(ref segment_id) = resource.segment {
             for subject_seg in &subject_segments {
-                let result = self.check_segment_access(subject_seg.id.as_str(), segment_id).await?;
+                let result = self
+                    .check_segment_access(subject_seg.id.as_str(), segment_id)
+                    .await?;
                 if result.allowed {
                     return Ok(true);
                 }
             }
         }
-        
+
         // Check sensitivity-based default rules
         if subject_segments.is_empty() {
             // Unknown subject, apply sensitivity rules
             return Ok(resource.sensitivity <= SensitivityLevel::Internal);
         }
-        
+
         if resource_segments.is_empty() {
             // Unknown resource, allow based on subject segment sensitivity
-            return Ok(subject_segments.iter().all(|s| s.sensitivity >= SensitivityLevel::Internal));
+            return Ok(subject_segments
+                .iter()
+                .all(|s| s.sensitivity >= SensitivityLevel::Internal));
         }
-        
+
         Ok(false)
     }
 
     /// Check access between two segments
-    pub async fn check_segment_access(&self, source_segment: &str, dest_segment: &str) -> Result<SegmentationResult> {
+    pub async fn check_segment_access(
+        &self,
+        source_segment: &str,
+        dest_segment: &str,
+    ) -> Result<SegmentationResult> {
         let mut matched_rules = Vec::new();
         let mut warnings = Vec::new();
-        
+
         // Same segment
         if source_segment == dest_segment {
             return Ok(SegmentationResult {
@@ -495,27 +507,27 @@ impl SegmentationEngine {
                 warnings: vec![],
             });
         }
-        
+
         // Check traffic rules
         for rule in &self.traffic_rules {
             if rule.source_segment == source_segment && rule.dest_segment == dest_segment {
                 matched_rules.push(rule.id.clone());
-                
+
                 // Check time restrictions
                 if !rule.time_restrictions.is_empty() {
                     let now = Utc::now();
                     let hour = now.hour() as i32;
                     let day = now.weekday();
-                    
+
                     let within_time = rule.time_restrictions.iter().any(|r| {
                         hour >= r.start_hour && hour < r.end_hour && r.days.contains(&day)
                     });
-                    
+
                     if !within_time && rule.allowed {
                         warnings.push(format!("Access allowed only during restricted hours"));
                     }
                 }
-                
+
                 return Ok(SegmentationResult {
                     allowed: rule.allowed,
                     source_segment: source_segment.to_string(),
@@ -525,7 +537,7 @@ impl SegmentationEngine {
                 });
             }
         }
-        
+
         // Check segment allowed/denied connections
         if let Some(source_seg) = self.segments.get(source_segment) {
             if source_seg.denied_connections.contains(dest_segment) {
@@ -537,7 +549,7 @@ impl SegmentationEngine {
                     warnings: vec!["Destination in denied list".to_string()],
                 });
             }
-            
+
             if source_seg.allowed_connections.contains(dest_segment) {
                 return Ok(SegmentationResult {
                     allowed: true,
@@ -548,7 +560,7 @@ impl SegmentationEngine {
                 });
             }
         }
-        
+
         // Default deny
         Ok(SegmentationResult {
             allowed: false,
@@ -566,11 +578,16 @@ impl SegmentationEngine {
             return Err(anyhow!("Source segment {} not found", rule.source_segment));
         }
         if !self.segments.contains_key(&rule.dest_segment) {
-            return Err(anyhow!("Destination segment {} not found", rule.dest_segment));
+            return Err(anyhow!(
+                "Destination segment {} not found",
+                rule.dest_segment
+            ));
         }
-        
-        info!("Adding traffic rule: {} -> {} (allowed: {})", 
-              rule.source_segment, rule.dest_segment, rule.allowed);
+
+        info!(
+            "Adding traffic rule: {} -> {} (allowed: {})",
+            rule.source_segment, rule.dest_segment, rule.allowed
+        );
         self.traffic_rules.push(rule);
         Ok(())
     }
@@ -611,17 +628,23 @@ mod tests {
     #[tokio::test]
     async fn test_segment_access_check() {
         let engine = SegmentationEngine::new();
-        
+
         // DMZ to production should be allowed
-        let result = engine.check_segment_access("dmz", "production").await.unwrap();
+        let result = engine
+            .check_segment_access("dmz", "production")
+            .await
+            .unwrap();
         assert!(result.allowed);
-        
+
         // DMZ to data should be denied
         let result = engine.check_segment_access("dmz", "data").await.unwrap();
         assert!(!result.allowed);
-        
+
         // Development to production should be denied
-        let result = engine.check_segment_access("development", "production").await.unwrap();
+        let result = engine
+            .check_segment_access("development", "production")
+            .await
+            .unwrap();
         assert!(!result.allowed);
     }
 }

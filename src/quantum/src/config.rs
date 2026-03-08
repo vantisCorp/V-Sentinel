@@ -1,13 +1,13 @@
 //! PQC Configuration Module
-//! 
+//!
 //! This module provides configuration management for post-quantum cryptographic algorithms,
 //! allowing users to select algorithms, parameters, and security levels.
 
-use serde::{Serialize, Deserialize};
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 /// PQC Configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,7 +147,12 @@ impl PqcConfig {
     }
 
     /// Set default KEM algorithm
-    pub fn set_default_kem(&mut self, algorithm: KemAlgorithm, security_level: u8, hybrid_mode: bool) {
+    pub fn set_default_kem(
+        &mut self,
+        algorithm: KemAlgorithm,
+        security_level: u8,
+        hybrid_mode: bool,
+    ) {
         self.default_kem = KemConfig {
             algorithm,
             security_level,
@@ -156,7 +161,12 @@ impl PqcConfig {
     }
 
     /// Set default signature algorithm
-    pub fn set_default_signature(&mut self, algorithm: SigAlgorithm, security_level: u8, hybrid_mode: bool) {
+    pub fn set_default_signature(
+        &mut self,
+        algorithm: SigAlgorithm,
+        security_level: u8,
+        hybrid_mode: bool,
+    ) {
         self.default_signature = SigConfig {
             algorithm,
             security_level,
@@ -165,7 +175,12 @@ impl PqcConfig {
     }
 
     /// Set hybrid crypto configuration
-    pub fn set_hybrid_config(&mut self, kdf: KeyDerivationFunction, classical: ClassicalAlgorithm, enable_pcs: bool) {
+    pub fn set_hybrid_config(
+        &mut self,
+        kdf: KeyDerivationFunction,
+        classical: ClassicalAlgorithm,
+        enable_pcs: bool,
+    ) {
         self.hybrid_crypto = HybridConfig {
             kdf,
             classical_algorithm: classical,
@@ -238,7 +253,8 @@ impl PqcConfig {
             kem_algorithm: self.default_kem.algorithm,
             kem_security_bits: self.get_kem_security_bits(self.default_kem.algorithm),
             signature_algorithm: self.default_signature.algorithm,
-            signature_security_bits: self.get_signature_security_bits(self.default_signature.algorithm),
+            signature_security_bits: self
+                .get_signature_security_bits(self.default_signature.algorithm),
             hybrid_mode: self.default_kem.hybrid_mode || self.default_signature.hybrid_mode,
         }
     }
@@ -286,8 +302,16 @@ pub struct SecurityInfo {
 impl std::fmt::Display for SecurityInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "PQC Security Configuration:\n")?;
-        write!(f, "  KEM Algorithm: {:?} ({}-bit security)\n", self.kem_algorithm, self.kem_security_bits)?;
-        write!(f, "  Signature Algorithm: {:?} ({}-bit security)\n", self.signature_algorithm, self.signature_security_bits)?;
+        write!(
+            f,
+            "  KEM Algorithm: {:?} ({}-bit security)\n",
+            self.kem_algorithm, self.kem_security_bits
+        )?;
+        write!(
+            f,
+            "  Signature Algorithm: {:?} ({}-bit security)\n",
+            self.signature_algorithm, self.signature_security_bits
+        )?;
         write!(f, "  Hybrid Mode: {}\n", self.hybrid_mode)?;
         Ok(())
     }
@@ -301,7 +325,10 @@ mod tests {
     fn test_default_config() {
         let config = PqcConfig::new();
         assert_eq!(config.default_kem.algorithm, KemAlgorithm::CrystalsKyber768);
-        assert_eq!(config.default_signature.algorithm, SigAlgorithm::CrystalsDilithium3);
+        assert_eq!(
+            config.default_signature.algorithm,
+            SigAlgorithm::CrystalsDilithium3
+        );
         assert!(config.default_kem.hybrid_mode);
     }
 
@@ -331,6 +358,9 @@ mod tests {
         let config = PqcConfig::new();
         let json = serde_json::to_string(&config).unwrap();
         let deserialized: PqcConfig = serde_json::from_str(&json).unwrap();
-        assert_eq!(config.default_kem.algorithm, deserialized.default_kem.algorithm);
+        assert_eq!(
+            config.default_kem.algorithm,
+            deserialized.default_kem.algorithm
+        );
     }
 }
