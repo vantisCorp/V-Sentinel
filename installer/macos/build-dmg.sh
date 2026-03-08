@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # V-Sentinel macOS DMG Builder
-# Requires: Xcode Command Line Tools, cargo (Rust)
+# Requires: Xcode Command Line Tools, curl
+# Downloads pre-built binary from GitHub Releases (no Rust required)
 #
 # Usage: ./build-dmg.sh [VERSION]
 # Example: ./build-dmg.sh 2.1.1
@@ -79,9 +80,9 @@ check_dependencies() {
         missing+=("Xcode Command Line Tools")
     fi
     
-    # Check for cargo (Rust)
-    if ! command -v cargo &> /dev/null; then
-        missing+=("cargo (Rust)")
+    # Check for curl (for downloading pre-built binary)
+    if ! command -v curl &> /dev/null; then
+        missing+=("curl")
     fi
     
     # Check for create-dmg (optional but recommended)
@@ -94,29 +95,61 @@ check_dependencies() {
         echo ""
         echo "Please install missing dependencies and try again."
         echo "  Xcode: xcode-select --install"
-        echo "  Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+        echo "  curl: usually pre-installed on macOS"
         exit 1
     fi
     
     log_info "All dependencies found."
 }
 
-# Build release binary
-build_binary() {
-    log_info "Building release binary..."
-    log_info "This may take several minutes..."
+# Download pre-built binary from GitHub Releases
+download_binary() {
+    log_info "Downloading pre-built binary from GitHub Releases..."
     
-    cd "${PROJECT_ROOT}"
+    # GitHub repository for releases
+    GITHUB_REPO="vantisCorp/V-Sentinel"
     
-    # Build for current architecture
-    cargo build --release
+    # Detect architecture
+    ARCH=$(uname -m)
+    if [ "${ARCH}" = "arm64" ]; then
+        BINARY_NAME="v-sentinel-${VERSION}-aarch64-apple-darwin.tar.gz"
+    else
+        BINARY_NAME="v-sentinel-${VERSION}-x86_64-apple-darwin.tar.gz"
+    fi
     
-    if [ ! -f "target/release/${PRODUCT_EXEC}" ]; then
-        log_error "Build failed! Binary not found."
+    DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/${BINARY_NAME}"
+    
+    log_info "Architecture: ${ARCH}"
+    log_info "Downloading: ${DOWNLOAD_URL}"
+    
+    # Create build directory
+    mkdir -p "${BUILD_DIR}"
+    
+    # Download the binary
+    curl -L -o "${BUILD_DIR}/${BINARY_NAME}" "${DOWNLOAD_URL}"
+    
+    if [ ! -f "${BUILD_DIR}/${BINARY_NAME}" ]; then
+        log_error "Download failed! Binary not found."
         exit 1
     fi
     
-    log_info "Build successful."
+    # Extract the archive
+    log_info "Extracting binary..."
+    tar xzf "${BUILD_DIR}/${BINARY_NAME}" -C "${BUILD_DIR}"
+    
+    # Find the extracted binary
+    if [ -f "${BUILD_DIR}/v-sentinel" ]; then
+        mv "${BUILD_DIR}/v-sentinel" "${BUILD_DIR}/${PRODUCT_EXEC}"
+        chmod +x "${BUILD_DIR}/${PRODUCT_EXEC}"
+    elif [ -f "${BUILD_DIR}/${PRODUCT_EXEC}" ]; then
+        chmod +x "${BUILD_DIR}/${PRODUCT_EXEC}"
+    else
+        log_error "Binary not found after extraction!"
+        log_error "Expected: ${BUILD_DIR}/v-sentinel or ${BUILD_DIR}/${PRODUCT_EXEC}"
+        exit 1
+    fi
+    
+    log_info "Binary downloaded and extracted successfully."
 }
 
 # Create app bundle structure
@@ -201,8 +234,8 @@ EOF
 install_files() {
     log_info "Installing files..."
     
-    # Copy main binary
-    cp "${PROJECT_ROOT}/target/release/${PRODUCT_EXEC}" "${APP_DIR}/Contents/MacOS/"
+    # Copy main binary (from downloaded location)
+    cp "${BUILD_DIR}/${PRODUCT_EXEC}" "${APP_DIR}/Contents/MacOS/"
     chmod +x "${APP_DIR}/Contents/MacOS/${PRODUCT_EXEC}"
     
     # Copy configuration
@@ -418,7 +451,7 @@ main() {
     
     check_platform
     check_dependencies
-    build_binary
+    download_binary
     create_app_bundle
     create_info_plist
     install_files

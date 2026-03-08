@@ -1,10 +1,11 @@
 #!/bin/bash
 #
 # V-Sentinel Linux AppImage Builder
-# Requires: curl, wget, tar, appstream
+# Downloads pre-built binary from GitHub Releases
+# Requires: curl, wget, tar
 #
 # Usage: ./build-appimage.sh [VERSION]
-# Example: ./build-appimage.sh 2.1.1
+# Example: ./build-appimage.sh 2.1.2
 
 set -e
 
@@ -15,15 +16,17 @@ PRODUCT_ID="io.github.v-sentinel.V-Sentinel"
 PRODUCT_COMMENT="AI-Powered Security Monitoring System"
 PRODUCT_CATEGORIES="Security;System;Monitor;"
 PRODUCT_KEYWORDS="security;monitoring;ai;threat;detection;"
+GITHUB_REPO="vantisCorp/V-Sentinel"
 
 # Version handling
 if [ -z "$1" ]; then
-    VERSION="2.1.1"
+    VERSION="2.1.2"
 else
     VERSION="$1"
 fi
 
 APPIMAGE_NAME="${PRODUCT_NAME}-${VERSION}-x86_64.AppImage"
+BINARY_NAME="v-sentinel-${VERSION}-x86_64-unknown-linux-gnu.tar.gz"
 
 echo ""
 echo "========================================"
@@ -74,9 +77,9 @@ check_dependencies() {
         missing+=("wget")
     fi
     
-    # Check for cargo (Rust)
-    if ! command -v cargo &> /dev/null; then
-        missing+=("cargo (Rust)")
+    # Check for tar
+    if ! command -v tar &> /dev/null; then
+        missing+=("tar")
     fi
     
     if [ ${#missing[@]} -ne 0 ]; then
@@ -91,27 +94,42 @@ check_dependencies() {
     log_info "All dependencies found."
 }
 
-# Build release binary
-build_binary() {
-    log_info "Building release binary..."
-    log_info "This may take several minutes..."
+# Download pre-built binary from GitHub Releases
+download_binary() {
+    log_info "Downloading pre-built binary from GitHub Releases..."
     
-    cd "${PROJECT_ROOT}"
-    cargo build --release
+    local DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/${BINARY_NAME}"
+    log_info "URL: ${DOWNLOAD_URL}"
     
-    if [ ! -f "target/release/${PRODUCT_EXEC}" ]; then
-        log_error "Build failed! Binary not found."
+    mkdir -p "${BUILD_DIR}"
+    
+    # Download the binary
+    if ! curl -L -o "${BUILD_DIR}/${BINARY_NAME}" "${DOWNLOAD_URL}"; then
+        log_error "Download failed!"
+        echo ""
+        echo "The Linux binary for version ${VERSION} may not be available yet."
+        echo "Please check: https://github.com/${GITHUB_REPO}/releases"
         exit 1
     fi
     
-    log_info "Build successful."
+    # Extract the binary
+    log_info "Extracting binary..."
+    tar xzf "${BUILD_DIR}/${BINARY_NAME}" -C "${BUILD_DIR}"
+    
+    if [ ! -f "${BUILD_DIR}/${PRODUCT_EXEC}" ]; then
+        log_error "Binary not found after extraction!"
+        exit 1
+    fi
+    
+    chmod +x "${BUILD_DIR}/${PRODUCT_EXEC}"
+    log_info "Binary downloaded and extracted."
 }
 
 # Create AppDir structure
 create_appdir() {
     log_info "Creating AppDir structure..."
     
-    rm -rf "${BUILD_DIR}"
+    rm -rf "${APPDIR}"
     mkdir -p "${APPDIR}"
     
     # Create directories
@@ -135,33 +153,18 @@ install_files() {
     log_info "Installing files..."
     
     # Copy main binary
-    cp "${PROJECT_ROOT}/target/release/${PRODUCT_EXEC}" "${APPDIR}/usr/bin/"
+    cp "${BUILD_DIR}/${PRODUCT_EXEC}" "${APPDIR}/usr/bin/"
     chmod +x "${APPDIR}/usr/bin/${PRODUCT_EXEC}"
     
-    # Copy configuration
+    # Copy configuration if exists
     if [ -f "${PROJECT_ROOT}/config/default.toml" ]; then
         cp "${PROJECT_ROOT}/config/default.toml" "${APPDIR}/etc/${PRODUCT_NAME}/"
     fi
     
-    # Copy documentation
+    # Copy documentation if exists
     cp "${PROJECT_ROOT}/README.md" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
     cp "${PROJECT_ROOT}/LICENSE" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
     cp "${PROJECT_ROOT}/CHANGELOG.md" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
-    
-    # Copy modules if exist
-    if [ -d "${PROJECT_ROOT}/modules" ]; then
-        cp -r "${PROJECT_ROOT}/modules/"* "${APPDIR}/opt/${PRODUCT_NAME}/modules/" 2>/dev/null || true
-    fi
-    
-    # Copy PQC if exist
-    if [ -d "${PROJECT_ROOT}/pqc" ]; then
-        cp -r "${PROJECT_ROOT}/pqc/"* "${APPDIR}/opt/${PRODUCT_NAME}/pqc/" 2>/dev/null || true
-    fi
-    
-    # Copy SDK if exist
-    if [ -d "${PROJECT_ROOT}/sdk" ]; then
-        cp -r "${PROJECT_ROOT}/sdk/"* "${APPDIR}/opt/${PRODUCT_NAME}/sdk/" 2>/dev/null || true
-    fi
     
     log_info "Files installed."
 }
@@ -204,9 +207,8 @@ create_appstream_metadata() {
   <metadata_license>AGPL-3.0-or-later</metadata_license>
   <project_license>AGPL-3.0-or-later</project_license>
   <developer_name>V-Sentinel Security Team</developer_name>
-  <url type="homepage">https://github.com/V-Sentinel/V-Sentinel</url>
-  <url type="bugtracker">https://github.com/V-Sentinel/V-Sentinel/issues</url>
-  <url type="donation">https://github.com/sponsors/V-Sentinel</url>
+  <url type="homepage">https://github.com/vantisCorp/V-Sentinel</url>
+  <url type="bugtracker">https://github.com/vantisCorp/V-Sentinel/issues</url>
   
   <description>
     <p>
@@ -220,7 +222,6 @@ create_appstream_metadata() {
       <li>Deepfake Detection</li>
       <li>Post-Quantum Cryptography</li>
       <li>Real-time Threat Intelligence</li>
-      <li>Multi-language Support</li>
     </ul>
   </description>
   
@@ -230,12 +231,6 @@ create_appstream_metadata() {
     <category>Security</category>
     <category>System</category>
   </categories>
-  
-  <requires>
-    <display_length compare="ge">medium</display_length>
-  </requires>
-  
-  <content_rating type="oars-1.1"/>
   
   <releases>
     <release version="${VERSION}" date="$(date +%Y-%m-%d)">
@@ -352,7 +347,7 @@ main() {
     echo ""
     
     check_dependencies
-    build_binary
+    download_binary
     create_appdir
     install_files
     create_desktop_entry
