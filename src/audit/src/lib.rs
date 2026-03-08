@@ -159,12 +159,37 @@ pub enum ComplianceStatus {
 }
 
 /// Assessment Rule
-#[derive(Debug, Clone)]
 pub struct AssessmentRule {
     pub id: String,
     pub name: String,
     pub category: AssessmentCategory,
     pub check_fn: Box<dyn Fn() -> AssessmentCheckResult + Send + Sync>,
+}
+
+impl std::fmt::Debug for AssessmentRule {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AssessmentRule")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("category", &self.category)
+            .finish()
+    }
+}
+
+impl Clone for AssessmentRule {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            category: self.category,
+            check_fn: Box::new(|| AssessmentCheckResult {
+                passed: false,
+                score: 0.0,
+                findings: vec![],
+                recommendations: vec![],
+            }),
+        }
+    }
 }
 
 /// Assessment Category

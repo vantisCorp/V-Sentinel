@@ -355,7 +355,7 @@ impl NeuralManager {
         self.graph_nets.write().await.initialize()?;
         
         // Initialize RL agent
-        self.reinforcement_learning.write().await.initialize()?;
+        self.reinforcement.write().await.initialize()?;
         
         info!("Neural Network Manager initialized successfully");
         Ok(())
@@ -697,7 +697,9 @@ impl NeuralManager {
     async fn generate_model_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        format!("MODEL-{:x}", sha2::Sha256::digest(&bytes)[..8].to_vec())
+        use sha2::{Sha256, Digest};
+        let hash = Sha256::digest(&bytes);
+        format!("MODEL-{}", hex::encode(&hash[..8]))
     }
     
     async fn update_statistics(&self, duration: std::time::Duration) {

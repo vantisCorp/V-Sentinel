@@ -379,7 +379,7 @@ impl TrafficMonitor {
             destination_ip: packet.destination_ip.clone(),
             source_port: packet.source_port,
             destination_port: packet.destination_port,
-            protocol: packet.protocol,
+            protocol: packet.protocol.clone(),
             size: packet.size,
             timestamp: std::time::Instant::now(),
         };

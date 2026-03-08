@@ -8,6 +8,7 @@
 //! - Abuse detection
 
 use crate::models::*;
+use crate::InputValidationResult;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};

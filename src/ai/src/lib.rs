@@ -129,10 +129,10 @@ impl PredictionEngine {
         let start = std::time::Instant::now();
         
         // Create a neural network model
-        let model = Box::new(NeuralNetwork::new(10, vec![64, 32], 13)) as Box<dyn MLModel>;
+        let mut model = Box::new(NeuralNetwork::new(10, vec![64, 32], 13)) as Box<dyn MLModel>;
         
         // Try to load from file, if fails use default
-        if let Err(_) = model.clone().load(model_path).await {
+        if let Err(_) = model.load(model_path) {
             warn!("Could not load model from file, using default model");
         }
         
@@ -177,10 +177,13 @@ impl PredictionEngine {
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
             .ok_or_else(|| anyhow::anyhow!("No prediction result"))?;
         
+        // Convert to f64 for consistency
+        let max_prob_f64 = max_prob as f64;
+        
         // Map to threat type
         let threat_type = Self::index_to_threat_type(max_idx)?;
         let is_malicious = max_idx > 0; // Index 0 is Benign
-        let risk_score = max_prob;
+        let risk_score = max_prob_f64;
         
         let prediction_time = start.elapsed().as_millis() as u64;
         
@@ -193,14 +196,14 @@ impl PredictionEngine {
         {
             let mut stats = self.statistics.write().await;
             stats.total_predictions += 1;
-            stats.average_confidence = (stats.average_confidence * (stats.total_predictions - 1) as f64 + max_prob) / stats.total_predictions as f64;
+            stats.average_confidence = (stats.average_confidence * (stats.total_predictions - 1) as f64 + max_prob_f64) / stats.total_predictions as f64;
             stats.average_prediction_time_ms = (stats.average_prediction_time_ms * (stats.total_predictions - 1) as f64 + prediction_time as f64) / stats.total_predictions as f64;
             stats.last_prediction_time = Some(std::time::SystemTime::now());
         }
         
         let prediction = ThreatPrediction {
             is_malicious,
-            confidence: max_prob,
+            confidence: max_prob_f64,
             threat_type,
             risk_score,
             prediction_time_ms: prediction_time,
@@ -245,14 +248,15 @@ impl PredictionEngine {
                 .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
                 .ok_or_else(|| anyhow::anyhow!("No prediction result"))?;
             
+            let max_prob_f64 = max_prob as f64;
             let threat_type = Self::index_to_threat_type(max_idx)?;
             let is_malicious = max_idx > 0;
             
             predictions.push(ThreatPrediction {
                 is_malicious,
-                confidence: max_prob,
+                confidence: max_prob_f64,
                 threat_type,
-                risk_score: max_prob,
+                risk_score: max_prob_f64,
                 prediction_time_ms: 0,
             });
         }

@@ -49,7 +49,7 @@ pub struct ActiveDecision {
 }
 
 /// Decision status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DecisionStatus {
     Active,
     Expired,
@@ -141,7 +141,7 @@ impl EnforcementPoint {
 
     /// Enforce an access decision
     pub async fn enforce(&self, decision: &AccessDecision) -> Result<()> {
-        info!("Enforcing decision {} for request {}", decision.decision_id, decision.request_id);
+        info!("Enforcing decision {} for request {}", decision.id, decision.request_id);
         
         match decision.decision {
             Decision::Allow => {
@@ -200,7 +200,7 @@ impl EnforcementPoint {
     /// Record a decision (stores it for tracking)
     pub fn record_decision(&mut self, decision: &AccessDecision, subject_id: &str, resource_id: &str) -> Result<String> {
         let active = ActiveDecision {
-            decision_id: decision.decision_id.to_string(),
+            decision_id: decision.id.to_string(),
             request_id: decision.request_id.to_string(),
             subject_id: subject_id.to_string(),
             resource_id: resource_id.to_string(),
@@ -259,7 +259,7 @@ impl EnforcementPoint {
             if fulfilled {
                 // Move obligation to fulfilled
                 let obligation = decision.pending_obligations.remove(obligation_idx);
-                decision.fulfilled_obligations.push(obligation);
+                decision.fulfilled_obligations.push(obligation.clone());
                 
                 // Update status if all obligations fulfilled
                 if decision.pending_obligations.is_empty() {

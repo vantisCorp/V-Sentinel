@@ -9,6 +9,12 @@ on:
     - cron: '0 0 * * 0'  # Every Sunday at midnight
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  id-token: write
+
 jobs:
   # ============================================================================
   # Security Audit

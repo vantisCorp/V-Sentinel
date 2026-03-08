@@ -314,7 +314,7 @@ impl DeepfakeDetector {
         // Determine types based on indicators and model targets
         let types: Vec<DeepfakeType> = model.target_types
             .iter()
-            .filter(|t| detected && self.should_detect_type(*t, analysis))
+            .filter(|t| detected && self.should_detect_type(**t, analysis))
             .cloned()
             .collect();
 

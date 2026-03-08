@@ -102,6 +102,7 @@ pub struct DetectionResult {
 
 /// Governance status
 #[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(PartialEq)]
 pub enum GovernanceStatus {
     Approved,
     Pending,
@@ -216,7 +217,7 @@ impl ShadowAIManager {
     /// Check governance status
     pub async fn check_governance(&self, model_id: &str) -> Result<GovernanceStatus> {
         let governance = self.governance.read().await;
-        governance.get_status(model_id).await
+        Ok(governance.get_status(model_id).await)
     }
 
     /// Process discovered AI (assess risk, check governance, recommend actions)

@@ -79,10 +79,26 @@ pub struct RecoveryManager {
 }
 
 /// Recovery Strategy
-#[derive(Debug, Clone)]
 pub struct RecoveryStrategy {
     name: String,
     recovery_fn: Box<dyn Fn() -> RecoveryAction + Send + Sync>,
+}
+
+impl std::fmt::Debug for RecoveryStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RecoveryStrategy")
+            .field("name", &self.name)
+            .finish()
+    }
+}
+
+impl Clone for RecoveryStrategy {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            recovery_fn: Box::new(|| RecoveryAction::Ignore),
+        }
+    }
 }
 
 /// Recovery Action
@@ -354,7 +370,7 @@ impl CircuitBreakerManager {
     }
     
     pub fn add_breaker(&mut self, name: String, failure_threshold: u32, timeout: Duration) {
-        self.breakers.insert(name, CircuitBreaker::new(name, failure_threshold, timeout));
+        self.breakers.insert(name.clone(), CircuitBreaker::new(name, failure_threshold, timeout));
     }
     
     pub fn can_execute(&mut self, name: &str) -> bool {

@@ -127,11 +127,12 @@ impl CloudSecurityManager {
     /// Apply Kubernetes security policy
     pub async fn apply_kubernetes_policy(&self, policy: K8sPolicy) -> Result<()> {
         debug!("Applying Kubernetes policy: {}", policy.name);
+        let policy_name = policy.name.clone();
         
         let mut k8s_policy = self.kubernetes_policy.write().await;
         k8s_policy.apply_policy(policy).await?;
         
-        info!("Kubernetes policy applied: {}", policy.name);
+        info!("Kubernetes policy applied: {}", policy_name);
         
         Ok(())
     }

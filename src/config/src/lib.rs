@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use std::path::{Path, PathBuf};
 use std::fs;
-use notify::{Watcher, RecursiveMode, watcher, DebouncedEvent, RecommendedWatcher};
+use notify::{Watcher, RecursiveMode, RecommendedWatcher, Event, EventKind};
 use std::time::Duration;
 
 pub mod pqc_validator;
@@ -342,7 +342,8 @@ impl ConfigManager {
         *self.config.write().await = config;
         
         // Call reload callbacks
-        self.call_reload_callbacks(&old_config, &self.config.read().await).await?;
+        let new_config = self.config.read().await.clone();
+        self.call_reload_callbacks(&old_config, &new_config).await?;
         
         info!("Configuration loaded successfully");
         
@@ -444,7 +445,7 @@ impl ConfigManager {
         info!("Watching configuration file: {:?}", path);
         
         let (tx, rx) = std::sync::mpsc::channel();
-        let mut watcher = watcher(tx, Duration::from_secs(1))
+        let mut watcher = RecommendedWatcher::new(tx, notify::Config::default())
             .map_err(|e| anyhow!("Failed to create watcher: {}", e))?;
         
         watcher.watch(&path, RecursiveMode::NonRecursive)
@@ -452,15 +453,12 @@ impl ConfigManager {
         
         let config_manager = self.clone();
         tokio::spawn(async move {
-            while let Ok(event) = rx.recv() {
-                match event {
-                    DebouncedEvent::Write(_) | DebouncedEvent::Create(_) => {
-                        debug!("Configuration file changed, reloading...");
-                        if let Err(e) = config_manager.load_from_file(&path).await {
-                            error!("Failed to reload configuration: {}", e);
-                        }
+            while let Ok(Ok(event)) = rx.recv() {
+                if matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_)) {
+                    debug!("Configuration file changed, reloading...");
+                    if let Err(e) = config_manager.load_from_file(&path).await {
+                        error!("Failed to reload configuration: {}", e);
                     }
-                    _ => {}
                 }
             }
         });

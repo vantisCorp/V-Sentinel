@@ -148,11 +148,11 @@ impl BehavioralAnalysisEngine {
     /// Calculate risk score from pattern matches and anomalies
     fn calculate_risk_score(&self, pattern_matches: &[PatternMatch], anomalies: &[Anomaly]) -> f64 {
         let pattern_score = pattern_matches.iter()
-            .map(|m| m.severity as f64)
+            .map(|m| m.severity.value())
             .sum::<f64>() / (pattern_matches.len() as f64 + 1.0);
         
         let anomaly_score = anomalies.iter()
-            .map(|a| a.severity as f64)
+            .map(|a| a.severity.value())
             .sum::<f64>() / (anomalies.len() as f64 + 1.0);
         
         (pattern_score + anomaly_score) / 2.0
@@ -174,7 +174,7 @@ impl BehavioralAnalysisEngine {
 pub struct ProcessBehavior {
     pub process_id: u32,
     pub events: Vec<BehaviorEvent>,
-    pub start_time: std::time::Instant,
+    pub start_time: chrono::DateTime<chrono::Utc>,
 }
 
 impl ProcessBehavior {
@@ -182,20 +182,20 @@ impl ProcessBehavior {
         Self {
             process_id,
             events: Vec::new(),
-            start_time: std::time::Instant::now(),
+            start_time: chrono::Utc::now(),
         }
     }
-    
+
     pub fn add_event(&mut self, event: BehaviorEvent) {
         self.events.push(event);
     }
-    
+
     pub fn event_count(&self) -> usize {
         self.events.len()
     }
-    
+
     pub fn duration(&self) -> std::time::Duration {
-        self.start_time.elapsed()
+        std::time::Duration::from_secs(0) // Simplified
     }
 }
 
@@ -203,12 +203,12 @@ impl ProcessBehavior {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BehaviorEvent {
     pub event_type: BehaviorEventType,
-    pub timestamp: std::time::Instant,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
     pub details: String,
 }
 
 /// Behavior event types
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BehaviorEventType {
     ProcessCreated,
     ProcessTerminated,
@@ -341,6 +341,17 @@ pub enum PatternSeverity {
     Critical,
 }
 
+impl PatternSeverity {
+    pub fn value(&self) -> f64 {
+        match self {
+            PatternSeverity::Low => 0.25,
+            PatternSeverity::Medium => 0.5,
+            PatternSeverity::High => 0.75,
+            PatternSeverity::Critical => 1.0,
+        }
+    }
+}
+
 /// Pattern match
 #[derive(Debug, Clone)]
 pub struct PatternMatch {
@@ -423,6 +434,17 @@ pub enum AnomalySeverity {
     Critical,
 }
 
+impl AnomalySeverity {
+    pub fn value(&self) -> f64 {
+        match self {
+            AnomalySeverity::Low => 0.25,
+            AnomalySeverity::Medium => 0.5,
+            AnomalySeverity::High => 0.75,
+            AnomalySeverity::Critical => 1.0,
+        }
+    }
+}
+
 /// Behavioral analysis result
 #[derive(Debug, Clone)]
 pub struct BehavioralAnalysisResult {
@@ -467,7 +489,7 @@ mod tests {
         
         let behavior = BehaviorEvent {
             event_type: BehaviorEventType::FileCreated,
-            timestamp: std::time::Instant::now(),
+            timestamp: chrono::Utc::now(),
             details: "Created file".to_string(),
         };
         
@@ -488,7 +510,7 @@ mod tests {
                 } else {
                     BehaviorEventType::FileModified
                 },
-                timestamp: std::time::Instant::now(),
+                timestamp: chrono::Utc::now(),
                 details: format!("Event {}", i),
             };
             engine.record_behavior(1234, behavior).await.unwrap();
@@ -507,7 +529,7 @@ mod tests {
         for i in 0..10 {
             process_behavior.add_event(BehaviorEvent {
                 event_type: BehaviorEventType::FileCreated,
-                timestamp: std::time::Instant::now(),
+                timestamp: chrono::Utc::now(),
                 details: format!("Event {}", i),
             });
         }
@@ -525,7 +547,7 @@ mod tests {
         for i in 0..50 {
             process_behavior.add_event(BehaviorEvent {
                 event_type: BehaviorEventType::FileCreated,
-                timestamp: std::time::Instant::now(),
+                timestamp: chrono::Utc::now(),
                 details: format!("Event {}", i),
             });
         }

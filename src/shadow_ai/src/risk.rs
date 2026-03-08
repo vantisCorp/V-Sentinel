@@ -76,6 +76,7 @@ pub struct RiskScore {
 
 /// Risk level
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(PartialOrd)]
 pub enum RiskLevel {
     Minimal = 1,
     Low = 2,

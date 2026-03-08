@@ -7,6 +7,14 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  checks: write
+  actions: read
+  pages: write
+  id-token: write
+  security-events: write
+
 env:
   CARGO_TERM_COLOR: always
   RUST_VERSION: stable

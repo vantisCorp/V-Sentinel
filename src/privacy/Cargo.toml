@@ -11,3 +11,10 @@ description = "SENTINEL privacy module"
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = "0.10"
+rand = "0.8"
+aes-gcm = "0.10"
+curve25519-dalek = "4.0"
+chrono = { workspace = true }

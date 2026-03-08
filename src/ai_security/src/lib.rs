@@ -22,11 +22,12 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
-pub use data_security::{DataSecurityManager, DataPipeline, DataClassification};
+pub use data_security::DataSecurityManager;
+pub use models::{DataPipeline, DataClassification};
 pub use model_security::{ModelSecurityManager, ModelEncryption, ModelWatermark};
 pub use api_security::{APISecurityManager, PromptInjectionDetector, InputValidator};
 pub use mlops_security::{MLOpsSecurityManager, PipelineSecurity, ModelRegistry};
-pub use models::{AISystem, AIModel, SecurityPolicy, SecurityEvent, ThreatLevel};
+pub use models::{AISystem, AIModel, SecurityPolicy, SecurityEvent, SecurityEventType, ThreatLevel};
 
 /// Main AI Security Manager
 pub struct AISecurityManager {
@@ -491,26 +492,6 @@ pub struct SecurityContext {
     pub session_id: Option<String>,
     /// Request source
     pub source: Option<String>,
-}
-
-/// Security event types
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SecurityEventType {
-    /// System secured
-    SystemSecured,
-    /// Prompt injection detected
-    PromptInjectionDetected,
-    /// Data breach prevented
-    DataBreachPrevented,
-    /// Model tampering detected
-    ModelTamperingDetected,
-    /// Unauthorized access
-    UnauthorizedAccess,
-    /// Policy violation
-    PolicyViolation,
-    /// Anomaly detected
-    AnomalyDetected,
 }
 
 #[cfg(test)]

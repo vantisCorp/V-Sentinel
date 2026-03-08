@@ -193,7 +193,7 @@ pub struct ThreatEntry {
 }
 
 /// Threat Types
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ThreatType {
     Malware,
     Ransomware,
@@ -209,7 +209,7 @@ pub enum ThreatType {
 }
 
 /// Severity Levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Severity {
     Critical,
     High,
@@ -435,17 +435,19 @@ impl BlockchainManager {
     
     /// Add block to chain
     pub async fn add_block(&self, transactions: Vec<Transaction>) -> Result<String> {
-        let chain = self.chain.read().await;
-        let previous_block = chain.last().ok_or_else(|| anyhow!("No genesis block"))?;
-        drop(chain);
-        
+        let (height, previous_hash) = {
+            let chain = self.chain.read().await;
+            let previous_block = chain.last().ok_or_else(|| anyhow!("No genesis block"))?;
+            (previous_block.header.height + 1, previous_block.hash.clone())
+        };
+
         let wallet = self.wallet.read().await;
-        
+
         let header = BlockHeader {
             version: 1,
-            height: previous_block.header.height + 1,
+            height,
             timestamp: Utc::now().timestamp(),
-            previous_hash: previous_block.hash.clone(),
+            previous_hash,
             merkle_root: self.calculate_merkle_root(&transactions).await,
             nonce: 0,
             difficulty: 1,
@@ -475,9 +477,9 @@ impl BlockchainManager {
             stats.total_blocks += 1;
             stats.total_transactions += transactions.len() as u64;
         }
-        
-        info!("Added block at height: {}", previous_block.header.height + 1);
-        
+
+        info!("Added block at height: {}", height);
+
         Ok(block_hash)
     }
     
@@ -518,10 +520,10 @@ impl BlockchainManager {
         
         Ok(ThreatStatistics {
             total_threats: registry.threats.len() as u64,
-            total_attestations: registry.attestations.values().map(|v| v.len() as u64).sum(),
+            total_attestations: registry.attestations.values().map(|v| v.len() as u64).sum::<u64>(),
             by_type,
             by_severity,
-            average_confidence: registry.threats.values().map(|t| t.confidence).sum() / registry.threats.len().max(1) as f64,
+            average_confidence: registry.threats.values().map(|t| t.confidence).sum::<f64>() / registry.threats.len().max(1) as f64,
         })
     }
     

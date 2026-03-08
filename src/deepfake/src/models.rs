@@ -227,7 +227,7 @@ pub struct FaceDetection {
 }
 
 /// Audio analysis result
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AudioAnalysis {
     /// Detected speakers
     pub speakers: Vec<SpeakerInfo>,

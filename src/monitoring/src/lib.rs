@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use std::time::{Duration, Instant};
 use prometheus::{Counter, Histogram, Gauge, Registry, Encoder, TextEncoder};
-use tracing_subscriber::{Layer, Subscriber};
+use tracing_subscriber::Layer;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
@@ -91,6 +91,17 @@ pub enum AlertSeverity {
     Critical,
 }
 
+impl std::fmt::Display for AlertSeverity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AlertSeverity::Info => write!(f, "Info"),
+            AlertSeverity::Warning => write!(f, "Warning"),
+            AlertSeverity::Error => write!(f, "Error"),
+            AlertSeverity::Critical => write!(f, "Critical"),
+        }
+    }
+}
+
 /// Alert Rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertRule {
@@ -139,12 +150,37 @@ pub trait NotificationChannel: Send + Sync {
 }
 
 /// Health Check
-#[derive(Debug, Clone)]
 pub struct HealthCheck {
     name: String,
     check_fn: Box<dyn Fn() -> HealthStatus + Send + Sync>,
     interval: Duration,
     timeout: Duration,
+}
+
+impl std::fmt::Debug for HealthCheck {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("HealthCheck")
+            .field("name", &self.name)
+            .field("interval", &self.interval)
+            .field("timeout", &self.timeout)
+            .finish()
+    }
+}
+
+impl Clone for HealthCheck {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            check_fn: Box::new(|| HealthStatus {
+                healthy: false,
+                message: "cloned check".to_string(),
+                last_check: std::time::SystemTime::now(),
+                response_time_ms: 0,
+            }),
+            interval: self.interval,
+            timeout: self.timeout,
+        }
+    }
 }
 
 /// Health Status
@@ -264,7 +300,8 @@ impl MonitoringManager {
     /// Evaluate alert rules
     pub async fn evaluate_alerts(&self) -> Result<Vec<Alert>> {
         let mut alerts = self.alerts.write().await;
-        alerts.evaluate_rules(&self.metrics.read().await)
+        let metrics = self.metrics.read().await;
+        alerts.evaluate_rules(&*metrics)
     }
     
     /// Get active alerts
@@ -312,7 +349,9 @@ impl MonitoringManager {
         tokio::spawn(async move {
             loop {
                 tokio::time::sleep(Duration::from_secs(60)).await;
-                if let Err(e) = alerts.write().await.evaluate_rules(&metrics.read().await) {
+                let mut alerts_guard = alerts.write().await;
+                let metrics_guard = metrics.read().await;
+                if let Err(e) = alerts_guard.evaluate_rules(&*metrics_guard) {
                     error!("Alert evaluation failed: {}", e);
                 }
             }
@@ -346,22 +385,17 @@ impl MetricsCollector {
         })
     }
     
-    pub fn increment_counter(&mut self, name: &str, labels: &[(&str, &str)]) -> Result<()> {
+    pub fn increment_counter(&mut self, name: &str, _labels: &[(&str, &str)]) -> Result<()> {
         let counter = self.counters.entry(name.to_string())
             .or_insert_with(|| {
                 Counter::new(name, name).unwrap()
             });
         
-        let mut counter = counter.clone();
-        for (key, value) in labels {
-            counter = counter.with_label_values(&[value]);
-        }
-        
         counter.inc();
         Ok(())
     }
     
-    pub fn record_histogram(&mut self, name: &str, value: f64, labels: &[(&str, &str)]) -> Result<()> {
+    pub fn record_histogram(&mut self, name: &str, value: f64, _labels: &[(&str, &str)]) -> Result<()> {
         let histogram = self.histograms.entry(name.to_string())
             .or_insert_with(|| {
                 Histogram::with_opts(
@@ -370,25 +404,15 @@ impl MetricsCollector {
                 ).unwrap()
             });
         
-        let mut histogram = histogram.clone();
-        for (key, value) in labels {
-            histogram = histogram.with_label_values(&[value]);
-        }
-        
         histogram.observe(value);
         Ok(())
     }
     
-    pub fn set_gauge(&mut self, name: &str, value: f64, labels: &[(&str, &str)]) -> Result<()> {
+    pub fn set_gauge(&mut self, name: &str, value: f64, _labels: &[(&str, &str)]) -> Result<()> {
         let gauge = self.gauges.entry(name.to_string())
             .or_insert_with(|| {
                 Gauge::new(name, name).unwrap()
             });
-        
-        let mut gauge = gauge.clone();
-        for (key, value) in labels {
-            gauge = gauge.with_label_values(&[value]);
-        }
         
         gauge.set(value);
         Ok(())

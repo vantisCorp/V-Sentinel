@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 /// Bottleneck severity level
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum BottleneckSeverity {
     Low,
     Medium,
@@ -15,11 +15,11 @@ pub enum BottleneckSeverity {
 }
 
 /// Bottleneck type
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BottleneckType {
     CPU,
     Memory,
-    I/O,
+    IO,
     Network,
     LockContention,
     Algorithmic,
@@ -128,7 +128,8 @@ impl BottleneckAnalyzer {
     pub fn analyze_bottlenecks(&mut self) -> Vec<Bottleneck> {
         self.bottlenecks.clear();
         
-        for profile in &self.profiles {
+        let profiles: Vec<_> = self.profiles.clone();
+        for profile in &profiles {
             self.analyze_cpu_bottlenecks(profile);
             self.analyze_memory_bottlenecks(profile);
             self.analyze_cache_bottlenecks(profile);
@@ -279,7 +280,7 @@ impl BottleneckAnalyzer {
                 self.bottlenecks.push(Bottleneck {
                     component: profile.component.clone(),
                     operation: profile.operation.clone(),
-                    bottleneck_type: BottleneckType::I/O,
+                    bottleneck_type: BottleneckType::IO,
                     severity,
                     description: format!(
                         "High I/O rate: {:.0} operations/second",

@@ -206,9 +206,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::LLM,
                 patterns: vec!["api.openai.com".to_string(), "Bearer sk-".to_string()],
                 ports: vec![443],
-                endpoints: vec!["/v1/chat/completions", "/v1/embeddings", "/v1/completions"],
+                endpoints: vec!["/v1/chat/completions".to_string(), "/v1/embeddings".to_string(), "/v1/completions".to_string()],
                 headers: vec![("Authorization".to_string(), "Bearer sk-".to_string())].into_iter().collect(),
-                response_patterns: vec!["gpt-", "davinci", "curie", "babbage", "ada"],
+                response_patterns: vec!["gpt-".to_string(), "davinci".to_string(), "curie".to_string(), "babbage".to_string(), "ada".to_string()],
             },
             // Anthropic
             AISignature {
@@ -217,9 +217,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::LLM,
                 patterns: vec!["api.anthropic.com".to_string(), "x-api-key".to_string()],
                 ports: vec![443],
-                endpoints: vec!["/v1/complete", "/v1/messages"],
+                endpoints: vec!["/v1/complete".to_string(), "/v1/messages".to_string()],
                 headers: vec![("x-api-key".to_string(), "".to_string())].into_iter().collect(),
-                response_patterns: vec!["claude", "claude-"],
+                response_patterns: vec!["claude".to_string(), "claude-".to_string()],
             },
             // Local LLM
             AISignature {
@@ -228,9 +228,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::LLM,
                 patterns: vec!["localhost:8000".to_string(), "llama".to_string(), "ollama".to_string()],
                 ports: vec![8000, 8080, 11434],
-                endpoints: vec!["/generate", "/completions", "/api/generate"],
+                endpoints: vec!["/generate".to_string(), "/completions".to_string(), "/api/generate".to_string()],
                 headers: HashMap::new(),
-                response_patterns: vec!["temperature", "top_p", "max_tokens"],
+                response_patterns: vec!["temperature".to_string(), "top_p".to_string(), "max_tokens".to_string()],
             },
             // HuggingFace
             AISignature {
@@ -239,9 +239,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::Transformer,
                 patterns: vec!["huggingface.co".to_string(), "hf_".to_string()],
                 ports: vec![443],
-                endpoints: vec!["/models/", "/pipeline/"],
+                endpoints: vec!["/models/".to_string(), "/pipeline/".to_string()],
                 headers: vec![("Authorization".to_string(), "Bearer hf_".to_string())].into_iter().collect(),
-                response_patterns: vec!["model", "inference"],
+                response_patterns: vec!["model".to_string(), "inference".to_string()],
             },
             // AWS Bedrock
             AISignature {
@@ -250,9 +250,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::LLM,
                 patterns: vec!["bedrock".to_string(), "amazonaws.com".to_string()],
                 ports: vec![443],
-                endpoints: vec!["/model/", "/invoke"],
+                endpoints: vec!["/model/".to_string(), "/invoke".to_string()],
                 headers: HashMap::new(),
-                response_patterns: vec!["claude", "titan", "llama"],
+                response_patterns: vec!["claude".to_string(), "titan".to_string(), "llama".to_string()],
             },
             // Azure OpenAI
             AISignature {
@@ -261,9 +261,9 @@ impl DiscoveryEngine {
                 model_type: AIModelType::LLM,
                 patterns: vec!["openai.azure.com".to_string()],
                 ports: vec![443],
-                endpoints: vec!["/deployments/", "/chat/completions"],
+                endpoints: vec!["/deployments/".to_string(), "/chat/completions".to_string()],
                 headers: vec![("api-key".to_string(), "".to_string())].into_iter().collect(),
-                response_patterns: vec!["gpt-", "davinci"],
+                response_patterns: vec!["gpt-".to_string(), "davinci".to_string()],
             },
         ];
         
@@ -276,14 +276,24 @@ impl DiscoveryEngine {
         
         let mut all_discovered = Vec::new();
         
-        for method in &mut self.methods {
-            if !method.enabled {
+        // Collect method data first to avoid borrow conflicts
+        let method_data: Vec<(usize, bool, String, DiscoveryMethodType)> = self.methods.iter().enumerate()
+            .map(|(i, m)| (i, m.enabled, m.name.clone(), m.method_type.clone()))
+            .collect();
+        
+        for (idx, enabled, _name, _method_type) in method_data {
+            if !enabled {
                 continue;
             }
             
-            let discovered = self.run_method(method).await?;
-            method.findings += discovered.len() as u64;
-            method.last_run = Some(Utc::now());
+            let discovered = self.run_method_by_type(&_method_type).await?;
+            let count = discovered.len();
+            
+            // Update method stats
+            if let Some(method) = self.methods.get_mut(idx) {
+                method.findings += count as u64;
+                method.last_run = Some(Utc::now());
+            }
             
             for ai in discovered {
                 if !self.discovered.contains_key(&ai.id) {
@@ -302,6 +312,20 @@ impl DiscoveryEngine {
         debug!("Running discovery method: {}", method.name);
         
         let discovered = match method.method_type {
+            DiscoveryMethodType::NetworkScan => self.network_scan().await?,
+            DiscoveryMethodType::ProcessScan => self.process_scan().await?,
+            DiscoveryMethodType::ContainerScan => self.container_scan().await?,
+            DiscoveryMethodType::CloudAPI => self.cloud_api_scan().await?,
+            DiscoveryMethodType::TrafficAnalysis => self.traffic_scan().await?,
+            _ => vec![],
+        };
+        
+        Ok(discovered)
+    }
+
+    /// Run discovery by method type (helper to avoid borrow conflicts)
+    async fn run_method_by_type(&self, method_type: &DiscoveryMethodType) -> Result<Vec<DiscoveredAI>> {
+        let discovered = match method_type {
             DiscoveryMethodType::NetworkScan => self.network_scan().await?,
             DiscoveryMethodType::ProcessScan => self.process_scan().await?,
             DiscoveryMethodType::ContainerScan => self.container_scan().await?,

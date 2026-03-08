@@ -259,7 +259,7 @@ pub struct SecurityEvent {
     pub event_id: String,
     pub event_type: SecurityEventType,
     pub severity: EventSeverity,
-    pub timestamp: std::time::Instant,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
     pub source: String,
     pub details: serde_json::Value,
 }
@@ -299,7 +299,7 @@ pub struct SecurityAlert {
     pub description: String,
     pub affected_assets: Vec<String>,
     pub recommended_actions: Vec<String>,
-    pub timestamp: std::time::Instant,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 /// Alert type
@@ -388,7 +388,7 @@ mod tests {
             event_id: "event_001".to_string(),
             event_type: SecurityEventType::ThreatDetected,
             severity: EventSeverity::High,
-            timestamp: std::time::Instant::now(),
+            timestamp: chrono::Utc::now(),
             source: "sentinel".to_string(),
             details: serde_json::json!({"test": "data"}),
         };
@@ -422,7 +422,7 @@ mod tests {
             description: "Malware found on system".to_string(),
             affected_assets: vec!["server1".to_string()],
             recommended_actions: vec!["Isolate system".to_string()],
-            timestamp: std::time::Instant::now(),
+            timestamp: chrono::Utc::now(),
         };
         
         assert!(manager.send_alert(alert).await.is_ok());

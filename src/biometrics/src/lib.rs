@@ -651,7 +651,7 @@ impl BiometricsManager {
         sample: &BiometricSample,
         templates: &[&BiometricTemplate],
     ) -> Result<(f64, bool, Vec<String>)> {
-        let mut best_score = 0.0;
+        let mut best_score: f64 = 0.0;
         let mut liveness_detected = false;
         let mut fraud_indicators = Vec::new();
         
@@ -716,7 +716,8 @@ impl BiometricsManager {
     async fn generate_template_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        format!("BIO-{:x}", Sha256::digest(&bytes)[..8].to_vec())
+        let hash = Sha256::digest(&bytes);
+        format!("BIO-{}", hex::encode(&hash[..8]))
     }
 }
 

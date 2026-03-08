@@ -84,18 +84,19 @@ impl IotSecurityManager {
     /// Register IoT device
     pub async fn register_device(&self, device: IotDevice) -> Result<()> {
         debug!("Registering IoT device: {}", device.device_id);
-        
+        let device_id = device.device_id.clone();
+
         let mut devices = self.devices.write().await;
-        devices.insert(device.device_id.clone(), device);
-        
+        devices.insert(device_id.clone(), device);
+
         // Update statistics
         {
             let mut count = self.devices_protected.write().await;
             *count += 1;
         }
-        
-        info!("IoT device registered: {}", device.device_id);
-        
+
+        info!("IoT device registered: {}", device_id);
+
         Ok(())
     }
     

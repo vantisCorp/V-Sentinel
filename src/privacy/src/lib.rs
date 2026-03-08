@@ -643,13 +643,14 @@ impl HomomorphicEncryption {
         match self.scheme {
             HomomorphicScheme::Paillier | HomomorphicScheme::Bfv => {
                 // Simplified addition
-                let mut result = vec![0u8; ct1.ciphertext.len().max(ct2.ciphertext.len())];
-                for (i, (&a, &b)) in result.iter_mut().zip(ct1.ciphertext.iter().chain(std::iter::repeat(&0)))
-                    .zip(ct2.ciphertext.iter().chain(std::iter::repeat(&0)))
-                {
-                    *i = a.wrapping_add(b);
+                let len = ct1.ciphertext.len().max(ct2.ciphertext.len());
+                let mut result = vec![0u8; len];
+                for i in 0..len {
+                    let a = ct1.ciphertext.get(i).copied().unwrap_or(0);
+                    let b = ct2.ciphertext.get(i).copied().unwrap_or(0);
+                    result[i] = a.wrapping_add(b);
                 }
-                
+
                 Ok(HomomorphicCiphertext {
                     ciphertext: result,
                     scheme: self.scheme,

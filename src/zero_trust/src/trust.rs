@@ -10,7 +10,7 @@ use anyhow::Result;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use tracing::{info, debug};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Utc, Duration, Timelike, Datelike};
 
 use super::{AccessRequest, Subject, DeviceInfo, RiskIndicator};
 
@@ -155,11 +155,11 @@ impl TrustEngine {
         };
         
         // Add default trust factors
-        engine.add_factor(DeviceTrustFactor::new());
-        engine.add_factor(BehaviorTrustFactor::new());
-        engine.add_factor(LocationTrustFactor::new());
-        engine.add_factor(TimeTrustFactor::new());
-        engine.add_factor(SessionTrustFactor::new());
+        engine.add_factor(Box::new(DeviceTrustFactor::new()));
+        engine.add_factor(Box::new(BehaviorTrustFactor::new()));
+        engine.add_factor(Box::new(LocationTrustFactor::new()));
+        engine.add_factor(Box::new(TimeTrustFactor::new()));
+        engine.add_factor(Box::new(SessionTrustFactor::new()));
         
         engine
     }
@@ -297,7 +297,7 @@ impl TrustFactorEvaluator for DeviceTrustFactor {
     }
     
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
-        let mut score = 0.5; // Base score for unknown device
+        let mut score: f64 = 0.5; // Base score for unknown device
         let mut details = HashMap::new();
         
         if let Some(ref device) = request.subject.device {
@@ -366,7 +366,7 @@ impl TrustFactorEvaluator for BehaviorTrustFactor {
     }
     
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
-        let mut score = 0.5;
+        let mut score: f64 = 0.5;
         let mut details = HashMap::new();
         
         // Check if user has behavior profile
@@ -428,7 +428,7 @@ impl TrustFactorEvaluator for LocationTrustFactor {
     }
     
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
-        let mut score = 0.5;
+        let mut score: f64 = 0.5;
         let mut details = HashMap::new();
         
         if let Some(ref geo) = request.context.geo_location {
@@ -494,7 +494,7 @@ impl TrustFactorEvaluator for TimeTrustFactor {
     }
     
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
-        let mut score = 0.5;
+        let mut score: f64 = 0.5;
         let mut details = HashMap::new();
         
         let hour = request.context.access_time.hour() as i32;
@@ -544,7 +544,7 @@ impl TrustFactorEvaluator for SessionTrustFactor {
     }
     
     async fn evaluate(&self, request: &AccessRequest) -> Result<FactorScore> {
-        let mut score = 0.5;
+        let mut score: f64 = 0.5;
         let mut details = HashMap::new();
         
         // Check session maturity

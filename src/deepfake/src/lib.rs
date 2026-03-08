@@ -26,7 +26,7 @@ pub use analysis::{MediaAnalyzer, AnalysisResult, AnalysisType};
 pub use authentication::{ContentAuthenticator, AuthenticationResult, WatermarkConfig};
 pub use detection::{DeepfakeDetector, DetectionResult, DetectionConfig};
 pub use threat_intel::{ThreatIntelIntegration, ThreatInfo, ThreatMatch};
-pub use models::{MediaContent, MediaType, DeepfakeType, ConfidenceLevel};
+pub use models::{MediaContent, MediaType, DeepfakeType, ConfidenceLevel, Watermark};
 
 /// Main manager for deepfake detection operations
 pub struct DeepfakeManager {

@@ -8,11 +8,11 @@ use std::thread;
 use serde::{Deserialize, Serialize};
 
 /// Profiling event type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ProfileEventType {
     FunctionCall,
     MemoryAllocation,
-    I/OOperation,
+    IOOperation,
     LockAcquisition,
     CacheAccess,
     NetworkRequest,
@@ -75,8 +75,8 @@ impl PerformanceProfiler {
 
     fn get_thread_id() -> u64 {
         use std::thread;
-        // Get current thread ID (simplified)
-        thread::current().id().as_u64().get()
+        // Get current thread ID (simplified - use hash of thread ID)
+        format!("{:?}", thread::current().id()).chars().map(|c| c as u64).sum()
     }
 
     pub fn enable(&self) {
@@ -182,7 +182,7 @@ impl PerformanceProfiler {
         let end_time = Self::get_timestamp_ns();
         
         let event = ProfileEvent {
-            event_type: ProfileEventType::I/OOperation,
+            event_type: ProfileEventType::IOOperation,
             component: component.to_string(),
             operation: operation.to_string(),
             start_time,
@@ -376,6 +376,105 @@ impl Default for PerformanceProfiler {
     }
 }
 
+// Additional methods for named profiling
+impl PerformanceProfiler {
+    /// Start a named profile
+    pub fn start(&mut self, name: &str) -> ProfileGuard {
+        if !self.is_enabled() {
+            return ProfileGuard::new(name, None);
+        }
+        ProfileGuard::new(name, Some(Arc::new(Mutex::new(self.clone()))))
+    }
+    
+    /// Record a profile duration
+    pub fn record_profile(&mut self, name: &str, duration: Duration) {
+        // Add event for this profile
+        let event = ProfileEvent {
+            event_type: ProfileEventType::FunctionCall,
+            component: "profile".to_string(),
+            operation: name.to_string(),
+            start_time: 0,
+            end_time: 0,
+            duration_ns: duration.as_nanos() as u64,
+            thread_id: self.thread_id,
+            metadata: HashMap::new(),
+        };
+        
+        let mut events = self.events.lock().unwrap();
+        events.push(event);
+    }
+    
+    /// Get profile by name (aggregates events with matching operation)
+    pub fn get(&self, name: &str) -> Option<Profile> {
+        let events = self.events.lock().unwrap();
+        let matching: Vec<_> = events.iter()
+            .filter(|e| e.operation == name)
+            .collect();
+        
+        if matching.is_empty() {
+            return None;
+        }
+        
+        let call_count = matching.len() as u64;
+        let total_duration_ns: u64 = matching.iter().map(|e| e.duration_ns).sum();
+        let durations: Vec<u64> = matching.iter().map(|e| e.duration_ns).collect();
+        
+        Some(Profile {
+            name: name.to_string(),
+            call_count,
+            total_duration_ms: total_duration_ns / 1_000_000,
+            avg_duration_ms: (total_duration_ns as f64 / call_count as f64) / 1_000_000.0,
+            min_duration_ms: durations.iter().min().copied().unwrap_or(0) / 1_000_000,
+            max_duration_ms: durations.iter().max().copied().unwrap_or(0) / 1_000_000,
+            last_call: matching.last().map(|e| e.end_time),
+        })
+    }
+    
+    /// Get all profiles
+    pub fn get_all(&self) -> HashMap<String, Profile> {
+        let events = self.events.lock().unwrap();
+        let mut profiles: HashMap<String, Profile> = HashMap::new();
+        
+        for event in events.iter() {
+            let entry = profiles.entry(event.operation.clone()).or_insert(Profile {
+                name: event.operation.clone(),
+                call_count: 0,
+                total_duration_ms: 0,
+                avg_duration_ms: 0.0,
+                min_duration_ms: u64::MAX,
+                max_duration_ms: 0,
+                last_call: None,
+            });
+            
+            let duration_ms = event.duration_ns / 1_000_000;
+            entry.call_count += 1;
+            entry.total_duration_ms += duration_ms;
+            entry.min_duration_ms = entry.min_duration_ms.min(duration_ms);
+            entry.max_duration_ms = entry.max_duration_ms.max(duration_ms);
+            entry.last_call = Some(event.end_time);
+        }
+        
+        // Calculate averages
+        for profile in profiles.values_mut() {
+            if profile.call_count > 0 {
+                profile.avg_duration_ms = profile.total_duration_ms as f64 / profile.call_count as f64;
+            }
+        }
+        
+        profiles
+    }
+}
+
+impl Clone for PerformanceProfiler {
+    fn clone(&self) -> Self {
+        Self {
+            events: Arc::clone(&self.events),
+            enabled: Arc::clone(&self.enabled),
+            thread_id: self.thread_id,
+        }
+    }
+}
+
 /// Global profiler instance
 lazy_static::lazy_static! {
     static ref GLOBAL_PROFILER: PerformanceProfiler = PerformanceProfiler::new();
@@ -410,6 +509,46 @@ pub fn disable_profiling() {
 /// Get profiling report
 pub fn get_profiling_report() -> String {
     GLOBAL_PROFILER.generate_report()
+}
+
+/// Profile data for named profiling
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Profile {
+    pub name: String,
+    pub call_count: u64,
+    pub total_duration_ms: u64,
+    pub avg_duration_ms: f64,
+    pub min_duration_ms: u64,
+    pub max_duration_ms: u64,
+    pub last_call: Option<u64>,
+}
+
+/// Profile Guard for automatic timing
+pub struct ProfileGuard {
+    name: String,
+    profiler: Option<Arc<Mutex<PerformanceProfiler>>>,
+    start: Instant,
+}
+
+impl ProfileGuard {
+    pub fn new(name: &str, profiler: Option<Arc<Mutex<PerformanceProfiler>>>) -> Self {
+        Self {
+            name: name.to_string(),
+            profiler,
+            start: Instant::now(),
+        }
+    }
+}
+
+impl Drop for ProfileGuard {
+    fn drop(&mut self) {
+        if let Some(profiler) = &self.profiler {
+            let duration = self.start.elapsed();
+            if let Ok(mut p) = profiler.try_lock() {
+                p.record_profile(&self.name, duration);
+            }
+        }
+    }
 }
 
 #[cfg(test)]

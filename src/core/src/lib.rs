@@ -115,19 +115,19 @@ mod tests {
     
     #[tokio::test]
     async fn test_core_initialization() {
-        let core = SentinelCore::new().unwrap();
+        let mut core = SentinelCore::new().unwrap();
         assert!(core.start().await.is_ok());
         assert!(core.stop().await.is_ok());
     }
-    
+
     #[tokio::test]
     async fn test_core_components() {
         let core = SentinelCore::new().unwrap();
-        
+
         // Verify all components are initialized
-        assert!(core.hypervisor().is_initialized());
-        assert!(core.memory_manager().is_initialized());
-        assert!(core.process_manager().is_initialized());
-        assert!(core.hardware_security().is_initialized());
+        assert!(core.hypervisor().is_initialized().await);
+        assert!(core.memory_manager().is_initialized().await);
+        assert!(core.process_manager().is_initialized().await);
+        assert!(core.hardware_security().is_initialized().await);
     }
 }

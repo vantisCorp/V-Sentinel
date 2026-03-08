@@ -197,7 +197,7 @@ pub enum ObligationType {
 }
 
 /// Policy status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PolicyStatus {
     Active,
     Inactive,
@@ -561,8 +561,12 @@ impl PolicyEngine {
             MatchOperator::Equals => value == pattern,
             MatchOperator::NotEquals => value != pattern,
             MatchOperator::Contains => {
-                if let (Some(arr), serde_json::Value::String(s)) = (value.as_array(), pattern.as_str()) {
-                    arr.contains(&serde_json::json!(s))
+                if let Some(arr) = value.as_array() {
+                    if let Some(s) = pattern.as_str() {
+                        arr.contains(&serde_json::json!(s))
+                    } else {
+                        false
+                    }
                 } else if let (serde_json::Value::String(v), serde_json::Value::String(p)) = (value, pattern) {
                     v.contains(p)
                 } else {
@@ -618,38 +622,40 @@ impl PolicyEngine {
     }
 
     /// Evaluate a condition expression
-    async fn evaluate_condition(&self, expression: &Expression, request: &AccessRequest) -> Result<bool> {
-        match expression {
-            Expression::Literal(v) => v.as_bool().unwrap_or(false),
-            Expression::Attribute(path) => {
-                // Resolve attribute from request
-                self.resolve_attribute(path, request)
-            }
-            Expression::And(expressions) => {
-                for expr in expressions {
-                    if !self.evaluate_condition(expr, request).await? {
-                        return Ok(false);
-                    }
+    fn evaluate_condition<'a>(&'a self, expression: &'a Expression, request: &'a AccessRequest) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<bool>> + Send + 'a>> {
+        Box::pin(async move {
+            match expression {
+                Expression::Literal(v) => Ok(v.as_bool().unwrap_or(false)),
+                Expression::Attribute(path) => {
+                    // Resolve attribute from request
+                    Ok(self.resolve_attribute(path, request))
                 }
-                Ok(true)
-            }
-            Expression::Or(expressions) => {
-                for expr in expressions {
-                    if self.evaluate_condition(expr, request).await? {
-                        return Ok(true);
+                Expression::And(expressions) => {
+                    for expr in expressions {
+                        if !self.evaluate_condition(expr, request).await? {
+                            return Ok(false);
+                        }
                     }
+                    Ok(true)
                 }
-                Ok(false)
+                Expression::Or(expressions) => {
+                    for expr in expressions {
+                        if self.evaluate_condition(expr, request).await? {
+                            return Ok(true);
+                        }
+                    }
+                    Ok(false)
+                }
+                Expression::Not(expr) => {
+                    Ok(!self.evaluate_condition(expr, request).await?)
+                }
+                Expression::Equals(left, right) => {
+                    // Simplified equality check
+                    Ok(false)
+                }
+                _ => Ok(false),
             }
-            Expression::Not(expr) => {
-                Ok(!self.evaluate_condition(expr, request).await?)
-            }
-            Expression::Equals(left, right) => {
-                // Simplified equality check
-                Ok(false)
-            }
-            _ => Ok(false),
-        }
+        })
     }
 
     /// Resolve an attribute path from the request
@@ -678,6 +684,7 @@ impl Default for PolicyEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{SubjectType, ResourceType, SensitivityLevel, ActionType};
 
     #[test]
     fn test_policy_engine_creation() {
@@ -692,21 +699,21 @@ mod tests {
             id: uuid::Uuid::new_v4(),
             subject: Subject {
                 id: "user-123".to_string(),
-                subject_type: super::SubjectType::User,
+                subject_type: SubjectType::User,
                 attributes: HashMap::new(),
                 identity_provider: None,
                 device: None,
             },
             resource: Resource {
                 id: "resource-1".to_string(),
-                resource_type: super::ResourceType::Data,
+                resource_type: ResourceType::Data,
                 attributes: HashMap::new(),
-                sensitivity: super::SensitivityLevel::Internal,
+                sensitivity: SensitivityLevel::Internal,
                 owner: None,
                 segment: None,
             },
             action: Action {
-                action_type: super::ActionType::Read,
+                action_type: ActionType::Read,
                 details: HashMap::new(),
             },
             context: RequestContext {

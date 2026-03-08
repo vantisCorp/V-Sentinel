@@ -31,6 +31,8 @@ pub use profiler::{
     PerformanceProfiler,
     ProfileEvent,
     ProfileEventType,
+    Profile,
+    ProfileGuard,
     FunctionStats,
     MemoryStats,
     profile,
@@ -168,24 +170,6 @@ struct OptimizationRule {
     priority: u32,
 }
 
-/// Performance Profiler
-pub struct PerformanceProfiler {
-    profiles: HashMap<String, Profile>,
-    enabled: bool,
-}
-
-/// Profile
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Profile {
-    pub name: String,
-    pub call_count: u64,
-    pub total_duration_ms: u64,
-    pub avg_duration_ms: f64,
-    pub min_duration_ms: u64,
-    pub max_duration_ms: u64,
-    pub last_call: Option<std::time::SystemTime>,
-}
-
 impl PerformanceManager {
     /// Create a new performance manager
     pub fn new() -> Result<Self> {
@@ -203,25 +187,25 @@ impl PerformanceManager {
     /// Get value from cache
     pub async fn cache_get(&self, key: &str) -> Result<Option<Vec<u8>>> {
         let cache = self.cache.read().await;
-        cache.get(key)
+        cache.get(key).await
     }
     
     /// Set value in cache
     pub async fn cache_set(&self, key: &str, value: Vec<u8>, ttl: Duration) -> Result<()> {
-        let cache = self.cache.write().await;
-        cache.set(key, value, ttl)
+        let cache = self.cache.read().await;
+        cache.set(key, value, ttl).await
     }
     
     /// Delete value from cache
     pub async fn cache_delete(&self, key: &str) -> Result<()> {
         let cache = self.cache.write().await;
-        cache.delete(key)
+        cache.delete(key).await
     }
     
     /// Clear cache
     pub async fn cache_clear(&self) -> Result<()> {
         let cache = self.cache.write().await;
-        cache.clear()
+        cache.clear().await
     }
     
     /// Get cache statistics
@@ -232,13 +216,13 @@ impl PerformanceManager {
     
     /// Acquire connection from pool
     pub async fn acquire_connection(&self) -> Result<String> {
-        let pool = self.pool.write().await;
+        let mut pool = self.pool.write().await;
         pool.acquire().await
     }
     
     /// Release connection back to pool
     pub async fn release_connection(&self, connection_id: &str) -> Result<()> {
-        let pool = self.pool.write().await;
+        let mut pool = self.pool.write().await;
         pool.release(connection_id).await
     }
     
@@ -270,7 +254,7 @@ impl PerformanceManager {
     /// Start profiling
     pub async fn start_profiling(&self, name: &str) -> Result<ProfileGuard> {
         let mut profiler = self.profiler.write().await;
-        profiler.start(name)
+        Ok(profiler.start(name))
     }
     
     /// Get profile
@@ -287,14 +271,14 @@ impl PerformanceManager {
     
     /// Enable profiling
     pub async fn enable_profiling(&self) {
-        let mut profiler = self.profiler.write().await;
-        profiler.enabled = true;
+        let profiler = self.profiler.read().await;
+        profiler.enable();
     }
     
     /// Disable profiling
     pub async fn disable_profiling(&self) {
-        let mut profiler = self.profiler.write().await;
-        profiler.enabled = false;
+        let profiler = self.profiler.read().await;
+        profiler.disable();
     }
 }
 
@@ -542,79 +526,6 @@ impl QueryOptimizer {
         }
         
         Ok(optimized)
-    }
-}
-
-impl PerformanceProfiler {
-    pub fn new() -> Self {
-        Self {
-            profiles: HashMap::new(),
-            enabled: false,
-        }
-    }
-    
-    pub fn start(&mut self, name: &str) -> Result<ProfileGuard> {
-        if !self.enabled {
-            return Ok(ProfileGuard::new(name, None));
-        }
-        
-        Ok(ProfileGuard::new(name, Some(Arc::new(RwLock::new(self)))))
-    }
-    
-    pub fn record(&mut self, name: &str, duration: Duration) {
-        let profile = self.profiles.entry(name.to_string()).or_insert_with(|| Profile {
-            name: name.to_string(),
-            call_count: 0,
-            total_duration_ms: 0,
-            avg_duration_ms: 0.0,
-            min_duration_ms: u64::MAX,
-            max_duration_ms: 0,
-            last_call: None,
-        });
-        
-        let duration_ms = duration.as_millis() as u64;
-        profile.call_count += 1;
-        profile.total_duration_ms += duration_ms;
-        profile.avg_duration_ms = profile.total_duration_ms as f64 / profile.call_count as f64;
-        profile.min_duration_ms = profile.min_duration_ms.min(duration_ms);
-        profile.max_duration_ms = profile.max_duration_ms.max(duration_ms);
-        profile.last_call = Some(std::time::SystemTime::now());
-    }
-    
-    pub fn get(&self, name: &str) -> Option<Profile> {
-        self.profiles.get(name).cloned()
-    }
-    
-    pub fn get_all(&self) -> HashMap<String, Profile> {
-        self.profiles.clone()
-    }
-}
-
-/// Profile Guard for automatic timing
-pub struct ProfileGuard {
-    name: String,
-    profiler: Option<Arc<RwLock<PerformanceProfiler>>>,
-    start: Instant,
-}
-
-impl ProfileGuard {
-    fn new(name: &str, profiler: Option<Arc<RwLock<PerformanceProfiler>>>) -> Self {
-        Self {
-            name: name.to_string(),
-            profiler,
-            start: Instant::now(),
-        }
-    }
-}
-
-impl Drop for ProfileGuard {
-    fn drop(&mut self) {
-        if let Some(profiler) = &self.profiler {
-            let duration = self.start.elapsed();
-            if let Ok(mut p) = profiler.try_write() {
-                p.record(&self.name, duration);
-            }
-        }
     }
 }
 

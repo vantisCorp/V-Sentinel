@@ -171,7 +171,7 @@ pub enum ResourceType {
 }
 
 /// Sensitivity levels
-#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub enum SensitivityLevel {
     Public,
     Internal,
@@ -190,7 +190,7 @@ pub struct Action {
 }
 
 /// Action types
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ActionType {
     Read,
     Write,
@@ -399,6 +399,8 @@ impl ZeroTrustManager {
             policy::DecisionType::Allow => Decision::Allow,
             policy::DecisionType::Deny => Decision::Deny,
             policy::DecisionType::Challenge => Decision::Challenge,
+            policy::DecisionType::NotApplicable => Decision::Deny, // Default to deny
+            policy::DecisionType::Indeterminate => Decision::Deny, // Default to deny
         };
 
         Ok(AccessDecision {
@@ -408,14 +410,18 @@ impl ZeroTrustManager {
             trust_score,
             applied_policies: policy_decision.applied_policies,
             obligations: policy_decision.obligations.into_iter().map(|o| Obligation {
-                obligation_type: match o {
+                obligation_type: match o.obligation_type {
                     policy::ObligationType::Reauthenticate => ObligationType::Reauthenticate,
                     policy::ObligationType::ProvideMFA => ObligationType::ProvideMFA,
                     policy::ObligationType::ApproveViaManager => ObligationType::ApproveViaManager,
                     policy::ObligationType::CompleteTraining => ObligationType::CompleteTraining,
                     policy::ObligationType::AcknowledgePolicy => ObligationType::AcknowledgePolicy,
+                    policy::ObligationType::LogAccess => ObligationType::LogAccess,
+                    policy::ObligationType::NotifyAdmin => ObligationType::LogAccess, // Map to closest
+                    policy::ObligationType::EncryptData => ObligationType::EncryptData,
+                    policy::ObligationType::ApplyWatermark => ObligationType::EncryptData, // Map to closest
                 },
-                description: format!("Required: {:?}", o),
+                description: o.id.clone(),
                 deadline: None,
             }).collect(),
             recommendations: policy_decision.recommendations,

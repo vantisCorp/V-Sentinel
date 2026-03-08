@@ -167,7 +167,7 @@ pub enum AssuranceLevel {
 }
 
 /// Identity status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IdentityStatus {
     Active,
     Inactive,
@@ -193,7 +193,7 @@ pub struct IdentitySession {
 }
 
 /// Session status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SessionStatus {
     Active,
     Expired,
@@ -556,11 +556,19 @@ impl IdentityFabric {
         
         let mut total_synced = 0;
         
-        for (provider_id, provider) in &self.providers {
-            match provider.sync().await {
+        // Collect provider IDs first to avoid borrow conflicts
+        let provider_ids: Vec<String> = self.providers.keys().cloned().collect();
+        
+        for provider_id in provider_ids {
+            let identities = match self.providers.get(&provider_id) {
+                Some(provider) => provider.sync().await,
+                None => continue,
+            };
+            
+            match identities {
                 Ok(identities) => {
                     for pi in identities {
-                        if let Ok(identity) = self.get_or_create_identity(&pi, provider_id).await {
+                        if let Ok(_identity) = self.get_or_create_identity(&pi, &provider_id).await {
                             total_synced += 1;
                         }
                     }

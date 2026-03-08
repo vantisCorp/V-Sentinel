@@ -11,7 +11,8 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use rand::{RngCore, rngs::OsRng};
 use std::collections::{HashMap, VecDeque};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
+use sha2::{Sha256, Digest};
 
 /// Autonomous Security Manager
 pub struct AutonomousManager {
@@ -87,6 +88,8 @@ pub enum AgentCapability {
     Reporting,
     SelfHealing,
     ContinuousLearning,
+    SystemAnalysis,
+    PolicyEnforcement,
 }
 
 /// Knowledge Base
@@ -254,6 +257,14 @@ pub struct PolicyRule {
     pub severity: Severity,
 }
 
+/// Policy Enforcement
+#[derive(Debug, Clone, Default)]
+pub struct PolicyEnforcement {}
+
+/// Violation Handler
+#[derive(Debug, Clone, Default)]
+pub struct ViolationHandler {}
+
 /// Policy Actions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PolicyAction {
@@ -381,6 +392,24 @@ pub enum ThreatType {
     Spyware,
     Trojan,
     Unknown,
+}
+
+impl std::fmt::Display for ThreatType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ThreatType::Malware => write!(f, "Malware"),
+            ThreatType::Ransomware => write!(f, "Ransomware"),
+            ThreatType::Phishing => write!(f, "Phishing"),
+            ThreatType::DDoS => write!(f, "DDoS"),
+            ThreatType::Botnet => write!(f, "Botnet"),
+            ThreatType::ZeroDay => write!(f, "ZeroDay"),
+            ThreatType::APT => write!(f, "APT"),
+            ThreatType::CryptoJacking => write!(f, "CryptoJacking"),
+            ThreatType::Spyware => write!(f, "Spyware"),
+            ThreatType::Trojan => write!(f, "Trojan"),
+            ThreatType::Unknown => write!(f, "Unknown"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -638,7 +667,8 @@ impl AutonomousManager {
     async fn generate_agent_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        format!("AGENT-{:x}", sha2::Sha256::digest(&bytes)[..8].to_vec())
+        let hash = sha2::Sha256::digest(&bytes);
+        format!("AGENT-{}", hex::encode(&hash[..8]))
     }
 }
 
@@ -727,7 +757,8 @@ impl ContinuousLearningSystem {
     fn generate_update_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        format!("UPDATE-{:x}", sha2::Sha256::digest(&bytes)[..8].to_vec())
+        let hash = sha2::Sha256::digest(&bytes);
+        format!("UPDATE-{}", hex::encode(&hash[..8]))
     }
 }
 

@@ -11,3 +11,9 @@ description = "SENTINEL biometrics module"
 tokio = { workspace = true }
 anyhow = { workspace = true }
 tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+sha2 = "0.10"
+rand = "0.8"
+hex = "0.4"

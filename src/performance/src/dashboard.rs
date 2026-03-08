@@ -68,7 +68,8 @@ impl PerformanceDashboard {
         
         // Keep only last 10,000 metrics
         if metrics.len() > 10_000 {
-            metrics.drain(0..metrics.len() - 10_000);
+            let len = metrics.len();
+            metrics.drain(0..len - 10_000);
         }
     }
 
@@ -104,7 +105,7 @@ impl PerformanceDashboard {
         let avg_duration = total_duration / metrics.len() as f64;
         
         let mut durations: Vec<f64> = metrics.iter().map(|m| m.duration_ms).collect();
-        durations.sort();
+        durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         
         let p50 = durations[durations.len() / 2];
         let p95 = durations[(durations.len() as f64 * 0.95) as usize];
@@ -144,7 +145,7 @@ impl PerformanceDashboard {
         let avg_duration = total_duration / component_metrics.len() as f64;
         
         let mut durations: Vec<f64> = component_metrics.iter().map(|m| m.duration_ms).collect();
-        durations.sort();
+        durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         
         let p50 = durations[durations.len() / 2];
         let p95 = durations[(durations.len() as f64 * 0.95) as usize];
@@ -287,7 +288,7 @@ impl PerformanceDashboard {
                 let avg_duration = total_duration / component_metrics.len() as f64;
                 
                 let mut durations: Vec<f64> = component_metrics.iter().map(|m| m.duration_ms).collect();
-                durations.sort();
+                durations.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
                 
                 let p50 = durations[durations.len() / 2];
                 let p95 = durations[(durations.len() as f64 * 0.95) as usize];

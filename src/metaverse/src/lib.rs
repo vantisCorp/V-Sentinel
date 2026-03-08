@@ -93,6 +93,7 @@ pub struct MetaverseThreatDetector {
     script_injection_detector: ScriptInjectionDetector,
     credential_harvester_detector: CredentialHarvesterDetector,
     environment_exploitation_detector: EnvironmentExploitationDetector,
+    avatar_manipulation_detection: AvatarManipulationDetection,
 }
 
 /// Cross-platform synchronization
@@ -618,6 +619,7 @@ impl MetaverseThreatDetector {
             script_injection_detector: ScriptInjectionDetector::new(),
             credential_harvester_detector: CredentialHarvesterDetector::new(),
             environment_exploitation_detector: EnvironmentExploitationDetector::new(),
+            avatar_manipulation_detection: AvatarManipulationDetection::new(),
         }
     }
 

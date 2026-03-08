@@ -70,12 +70,14 @@ impl MediaAnalyzer {
 
     async fn analyze_video(&self, media: &MediaContent) -> Result<AnalysisResult> {
         let video_result = self.video_analyzer.analyze(&media.data).await?;
+        let faces = video_result.all_faces();
+        let metadata = video_result.metadata.clone();
 
         Ok(AnalysisResult {
             media_id: String::new(),
             media_type: MediaType::Video,
-            metadata: video_result.metadata,
-            faces: video_result.all_faces(),
+            metadata,
+            faces,
             frame_analyses: video_result.frame_analyses,
             audio_analysis: video_result.audio_analysis,
             indicators: video_result.indicators,
@@ -204,7 +206,7 @@ impl ImageAnalyzer {
     async fn detect_artifacts(&self, data: &[u8]) -> Result<ArtifactAnalysis> {
         let mut indicators = DetectionIndicators::default();
         let mut details = String::new();
-        let mut manipulation_probability = 0.0;
+        let mut manipulation_probability: f64 = 0.0;
 
         // Analyze data patterns (simplified heuristic)
         let data_len = data.len();
@@ -240,7 +242,7 @@ impl ImageAnalyzer {
 
         Ok(ArtifactAnalysis {
             indicators,
-            manipulation_probability: manipulation_probability.min(1.0),
+            manipulation_probability: manipulation_probability.min(1.0) as f32,
             details,
         })
     }

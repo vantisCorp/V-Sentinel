@@ -9,7 +9,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use chrono::{DateTime, Utc};
 
 /// Threat Intelligence Network
 pub struct ThreatIntelNetwork {
@@ -160,7 +160,7 @@ impl ThreatIntelNetwork {
         
         let mut peers = self.peer_connections.write().await;
         let peer = PeerConnection::new(peer_id.clone(), address);
-        peers.insert(peer_id, peer);
+        peers.insert(peer_id.clone(), peer);
         
         info!("Connected to peer: {}", peer_id);
         
@@ -261,7 +261,7 @@ pub struct PeerConnection {
     pub peer_id: String,
     pub address: String,
     pub is_connected: bool,
-    pub last_seen: Instant,
+    pub last_seen: DateTime<Utc>,
     pub threats_shared: u64,
 }
 
@@ -271,14 +271,14 @@ impl PeerConnection {
             peer_id,
             address,
             is_connected: true,
-            last_seen: Instant::now(),
+            last_seen: Utc::now(),
             threats_shared: 0,
         }
     }
     
     pub fn share_threat(&mut self, _threat: ThreatIntel) {
         self.threats_shared += 1;
-        self.last_seen = Instant::now();
+        self.last_seen = Utc::now();
     }
 }
 
@@ -292,8 +292,8 @@ pub struct ThreatIntel {
     pub domains: Vec<String>,
     pub ips: Vec<String>,
     pub description: String,
-    pub first_seen: Instant,
-    pub last_seen: Instant,
+    pub first_seen: DateTime<Utc>,
+    pub last_seen: DateTime<Utc>,
     pub confidence: f64,
     pub source: String,
 }
@@ -388,8 +388,8 @@ mod tests {
             domains: vec![],
             ips: vec![],
             description: "Test threat".to_string(),
-            first_seen: Instant::now(),
-            last_seen: Instant::now(),
+            first_seen: Utc::now(),
+            last_seen: Utc::now(),
             confidence: 0.9,
             source: "test".to_string(),
         };
@@ -411,8 +411,8 @@ mod tests {
             domains: vec!["malicious.com".to_string()],
             ips: vec!["192.168.1.1".to_string()],
             description: "Test threat".to_string(),
-            first_seen: Instant::now(),
-            last_seen: Instant::now(),
+            first_seen: Utc::now(),
+            last_seen: Utc::now(),
             confidence: 0.9,
             source: "test".to_string(),
         };

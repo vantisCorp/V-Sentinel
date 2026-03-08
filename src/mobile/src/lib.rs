@@ -256,7 +256,7 @@ impl MobileThreatDetector {
 pub struct AppScanner {
     apps_scanned: usize,
     threat_count: u64,
-    last_scan_time: Option<std::time::Instant>,
+    last_scan_time: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl AppScanner {
@@ -277,7 +277,7 @@ impl AppScanner {
         // 4. Analyze app behavior
         
         self.apps_scanned = 10;
-        self.last_scan_time = Some(std::time::Instant::now());
+        self.last_scan_time = Some(chrono::Utc::now());
         
         let results = vec![
             AppScanResult {
@@ -285,7 +285,7 @@ impl AppScanner {
                 app_name: "Safe App".to_string(),
                 has_threats: false,
                 threats: vec![],
-                scan_time: std::time::Instant::now(),
+                scan_time: chrono::Utc::now(),
             },
         ];
         
@@ -300,7 +300,7 @@ impl AppScanner {
             app_name: "Test App".to_string(),
             has_threats: false,
             threats: vec![],
-            scan_time: std::time::Instant::now(),
+            scan_time: chrono::Utc::now(),
         })
     }
     
@@ -312,7 +312,7 @@ impl AppScanner {
         self.threat_count
     }
     
-    pub fn last_scan_time(&self) -> Option<std::time::Instant> {
+    pub fn last_scan_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         self.last_scan_time
     }
 }
@@ -373,7 +373,7 @@ pub struct AppScanResult {
     pub app_name: String,
     pub has_threats: bool,
     pub threats: Vec<AppThreat>,
-    pub scan_time: std::time::Instant,
+    pub scan_time: chrono::DateTime<chrono::Utc>,
 }
 
 /// App threat
@@ -449,7 +449,7 @@ pub struct SecurityStatus {
     pub is_secure: bool,
     pub app_threats: u64,
     pub network_threats: u64,
-    pub last_scan: Option<std::time::Instant>,
+    pub last_scan: Option<chrono::DateTime<chrono::Utc>>,
     pub battery_optimized: bool,
 }
 

@@ -97,7 +97,7 @@ pub enum AuthMethod {
 }
 
 /// Authentication result
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AuthResult {
     Success,
     Failed,
@@ -136,7 +136,7 @@ pub struct Session {
 }
 
 /// Session status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SessionStatus {
     Active,
     Expired,
@@ -178,7 +178,7 @@ pub enum MFAChallengeType {
 }
 
 /// Challenge status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ChallengeStatus {
     Pending,
     Verified,
@@ -649,6 +649,7 @@ impl AuthenticationMethod for BiometricAuthMethod {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::SubjectType;
 
     #[test]
     fn test_authenticator_creation() {
@@ -661,12 +662,12 @@ mod tests {
         let mut auth = Authenticator::new();
         let subject = Subject {
             id: "user-123".to_string(),
-            subject_type: super::SubjectType::User,
+            subject_type: SubjectType::User,
             attributes: HashMap::new(),
             identity_provider: None,
             device: None,
         };
-        
+
         let session_id = auth.create_session(&subject, AuthMethod::Password, 1).await.unwrap();
         assert!(!session_id.is_empty());
         assert!(auth.get_session(&session_id).is_some());
