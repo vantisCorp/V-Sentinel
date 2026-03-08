@@ -1,0 +1,120 @@
+[workspace]
+members = [
+    "src/core",
+    "src/ai",
+    "src/gaming",
+    "src/quantum",
+    "src/behavioral",
+    "src/threat-intel",
+    "src/siem",
+    "src/mobile",
+    "src/neural",
+    "src/autonomous",
+    "src/metaverse",
+    "src/blockchain",
+    "src/privacy",
+    "src/iot",
+    "src/cloud",
+    "src/biometrics",
+    "src/config",
+    "src/monitoring",
+    "src/audit",
+    "src/performance",
+    "src/error-handling",
+    "src/plugins",
+    "src/mcp",
+    "src/zero_trust",
+]
+resolver = "2"
+
+[[bin]]
+name = "sentinel"
+path = "src/main.rs"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["SENTINEL Security Team"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/sentinel-security/sentinel"
+description = "Next-generation AI-native security system with quantum-ready cryptography"
+
+[workspace.dependencies]
+# Core dependencies
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Cryptography
+rustls = "0.23"
+ring = "0.17"
+x25519-dalek = "2.0"
+ed25519-dalek = "2.0"
+sha2 = "0.10"
+aes-gcm = "0.10"
+chacha20poly1305 = "0.10"
+
+# AI/ML
+tch = "0.13"
+ndarray = "0.15"
+ndarray-rand = "0.14"
+rand = "0.8"
+
+# Configuration
+toml = "0.8"
+serde_yaml = "0.9"
+notify = "6.0"
+
+# Monitoring
+prometheus = "0.13"
+uuid = { version = "1.0", features = ["v4"] }
+ndarray = "0.15"
+candle-core = "0.3"
+candle-nn = "0.3"
+
+# Async
+futures = "0.3"
+async-trait = "0.1"
+
+# Networking
+hyper = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+tonic = "0.10"
+prost = "0.12"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono"] }
+redis = { version = "0.24", features = ["tokio-comp"] }
+
+# Testing
+proptest = "1.4"
+criterion = "0.5"
+
+# Utilities
+chrono = "0.4"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+bytes = "1.5"
+hex = "0.4"
+base64 = "0.21"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[dependencies]
+sentinel-core = { path = "src/core" }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

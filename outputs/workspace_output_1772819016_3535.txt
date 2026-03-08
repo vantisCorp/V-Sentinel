@@ -1,0 +1,70 @@
+        /* Quick Start */
+        .quickstart-section {
+            background: var(--netflix-dark);
+            padding: 8rem 2rem;
+        }
+
+        .code-block {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--netflix-dark-gray);
+            border: 1px solid var(--netflix-light-gray);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: var(--netflix-medium-gray);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--netflix-light-gray);
+        }
+
+        .code-lang {
+            font-size: 0.875rem;
+            color: var(--netflix-text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .code-copy {
+            background: transparent;
+            border: 1px solid var(--netflix-light-gray);
+            color: var(--netflix-text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .code-copy:hover {
+            border-color: var(--netflix-red);
+            color: var(--netflix-text);
+        }
+
+        .code-content {
+            padding: 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+--
+                <a href="#quickstart" class="nav-link">Quick Start</a>
+                <a href="https://github.com/vantisCorp/V-Sentinel" class="nav-link">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="particles" id="particles"></div>
+        <div class="hero-content">
+            <div class="hero-logo">V-Sentinel</div>
+            <div class="hero-tagline">Advanced AI-Powered Security Framework</div>
+            <div class="hero-subtitle">
+                Najbardziej zaawansowany system bezpieczeństwa na świecie. Rewolucyjny framework napędzany przez sztuczną inteligencję.
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <div class="hero-badge">

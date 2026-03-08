@@ -1,79 +1,73 @@
-# V-Sentinel Changelog
+# V-Sentinel Security System v2.1.2 - Release Notes
 
-All notable changes to V-Sentinel will be documented in this file.
-
-## [2.1.1] - 2026-03-07
-
-### Added
-- **Installation Scripts**
-  - `install.sh` - Linux/macOS automated installer with systemd service
-  - `install.ps1` - Windows PowerShell installer with Windows Service
-  - `install.bat` - Windows batch installer for simpler installations
-  - `INSTALL.md` - Comprehensive installation documentation
-- **Configuration**
-  - `config/default.toml` - Default configuration file with all settings
-  - Docker support with existing Dockerfile and docker-compose.yml
-- **.gitignore** - Added for repository cleanliness
-
-### Features
-- Zero Trust Architecture (NIST SP 800-207)
-- Shadow AI Detection and Governance
-- Deepfake Detection and Media Forensics
-- AI Security Module
-- Multi-Language SDKs (Python, TypeScript, Go)
-- Developer Tools (CLI, VS Code Extension)
-
----
-
-## [2.1.0] - 2026-03-07
-
-### Release Date
-March 2026
+## Release Date
+March 8, 2025
 
 ## Overview
 
-V-Sentinel v2.1.0 is a major release that introduces comprehensive AI-powered security features including Zero Trust Architecture, Shadow AI Detection, Deepfake Detection, and AI Security modules. This release implements the complete 2025 Security Roadmap.
+V-Sentinel v2.1.2 introduces comprehensive GUI installers for all major platforms, making deployment and distribution significantly easier. Users can now download and install V-Sentinel with a familiar graphical interface instead of command-line scripts.
 
 ---
 
-## What's New in v2.1.0
+## What's New
 
-### 🛡️ Zero Trust Architecture (NIST SP 800-207)
-- **Trust Engine**: Multi-factor trust scoring with behavioral analysis
-- **Policy Engine**: Fine-grained access control policies
-- **Network Segmentation**: Micro-segmentation with continuous verification
-- **Identity Verification**: Continuous identity validation and monitoring
+### 🖥️ GUI Installers
 
-### 🤖 Shadow AI Detection and Governance
-- **Discovery Engine**: Detect unauthorized AI tools and applications
-- **Traffic Analysis**: Monitor AI API calls and data flows
-- **Risk Assessment**: Evaluate shadow AI risks and compliance
-- **Governance Framework**: Policy enforcement for AI usage
+#### Windows Installer (NSIS)
+- Professional setup wizard with component selection
+- Multi-language support (English, Polish, German, French, Spanish, Russian, Chinese, Japanese, Korean)
+- Component selection:
+  - Core Engine (required)
+  - Security Modules (Zero Trust, Shadow AI Detection, Deepfake Detection)
+  - Post-Quantum Cryptography module
+  - SDK files for integrations
+  - Windows Service installation
+- Start Menu and Desktop shortcuts
+- Automatic uninstaller
+- Windows Service integration
 
-### 🎭 Deepfake Detection and Media Forensics
-- **Multi-Modal Analysis**: Audio, video, and image deepfake detection
-- **Media Analyzer**: Spectral analysis, facial landmark detection
-- **Content Authenticator**: Watermarking and chain of custody
-- **Threat Intelligence**: Integration with deepfake threat databases
+#### Linux AppImage
+- Portable executable (no installation required)
+- Works on all major Linux distributions
+- Desktop integration support
+- AppStream metadata for software centers
 
-### 🔐 AI Security Module
-- **Data Security**: Encryption, lineage tracking, poisoning detection
-- **Model Security**: Model encryption, watermarking, integrity verification
-- **API Security**: Rate limiting, prompt injection detection, abuse monitoring
-- **MLOps Security**: Drift detection, performance monitoring, pipeline security
+#### macOS DMG
+- Drag-and-drop installation
+- Apple Silicon and Intel support
+- Code signing support
+- Notarization-ready
 
-### 📦 Multi-Language SDKs
-- **Python SDK**: Full-featured Python client library
-- **TypeScript SDK**: Node.js and browser support
-- **Go SDK**: High-performance Go client
-
-### 🔧 Developer Tools
-- **CLI Tool**: Command-line interface for V-Sentinel operations
-- **VS Code Extension**: IDE integration for security analysis
+### 📚 Documentation
+- Comprehensive installer documentation
+- CI/CD integration examples (GitHub Actions)
+- Platform-specific build instructions
 
 ---
 
-## Previous Release: v1.1.0
+## Installation
+
+### Windows
+```cmd
+Download V-Sentinel-2.1.2-Setup.exe
+Run the installer and follow the wizard
+```
+
+### Linux
+```bash
+chmod +x V-Sentinel-2.1.2-x86_64.AppImage
+./V-Sentinel-2.1.2-x86_64.AppImage
+```
+
+### macOS
+```bash
+Open V-Sentinel-2.1.2.dmg
+Drag V-Sentinel.app to Applications
+```
+
+---
+
+# SENTINEL Security System v1.1.0 - Release Notes
 
 ## Release Date
 January 15, 2026
@@ -358,12 +352,8 @@ We would like to thank our community contributors, beta testers, and early adopt
 
 ## License
 
-V-Sentinel is released under a dual license:
-- **Open Source**: AGPL-3.0 for open source projects
-- **Commercial**: Contact licensing@vantiscorp.com for commercial licensing
+SENTINEL Security System v1.1.0 is released under the MIT License.
 
-See [LICENSE](LICENSE) file for details.
+© 2026 Vantis Corp. All rights reserved.
 
-© 2026 VantisCorp. All rights reserved.
-
-For more information, visit https://vantiscorp.com
+For more information, visit https://sentinel.security

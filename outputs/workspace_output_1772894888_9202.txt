@@ -1,0 +1,11 @@
+=== Check if deepfake exists in main ===
+total 16
+drwxr-xr-x  3 root root 4096 Mar  7 14:17 .
+drwxr-xr-x 30 root root 4096 Mar  7 14:37 ..
+-rw-r--r--  1 root root  646 Mar  7 14:17 Cargo.toml
+drwxr-xr-x  2 root root 4096 Mar  7 14:17 src
+
+=== PR #13 branch commits ===
+f43ac6e Implement Deepfake Detection and Media Forensics module (Issue #7)
+8a97ce9 Implement Shadow AI Detection and Governance module
+2374e17 docs: Update todo with Zero Trust PR reference and closed issue

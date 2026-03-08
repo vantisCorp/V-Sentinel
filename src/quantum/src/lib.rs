@@ -10,6 +10,11 @@ use tokio::sync::RwLock;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256, Sha512, Digest};
 use rand::{RngCore, rngs::OsRng};
+use pqc_kyber::{keypair, encapsulate, decapsulate, KemError};
+use pqcrypto_traits::kem::{PublicKey, SecretKey, Ciphertext, SharedSecret};
+
+pub mod config;
+pub use config::{PqcConfig, KemAlgorithm, SigAlgorithm};
 
 /// Quantum Cryptography Manager
 pub struct QuantumCryptoManager {
@@ -398,70 +403,46 @@ impl CrystalsKyber {
     pub fn new(algorithm: KemAlgorithm) -> Self {
         Self { algorithm }
     }
-    
-    fn key_size(&self) -> usize {
-        match self.algorithm {
-            KemAlgorithm::CrystalsKyber512 => 800,
-            KemAlgorithm::CrystalsKyber768 => 1184,
-            KemAlgorithm::CrystalsKyber1024 => 1568,
-            _ => 1184,
-        }
-    }
-    
-    fn ciphertext_size(&self) -> usize {
-        match self.algorithm {
-            KemAlgorithm::CrystalsKyber512 => 768,
-            KemAlgorithm::CrystalsKyber768 => 1088,
-            KemAlgorithm::CrystalsKyber1024 => 1568,
-            _ => 1088,
-        }
-    }
 }
 
 impl KEM for CrystalsKyber {
     fn keypair(&self) -> Result<(Keypair, KemAlgorithm)> {
-        let key_size = self.key_size();
-        let mut rng = OsRng;
+        // Use real pqc_kyber implementation
+        let (public_key, secret_key) = pqc_kyber::keypair()?;
         
-        let mut public_key = vec![0u8; key_size];
-        let mut private_key = vec![0u8; key_size];
-        
-        rng.fill_bytes(&mut public_key);
-        rng.fill_bytes(&mut private_key);
-        
-        // In production, implement actual Kyber key generation
-        // This is a simplified placeholder
-        
-        Ok((Keypair { public_key, private_key }, self.algorithm))
+        Ok((
+            Keypair {
+                public_key: public_key.as_bytes().to_vec(),
+                private_key: secret_key.as_bytes().to_vec(),
+            },
+            self.algorithm
+        ))
     }
     
     fn encapsulate(&self, public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        let ct_size = self.ciphertext_size();
-        let mut rng = OsRng;
+        // Convert public_key to pqc_kyber format
+        let pk = pqc_kyber::PublicKey::from_bytes(public_key)?;
         
-        let mut ciphertext = vec![0u8; ct_size];
-        let mut shared_secret = vec![0u8; 32];
+        // Use real pqc_kyber encapsulation
+        let (shared_secret, ciphertext) = pqc_kyber::encapsulate(&pk)?;
         
-        rng.fill_bytes(&mut ciphertext);
-        rng.fill_bytes(&mut shared_secret);
-        
-        // In production, implement actual Kyber encapsulation
-        // This is a simplified placeholder
-        
-        Ok((ciphertext, shared_secret))
+        Ok((
+            ciphertext.as_bytes().to_vec(),
+            shared_secret.as_bytes().to_vec(),
+        ))
     }
     
     fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>> {
-        let mut shared_secret = vec![0u8; 32];
+        // Convert private_key to pqc_kyber format
+        let sk = pqc_kyber::SecretKey::from_bytes(private_key)?;
         
-        // In production, implement actual Kyber decapsulation
-        // This is a simplified placeholder
-        let mut hasher = Sha256::new();
-        hasher.update(private_key);
-        hasher.update(ciphertext);
-        shared_secret.copy_from_slice(&hasher.finalize());
+        // Convert ciphertext to pqc_kyber format
+        let ct = pqc_kyber::Ciphertext::from_bytes(ciphertext)?;
         
-        Ok(shared_secret)
+        // Use real pqc_kyber decapsulation
+        let shared_secret = pqc_kyber::decapsulate(&ct, &sk)?;
+        
+        Ok(shared_secret.as_bytes().to_vec())
     }
     
     fn algorithm(&self) -> KemAlgorithm {
@@ -478,78 +459,149 @@ impl CrystalsDilithium {
     pub fn new(algorithm: SigAlgorithm) -> Self {
         Self { algorithm }
     }
-    
-    fn key_size(&self) -> usize {
-        match self.algorithm {
-            SigAlgorithm::CrystalsDilithium2 => 1312,
-            SigAlgorithm::CrystalsDilithium3 => 1952,
-            SigAlgorithm::CrystalsDilithium5 => 2592,
-            _ => 1952,
-        }
-    }
-    
-    fn signature_size(&self) -> usize {
-        match self.algorithm {
-            SigAlgorithm::CrystalsDilithium2 => 2420,
-            SigAlgorithm::CrystalsDilithium3 => 3293,
-            SigAlgorithm::CrystalsDilithium5 => 4595,
-            _ => 3293,
-        }
-    }
 }
 
 impl Signature for CrystalsDilithium {
     fn keypair(&self) -> Result<(Keypair, SigAlgorithm)> {
-        let key_size = self.key_size();
-        let mut rng = OsRng;
+        // Use real pqcrypto-dilithium implementation
+        let (public_key, secret_key) = pqcrypto_dilithium::keypair()?;
         
-        let mut public_key = vec![0u8; key_size];
-        let mut private_key = vec![0u8; key_size];
-        
-        rng.fill_bytes(&mut public_key);
-        rng.fill_bytes(&mut private_key);
-        
-        // In production, implement actual Dilithium key generation
-        // This is a simplified placeholder
-        
-        Ok((Keypair { public_key, private_key }, self.algorithm))
+        Ok((
+            Keypair {
+                public_key: public_key.as_bytes().to_vec(),
+                private_key: secret_key.as_bytes().to_vec(),
+            },
+            self.algorithm
+        ))
     }
     
     fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>> {
-        let sig_size = self.signature_size();
-        let mut rng = OsRng;
+        // Convert private_key to pqcrypto-dilithium format
+        let sk = pqcrypto_dilithium::SecretKey::from_bytes(private_key)?;
         
-        let mut signature = vec![0u8; sig_size];
-        rng.fill_bytes(&mut signature);
+        // Use real pqcrypto-dilithium signing
+        let signature = pqcrypto_dilithium::sign(message, &sk)?;
         
-        // In production, implement actual Dilithium signing
-        // This is a simplified placeholder
-        let mut hasher = Sha512::new();
-        hasher.update(private_key);
-        hasher.update(message);
-        let hash = hasher.finalize();
-        
-        // Copy hash into signature (simplified)
-        let copy_len = sig_size.min(hash.len());
-        signature[..copy_len].copy_from_slice(&hash[..copy_len]);
-        
-        Ok(signature)
+        Ok(signature.as_bytes().to_vec())
     }
     
     fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
-        // In production, implement actual Dilithium verification
-        // This is a simplified placeholder
+        // Convert public_key to pqcrypto-dilithium format
+        let pk = pqcrypto_dilithium::PublicKey::from_bytes(public_key)?;
         
-        let mut hasher = Sha512::new();
-        hasher.update(public_key);
-        hasher.update(message);
-        let expected_hash = hasher.finalize();
+        // Convert signature to pqcrypto-dilithium format
+        let sig = pqcrypto_dilithium::SignedMessage::from_bytes(signature)?;
         
-        // Check if signature contains expected hash (simplified)
-        let copy_len = signature.len().min(expected_hash.len());
-        let matches = signature[..copy_len] == expected_hash[..copy_len];
+        // Use real pqcrypto-dilithium verification
+        let verified = pqcrypto_dilithium::verify(&pk, message, &sig)?;
         
-        Ok(matches)
+        Ok(verified)
+    }
+    
+    fn algorithm(&self) -> SigAlgorithm {
+        self.algorithm
+    }
+}
+
+/// FALCON Signature Implementation
+pub struct Falcon {
+    algorithm: SigAlgorithm,
+}
+
+impl Falcon {
+    pub fn new(algorithm: SigAlgorithm) -> Self {
+        Self { algorithm }
+    }
+}
+
+impl Signature for Falcon {
+    fn keypair(&self) -> Result<(Keypair, SigAlgorithm)> {
+        // Use real pqcrypto-falcon implementation
+        let (public_key, secret_key) = pqcrypto_falcon::keypair()?;
+        
+        Ok((
+            Keypair {
+                public_key: public_key.as_bytes().to_vec(),
+                private_key: secret_key.as_bytes().to_vec(),
+            },
+            self.algorithm
+        ))
+    }
+    
+    fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>> {
+        // Convert private_key to pqcrypto-falcon format
+        let sk = pqcrypto_falcon::SecretKey::from_bytes(private_key)?;
+        
+        // Use real pqcrypto-falcon signing
+        let signature = pqcrypto_falcon::sign(message, &sk)?;
+        
+        Ok(signature.as_bytes().to_vec())
+    }
+    
+    fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
+        // Convert public_key to pqcrypto-falcon format
+        let pk = pqcrypto_falcon::PublicKey::from_bytes(public_key)?;
+        
+        // Convert signature to pqcrypto-falcon format
+        let sig = pqcrypto_falcon::Signature::from_bytes(signature)?;
+        
+        // Use real pqcrypto-falcon verification
+        let verified = pqcrypto_falcon::verify(&pk, message, &sig)?;
+        
+        Ok(verified)
+    }
+    
+    fn algorithm(&self) -> SigAlgorithm {
+        self.algorithm
+    }
+}
+
+/// SPHINCS+ Signature Implementation
+pub struct SphincsPlus {
+    algorithm: SigAlgorithm,
+}
+
+impl SphincsPlus {
+    pub fn new(algorithm: SigAlgorithm) -> Self {
+        Self { algorithm }
+    }
+}
+
+impl Signature for SphincsPlus {
+    fn keypair(&self) -> Result<(Keypair, SigAlgorithm)> {
+        // Use real pqcrypto-sphincsplus implementation
+        let (public_key, secret_key) = pqcrypto_sphincsplus::keypair()?;
+        
+        Ok((
+            Keypair {
+                public_key: public_key.as_bytes().to_vec(),
+                private_key: secret_key.as_bytes().to_vec(),
+            },
+            self.algorithm
+        ))
+    }
+    
+    fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>> {
+        // Convert private_key to pqcrypto-sphincsplus format
+        let sk = pqcrypto_sphincsplus::SecretKey::from_bytes(private_key)?;
+        
+        // Use real pqcrypto-sphincsplus signing
+        let signature = pqcrypto_sphincsplus::sign(message, &sk)?;
+        
+        Ok(signature.as_bytes().to_vec())
+    }
+    
+    fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool> {
+        // Convert public_key to pqcrypto-sphincsplus format
+        let pk = pqcrypto_sphincsplus::PublicKey::from_bytes(public_key)?;
+        
+        // Convert signature to pqcrypto-sphincsplus format
+        let sig = pqcrypto_sphincsplus::Signature::from_bytes(signature)?;
+        
+        // Use real pqcrypto-sphincsplus verification
+        let verified = pqcrypto_sphincsplus::verify(&pk, message, &sig)?;
+        
+        Ok(verified)
     }
     
     fn algorithm(&self) -> SigAlgorithm {

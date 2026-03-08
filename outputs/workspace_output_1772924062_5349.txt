@@ -1,0 +1,39 @@
+=== 13. SPRAWDZENIE DUPLIKATÓW W DOKUMENTACJI ===
+112
+plików .md
+
+=== 14. STRUKTURA FOLDER DOCS ===
+total 744
+drwxr-xr-x 29 root root  4096 Mar  7 12:54 .
+drwxr-xr-x 18 root root  4096 Mar  7 14:50 ..
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 01_core
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 02_advanced
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 03_gaming
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 04_performance
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 05_hardware
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 06_quantum
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 07_ai
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 08_testing
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 09_ux
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 10_implementation
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 11_marketing
+drwxr-xr-x  2 root root  4096 Mar  6 16:58 12_operations
+
+=== 15. FOLDER ARCHIVE ===
+total 244
+drwxr-xr-x  2 root root  4096 Mar  7 14:53 .
+drwxr-xr-x 18 root root  4096 Mar  7 14:50 ..
+-rw-r--r--  1 root root 14480 Mar  6 16:58 SENTINEL_ACTION_PLAN.md
+-rw-r--r--  1 root root 14150 Mar  6 16:58 SENTINEL_COMPREHENSIVE_ANALYSIS_REPORT.md
+-rw-r--r--  1 root root 11267 Mar  6 16:58 SENTINEL_DEVELOPER_RESOURCES_SUMMARY.md
+-rw-r--r--  1 root root 12575 Mar  6 16:58 SENTINEL_FINAL_DELIVERABLES.md
+-rw-r--r--  1 root root 14858 Mar  6 16:58 SENTINEL_INVESTOR_PRESENTATION.md
+-rw-r--r--  1 root root 10248 Mar  6 16:58 SENTINEL_MARKETING_ASSETS_SUMMARY.md
+-rw-r--r--  1 root root  6330 Mar  6 16:58 SENTINEL_MARKETING_ONE_PAGER.md
+-rw-r--r--  1 root root 21429 Mar  6 16:58 SENTINEL_MVP_DEVELOPMENT_PLAN.md
+-rw-r--r--  1 root root  9570 Mar  6 16:58 SENTINEL_PRESS_KIT.md
+-rw-r--r--  1 root root 27819 Mar  6 16:58 SENTINEL_PROJECT_FINAL_SUMMARY.md
+-rw-r--r--  1 root root 12707 Mar  6 16:58 SENTINEL_PROJECT_INDEX.md
+-rw-r--r--  1 root root 13264 Mar  6 16:58 SENTINEL_PROJECT_STATUS_REPORT.md
+-rw-r--r--  1 root root 14785 Mar  6 16:58 SENTINEL_SOCIAL_MEDIA_CALENDAR.md
+-rw-r--r--  1 root root 27744 Mar  6 16:58 SENTINEL_TECHNICAL_SPECIFICATIONS.md

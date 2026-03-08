@@ -1,0 +1,10 @@
+[feature/zero-trust-architecture 8c777d3] feat: Implement Zero Trust Architecture (Issue #8)
+ 10 files changed, 4349 insertions(+), 27 deletions(-)
+ create mode 100644 src/zero_trust/Cargo.toml
+ create mode 100644 src/zero_trust/src/auth.rs
+ create mode 100644 src/zero_trust/src/enforcement.rs
+ create mode 100644 src/zero_trust/src/identity.rs
+ create mode 100644 src/zero_trust/src/lib.rs
+ create mode 100644 src/zero_trust/src/policy.rs
+ create mode 100644 src/zero_trust/src/segmentation.rs
+ create mode 100644 src/zero_trust/src/trust.rs

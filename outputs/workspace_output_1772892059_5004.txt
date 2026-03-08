@@ -1,0 +1,13 @@
+On branch feature/shadow-ai-detection
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   Cargo.toml
+	new file:   src/shadow_ai/Cargo.toml
+	new file:   src/shadow_ai/src/discovery.rs
+	new file:   src/shadow_ai/src/governance.rs
+	new file:   src/shadow_ai/src/lib.rs
+	new file:   src/shadow_ai/src/models.rs
+	new file:   src/shadow_ai/src/risk.rs
+	new file:   src/shadow_ai/src/traffic.rs
+	modified:   todo.md
+

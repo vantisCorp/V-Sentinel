@@ -1,0 +1,3 @@
+To https://github.com/vantisCorp/V-Sentinel.git
+ ! [rejected]        feature/zero-trust-architecture -> feature/zero-trust-architecture (stale info)
+error: failed to push some refs to 'https://github.com/vantisCorp/V-Sentinel.git'

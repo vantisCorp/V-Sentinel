@@ -1,0 +1,9 @@
+[feature/shadow-ai-detection 1e8b94c] feat(shadow-ai): Implement Shadow AI Detection and Governance module
+ 9 files changed, 2529 insertions(+), 14 deletions(-)
+ create mode 100644 src/shadow_ai/Cargo.toml
+ create mode 100644 src/shadow_ai/src/discovery.rs
+ create mode 100644 src/shadow_ai/src/governance.rs
+ create mode 100644 src/shadow_ai/src/lib.rs
+ create mode 100644 src/shadow_ai/src/models.rs
+ create mode 100644 src/shadow_ai/src/risk.rs
+ create mode 100644 src/shadow_ai/src/traffic.rs

@@ -1,0 +1,100 @@
+//! SENTINEL Quantum Cryptography Module
+//! 
+//! This module provides quantum-resistant cryptographic algorithms
+//! including post-quantum KEM, signatures, and hybrid cryptography.
+
+use anyhow::{Result, anyhow};
+use tracing::{info, debug, warn, error};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde::{Serialize, Deserialize};
+use sha2::{Sha256, Sha512, Digest};
+use rand::{RngCore, rngs::OsRng};
+
+/// Quantum Cryptography Manager
+pub struct QuantumCryptoManager {
+    kem: Arc<RwLock<Option<Box<dyn KEM>>>>,
+    signature: Arc<RwLock<Option<Box<dyn Signature>>>>,
+    hybrid: Arc<RwLock<Option<HybridCrypto>>>>,
+    statistics: Arc<RwLock<CryptoStatistics>>,
+}
+
+/// Key Encapsulation Mechanism trait
+pub trait KEM: Send + Sync {
+    fn keypair(&self) -> Result<(Keypair, KemAlgorithm)>;
+    fn encapsulate(&self, public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)>;
+    fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>>;
+    fn algorithm(&self) -> KemAlgorithm;
+}
+
+/// Signature trait
+pub trait Signature: Send + Sync {
+    fn keypair(&self) -> Result<(Keypair, SigAlgorithm)>;
+    fn sign(&self, private_key: &[u8], message: &[u8]) -> Result<Vec<u8>>;
+    fn verify(&self, public_key: &[u8], message: &[u8], signature: &[u8]) -> Result<bool>;
+    fn algorithm(&self) -> SigAlgorithm;
+}
+
+/// KEM Algorithms
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum KemAlgorithm {
+    CrystalsKyber512,
+    CrystalsKyber768,
+    CrystalsKyber1024,
+    ClassicMcEliece348864,
+    ClassicMcEliece460896,
+    NtruHps2048509,
+    NtruHps4096821,
+    SaberLightSaber,
+    SaberSaber,
+    SaberFireSaber,
+}
+
+/// Signature Algorithms
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SigAlgorithm {
+    CrystalsDilithium2,
+    CrystalsDilithium3,
+    CrystalsDilithium5,
+    Falcon512,
+    Falcon1024,
+    SphincsPlusSha256128f,
+    SphincsPlusSha256128s,
+    SphincsPlusShake256128f,
+    SphincsPlusShake256128s,
+}
+
+/// Hybrid Cryptography
+pub struct HybridCrypto {
+    kem: Box<dyn KEM>,
+    signature: Box<dyn Signature>,
+}
+
+/// Keypair structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Keypair {
+    pub public_key: Vec<u8>,
+    pub private_key: Vec<u8>,
+}
+
+/// Encapsulated secret
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EncapsulatedSecret {
+    pub ciphertext: Vec<u8>,
+    pub shared_secret: Vec<u8>,
+}
+
+/// Digital signature
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DigitalSignature {
+    pub signature: Vec<u8>,
+    pub algorithm: SigAlgorithm,
+}
+
+/// Crypto statistics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CryptoStatistics {
+    pub kem_encapsulations: u64,
+    pub kem_decapsulations: u64,
+    pub signatures_created: u64,
+    pub signatures_verified: u64,

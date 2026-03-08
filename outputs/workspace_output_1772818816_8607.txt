@@ -1,0 +1,7 @@
+  remotes/origin/feature/ai-security-protection
+  remotes/origin/feature/deepfake-detection
+  remotes/origin/feature/post-quantum-cryptography
+  remotes/origin/feature/shadow-ai-detection
+  remotes/origin/feature/zero-trust-architecture
+  remotes/origin/main
+  remotes/origin/master

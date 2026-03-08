@@ -1,0 +1,7 @@
+[main 551b470] feat: Add GUI installers for Windows, Linux, and macOS
+ 5 files changed, 1025 insertions(+)
+ create mode 100644 installer/README.md
+ create mode 100644 installer/linux/build-appimage.sh
+ create mode 100644 installer/macos/build-dmg.sh
+ create mode 100644 installer/windows/build-installer.bat
+ create mode 100644 installer/windows/v-sentinel-installer.nsi

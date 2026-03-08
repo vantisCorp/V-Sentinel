@@ -1,276 +1,382 @@
 #!/bin/bash
-
-# V-Sentinel v2.1.1 - Linux AppImage Builder
-# Creates a portable AppImage that can run on any Linux distribution
+#
+# V-Sentinel Linux AppImage Builder
+# Requires: curl, wget, tar, appstream
+#
+# Usage: ./build-appimage.sh [VERSION]
+# Example: ./build-appimage.sh 2.1.1
 
 set -e
 
-VERSION="2.1.1"
-APP_NAME="V-Sentinel"
-APPIMAGE_NAME="V-Sentinel-${VERSION}-x86_64.AppImage"
+# Configuration
+PRODUCT_NAME="V-Sentinel"
+PRODUCT_EXEC="v-sentinel"
+PRODUCT_ID="io.github.v-sentinel.V-Sentinel"
+PRODUCT_COMMENT="AI-Powered Security Monitoring System"
+PRODUCT_CATEGORIES="Security;System;Monitor;"
+PRODUCT_KEYWORDS="security;monitoring;ai;threat;detection;"
 
-# Colors
+# Version handling
+if [ -z "$1" ]; then
+    VERSION="2.1.1"
+else
+    VERSION="$1"
+fi
+
+APPIMAGE_NAME="${PRODUCT_NAME}-${VERSION}-x86_64.AppImage"
+
+echo ""
+echo "========================================"
+echo " ${PRODUCT_NAME} Linux AppImage Builder"
+echo "========================================"
+echo ""
+echo "Version: ${VERSION}"
+echo "Output: ${APPIMAGE_NAME}"
+echo ""
+
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+BUILD_DIR="${SCRIPT_DIR}/build"
+APPDIR="${BUILD_DIR}/${PRODUCT_NAME}.AppDir"
+
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-echo -e "${CYAN}================================================================${NC}"
-echo -e "${CYAN}  V-Sentinel Linux AppImage Builder v${VERSION}${NC}"
-echo -e "${CYAN}================================================================${NC}"
-echo ""
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
 
 # Check for required tools
 check_dependencies() {
-    echo -e "${CYAN}[i] Checking dependencies...${NC}"
+    log_info "Checking dependencies..."
     
-    # Check for cargo
-    if ! command -v cargo &> /dev/null; then
-        echo -e "${RED}[!] Rust/Cargo not found. Please install Rust first.${NC}"
-        exit 1
+    local missing=()
+    
+    # Check for curl
+    if ! command -v curl &> /dev/null; then
+        missing+=("curl")
     fi
     
     # Check for wget
     if ! command -v wget &> /dev/null; then
-        echo -e "${YELLOW}[!] wget not found. Installing...${NC}"
-        sudo apt-get install -y wget
+        missing+=("wget")
     fi
     
-    echo -e "${GREEN}[+] All dependencies satisfied${NC}"
+    # Check for cargo (Rust)
+    if ! command -v cargo &> /dev/null; then
+        missing+=("cargo (Rust)")
+    fi
+    
+    if [ ${#missing[@]} -ne 0 ]; then
+        log_error "Missing dependencies: ${missing[*]}"
+        echo ""
+        echo "Please install missing dependencies and try again."
+        echo "On Debian/Ubuntu: sudo apt install ${missing[*]}"
+        echo "On Fedora: sudo dnf install ${missing[*]}"
+        exit 1
+    fi
+    
+    log_info "All dependencies found."
 }
 
 # Build release binary
 build_binary() {
-    echo -e "${CYAN}[i] Building release binary...${NC}"
+    log_info "Building release binary..."
+    log_info "This may take several minutes..."
+    
+    cd "${PROJECT_ROOT}"
     cargo build --release
-    echo -e "${GREEN}[+] Binary built successfully${NC}"
+    
+    if [ ! -f "target/release/${PRODUCT_EXEC}" ]; then
+        log_error "Build failed! Binary not found."
+        exit 1
+    fi
+    
+    log_info "Build successful."
 }
 
 # Create AppDir structure
 create_appdir() {
-    echo -e "${CYAN}[i] Creating AppDir structure...${NC}"
+    log_info "Creating AppDir structure..."
     
-    rm -rf AppDir
-    mkdir -p AppDir/usr/bin
-    mkdir -p AppDir/usr/lib
-    mkdir -p AppDir/usr/share/applications
-    mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-    mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
-    mkdir -p AppDir/usr/share/metainfo
-    mkdir -p AppDir/usr/share/doc/v-sentinel
-    mkdir -p AppDir/etc/v-sentinel
-    mkdir -p AppDir/var/log/v-sentinel
+    rm -rf "${BUILD_DIR}"
+    mkdir -p "${APPDIR}"
     
-    # Copy binary
-    cp target/release/sentinel AppDir/usr/bin/v-sentinel
-    chmod +x AppDir/usr/bin/v-sentinel
+    # Create directories
+    mkdir -p "${APPDIR}/usr/bin"
+    mkdir -p "${APPDIR}/usr/lib"
+    mkdir -p "${APPDIR}/usr/share/applications"
+    mkdir -p "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
+    mkdir -p "${APPDIR}/usr/share/icons/hicolor/scalable/apps"
+    mkdir -p "${APPDIR}/usr/share/metainfo"
+    mkdir -p "${APPDIR}/usr/share/doc/${PRODUCT_NAME}"
+    mkdir -p "${APPDIR}/etc/${PRODUCT_NAME}"
+    mkdir -p "${APPDIR}/opt/${PRODUCT_NAME}/modules"
+    mkdir -p "${APPDIR}/opt/${PRODUCT_NAME}/pqc"
+    mkdir -p "${APPDIR}/opt/${PRODUCT_NAME}/sdk"
+    
+    log_info "AppDir structure created."
+}
+
+# Install binary and files
+install_files() {
+    log_info "Installing files..."
+    
+    # Copy main binary
+    cp "${PROJECT_ROOT}/target/release/${PRODUCT_EXEC}" "${APPDIR}/usr/bin/"
+    chmod +x "${APPDIR}/usr/bin/${PRODUCT_EXEC}"
     
     # Copy configuration
-    cp config/default.toml AppDir/etc/v-sentinel/config.toml
+    if [ -f "${PROJECT_ROOT}/config/default.toml" ]; then
+        cp "${PROJECT_ROOT}/config/default.toml" "${APPDIR}/etc/${PRODUCT_NAME}/"
+    fi
     
     # Copy documentation
-    cp README.md AppDir/usr/share/doc/v-sentinel/
-    cp LICENSE AppDir/usr/share/doc/v-sentinel/
-    cp INSTALL.md AppDir/usr/share/doc/v-sentinel/
+    cp "${PROJECT_ROOT}/README.md" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
+    cp "${PROJECT_ROOT}/LICENSE" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
+    cp "${PROJECT_ROOT}/CHANGELOG.md" "${APPDIR}/usr/share/doc/${PRODUCT_NAME}/" 2>/dev/null || true
     
-    echo -e "${GREEN}[+] AppDir structure created${NC}"
+    # Copy modules if exist
+    if [ -d "${PROJECT_ROOT}/modules" ]; then
+        cp -r "${PROJECT_ROOT}/modules/"* "${APPDIR}/opt/${PRODUCT_NAME}/modules/" 2>/dev/null || true
+    fi
+    
+    # Copy PQC if exist
+    if [ -d "${PROJECT_ROOT}/pqc" ]; then
+        cp -r "${PROJECT_ROOT}/pqc/"* "${APPDIR}/opt/${PRODUCT_NAME}/pqc/" 2>/dev/null || true
+    fi
+    
+    # Copy SDK if exist
+    if [ -d "${PROJECT_ROOT}/sdk" ]; then
+        cp -r "${PROJECT_ROOT}/sdk/"* "${APPDIR}/opt/${PRODUCT_NAME}/sdk/" 2>/dev/null || true
+    fi
+    
+    log_info "Files installed."
 }
 
 # Create desktop entry
 create_desktop_entry() {
-    echo -e "${CYAN}[i] Creating desktop entry...${NC}"
+    log_info "Creating desktop entry..."
     
-    cat > AppDir/usr/share/applications/v-sentinel.desktop << EOF
+    cat > "${APPDIR}/usr/share/applications/${PRODUCT_ID}.desktop" << EOF
 [Desktop Entry]
 Type=Application
-Name=V-Sentinel
-GenericName=Security System
-Comment=Next-generation AI-native security system with quantum-ready cryptography
-Exec=v-sentinel
-Icon=v-sentinel
+Name=${PRODUCT_NAME}
+Comment=${PRODUCT_COMMENT}
+Exec=${PRODUCT_EXEC}
+Icon=${PRODUCT_ID}
 Terminal=true
-Categories=Security;System;Network;
+Categories=${PRODUCT_CATEGORIES}
+Keywords=${PRODUCT_KEYWORDS}
 StartupNotify=true
-Keywords=security;ai;quantum;protection;
+StartupWMClass=${PRODUCT_NAME}
+X-AppImage-Version=${VERSION}
 EOF
     
-    # Also create root desktop entry
-    cat > AppDir/v-sentinel.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=V-Sentinel
-GenericName=Security System
-Comment=Next-generation AI-native security system with quantum-ready cryptography
-Exec=v-sentinel
-Icon=v-sentinel
-Terminal=true
-Categories=Security;System;Network;
-StartupNotify=true
-Keywords=security;ai;quantum;protection;
-EOF
+    # Also copy to AppDir root
+    cp "${APPDIR}/usr/share/applications/${PRODUCT_ID}.desktop" "${APPDIR}/"
     
-    echo -e "${GREEN}[+] Desktop entry created${NC}"
+    log_info "Desktop entry created."
 }
 
 # Create AppStream metadata
-create_appstream() {
-    echo -e "${CYAN}[i] Creating AppStream metadata...${NC}"
+create_appstream_metadata() {
+    log_info "Creating AppStream metadata..."
     
-    cat > AppDir/usr/share/metainfo/v-sentinel.metainfo.xml << EOF
+    cat > "${APPDIR}/usr/share/metainfo/${PRODUCT_ID}.metainfo.xml" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.vantiscorp.v-sentinel</id>
-  <name>V-Sentinel</name>
-  <summary>Next-generation AI-native security system</summary>
+  <id>${PRODUCT_ID}</id>
+  <name>${PRODUCT_NAME}</name>
+  <summary>${PRODUCT_COMMENT}</summary>
+  <metadata_license>AGPL-3.0-or-later</metadata_license>
+  <project_license>AGPL-3.0-or-later</project_license>
+  <developer_name>V-Sentinel Security Team</developer_name>
+  <url type="homepage">https://github.com/V-Sentinel/V-Sentinel</url>
+  <url type="bugtracker">https://github.com/V-Sentinel/V-Sentinel/issues</url>
+  <url type="donation">https://github.com/sponsors/V-Sentinel</url>
+  
   <description>
-    <p>V-Sentinel is a revolutionary security framework powered by artificial intelligence, 
-    designed for real-time applications, distributed systems, and gaming platforms.</p>
+    <p>
+      V-Sentinel is an AI-powered security monitoring system that provides 
+      comprehensive protection against modern cyber threats.
+    </p>
     <p>Features:</p>
     <ul>
-      <li>Zero Trust Architecture (NIST SP 800-207)</li>
-      <li>Shadow AI Detection and Governance</li>
-      <li>Deepfake Detection and Media Forensics</li>
-      <li>AI Security Module</li>
+      <li>Zero Trust Architecture</li>
+      <li>Shadow AI Detection</li>
+      <li>Deepfake Detection</li>
       <li>Post-Quantum Cryptography</li>
+      <li>Real-time Threat Intelligence</li>
+      <li>Multi-language Support</li>
     </ul>
   </description>
-  <metadata_license>MIT</metadata_license>
-  <project_license>AGPL-3.0</project_license>
-  <developer_name>VantisCorp</developer_name>
-  <url type="homepage">https://github.com/vantisCorp/V-Sentinel</url>
-  <url type="bugtracker">https://github.com/vantisCorp/V-Sentinel/issues</url>
-  <url type="help">https://github.com/vantisCorp/V-Sentinel/wiki</url>
-  <launchable type="desktop-id">v-sentinel.desktop</launchable>
+  
+  <launchable type="desktop-id">${PRODUCT_ID}.desktop</launchable>
+  
+  <categories>
+    <category>Security</category>
+    <category>System</category>
+  </categories>
+  
+  <requires>
+    <display_length compare="ge">medium</display_length>
+  </requires>
+  
+  <content_rating type="oars-1.1"/>
+  
   <releases>
     <release version="${VERSION}" date="$(date +%Y-%m-%d)">
       <description>
-        <p>Latest stable release with installer support</p>
+        <p>Latest release with security improvements and bug fixes.</p>
       </description>
     </release>
   </releases>
-  <content_rating type="oars-1.1"/>
-  <requires>
-    <display_length compare="ge">360</display_length>
-  </requires>
 </component>
 EOF
     
-    echo -e "${GREEN}[+] AppStream metadata created${NC}"
+    log_info "AppStream metadata created."
 }
 
-# Create AppImage icon
-create_icon() {
-    echo -e "${CYAN}[i] Creating icon...${NC}"
+# Create AppRun script
+create_apprun() {
+    log_info "Creating AppRun script..."
     
-    # Create a simple SVG icon if not exists
-    if [[ ! -f "assets/icon.svg" ]]; then
-        mkdir -p assets
-        cat > assets/icon.svg << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <defs>
-    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ff4444"/>
-      <stop offset="100%" style="stop-color:#cc0000"/>
-    </linearGradient>
-  </defs>
-  <path d="M128 16 L224 64 L224 128 C224 192 176 240 128 256 C80 240 32 192 32 128 L32 64 Z" 
-        fill="url(#shield)" stroke="#990000" stroke-width="4"/>
-  <path d="M128 48 L192 80 L192 128 C192 176 160 208 128 224 C96 208 64 176 64 128 L64 80 Z" 
-        fill="#ffffff" opacity="0.2"/>
-  <text x="128" y="160" font-family="Arial Black" font-size="72" font-weight="bold" 
-        fill="#ffffff" text-anchor="middle">V</text>
-</svg>
+    cat > "${APPDIR}/AppRun" << 'EOF'
+#!/bin/bash
+SELF=$(readlink -f "$0")
+HERE=${SELF%/*}
+export PATH="${HERE}/usr/bin:${PATH}"
+export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS}"
+export V_SENTINEL_HOME="${HERE}"
+exec "${HERE}/usr/bin/v-sentinel" "$@"
 EOF
+    
+    chmod +x "${APPDIR}/AppRun"
+    
+    log_info "AppRun created."
+}
+
+# Create icon
+create_icon() {
+    log_info "Creating application icon..."
+    
+    # Check for existing icon
+    ICON_SVG="${PROJECT_ROOT}/assets/icon.svg"
+    ICON_PNG="${PROJECT_ROOT}/assets/icon.png"
+    
+    if [ -f "${ICON_SVG}" ]; then
+        cp "${ICON_SVG}" "${APPDIR}/usr/share/icons/hicolor/scalable/apps/${PRODUCT_ID}.svg"
+        cp "${ICON_SVG}" "${APPDIR}/${PRODUCT_ID}.svg"
+        log_info "SVG icon installed."
+    elif [ -f "${ICON_PNG}" ]; then
+        cp "${ICON_PNG}" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${PRODUCT_ID}.png"
+        cp "${ICON_PNG}" "${APPDIR}/${PRODUCT_ID}.png"
+        log_info "PNG icon installed."
+    else
+        log_warn "No icon found. Creating placeholder..."
+        
+        # Create a simple placeholder icon using ImageMagick if available
+        if command -v convert &> /dev/null; then
+            convert -size 256x256 xc:navy \
+                -gravity center \
+                -pointsize 72 \
+                -fill white \
+                -annotate 0 "VS" \
+                "${APPDIR}/${PRODUCT_ID}.png"
+            cp "${APPDIR}/${PRODUCT_ID}.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/"
+            log_info "Placeholder icon created."
+        else
+            log_warn "ImageMagick not found. Skipping icon creation."
+        fi
     fi
-    
-    # Copy icons
-    cp assets/icon.svg AppDir/usr/share/icons/hicolor/scalable/apps/v-sentinel.svg
-    cp assets/icon.svg AppDir/v-sentinel.svg
-    
-    # Create PNG icon if possible
-    if command -v convert &> /dev/null; then
-        convert -background none -resize 256x256 assets/icon.svg AppDir/usr/share/icons/hicolor/256x256/apps/v-sentinel.png
-        convert -background none -resize 256x256 assets/icon.svg AppDir/v-sentinel.png
-    fi
-    
-    echo -e "${GREEN}[+] Icons created${NC}"
 }
 
 # Download linuxdeploy
 download_linuxdeploy() {
-    echo -e "${CYAN}[i] Downloading linuxdeploy...${NC}"
+    log_info "Downloading linuxdeploy..."
     
-    if [[ ! -f "linuxdeploy-x86_64.AppImage" ]]; then
-        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-        chmod +x linuxdeploy-x86_64.AppImage
+    LINUXDEPLOY_URL="https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+    LINUXDEPLOY="${BUILD_DIR}/linuxdeploy-x86_64.AppImage"
+    
+    if [ ! -f "${LINUXDEPLOY}" ]; then
+        wget -q "${LINUXDEPLOY_URL}" -O "${LINUXDEPLOY}"
+        chmod +x "${LINUXDEPLOY}"
+        log_info "linuxdeploy downloaded."
+    else
+        log_info "linuxdeploy already exists."
     fi
-    
-    echo -e "${GREEN}[+] linuxdeploy downloaded${NC}"
 }
 
 # Build AppImage
 build_appimage() {
-    echo -e "${CYAN}[i] Building AppImage...${NC}"
+    log_info "Building AppImage..."
     
+    cd "${BUILD_DIR}"
+    
+    export OUTPUT="${APPIMAGE_NAME}"
     export ARCH=x86_64
-    export VERSION=${VERSION}
-    export APP_NAME=${APP_NAME}
     
-    # Run linuxdeploy
-    ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+    "${LINUXDEPLOY}" --appdir "${APPDIR}" --output appimage
     
-    echo -e "${GREEN}[+] AppImage built successfully${NC}"
+    if [ -f "${BUILD_DIR}/${APPIMAGE_NAME}" ]; then
+        mv "${BUILD_DIR}/${APPIMAGE_NAME}" "${SCRIPT_DIR}/"
+        log_info "AppImage created: ${SCRIPT_DIR}/${APPIMAGE_NAME}"
+    else
+        log_error "AppImage not created!"
+        exit 1
+    fi
 }
 
-# Create release package
-create_package() {
-    echo -e "${CYAN}[i] Creating release package...${NC}"
-    
-    mkdir -p releases
-    
-    # Move AppImage
-    mv -f V-Sentinel-${VERSION}-x86_64.AppImage releases/ 2>/dev/null || true
-    
-    # Create tarball
-    tar -czvf releases/V-Sentinel-${VERSION}-linux-x86_64.tar.gz \
-        --transform 's,^,V-Sentinel-${VERSION}/,' \
-        README.md LICENSE INSTALL.md config/default.toml
-    
-    echo -e "${GREEN}[+] Release package created${NC}"
+# Cleanup
+cleanup() {
+    log_info "Cleaning up..."
+    rm -rf "${BUILD_DIR}"
 }
 
-# Print summary
-print_summary() {
-    echo ""
-    echo -e "${GREEN}================================================================${NC}"
-    echo -e "${GREEN}  AppImage Build Complete!${NC}"
-    echo -e "${GREEN}================================================================${NC}"
-    echo ""
-    echo -e "  Output files:"
-    echo -e "    ${CYAN}releases/V-Sentinel-${VERSION}-x86_64.AppImage${NC}"
-    echo -e "    ${CYAN}releases/V-Sentinel-${VERSION}-linux-x86_64.tar.gz${NC}"
-    echo ""
-    echo -e "  Usage:"
-    echo -e "    chmod +x V-Sentinel-${VERSION}-x86_64.AppImage"
-    echo -e "    ./V-Sentinel-${VERSION}-x86_64.AppImage"
-    echo ""
-    echo -e "${GREEN}================================================================${NC}"
-}
-
-# Main
+# Main function
 main() {
+    echo ""
+    
     check_dependencies
     build_binary
     create_appdir
+    install_files
     create_desktop_entry
-    create_appstream
+    create_appstream_metadata
+    create_apprun
     create_icon
     download_linuxdeploy
     build_appimage
-    create_package
-    print_summary
+    cleanup
+    
+    echo ""
+    echo "========================================"
+    echo " BUILD SUCCESSFUL!"
+    echo "========================================"
+    echo ""
+    echo "AppImage created: ${SCRIPT_DIR}/${APPIMAGE_NAME}"
+    echo ""
+    ls -lh "${SCRIPT_DIR}/${APPIMAGE_NAME}"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Test the AppImage: ./${APPIMAGE_NAME}"
+    echo "  2. Upload to GitHub Releases"
+    echo ""
 }
 
+# Run main
 main "$@"

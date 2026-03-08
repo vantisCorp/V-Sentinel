@@ -1,0 +1,10 @@
+./src
+./src/audit/src
+./src/core
+./src/core/src
+./src/cloud/src
+./src/metaverse/src
+./src/neural/src
+./src/error-handling/src
+./src/performance/src
+./src/gaming/src

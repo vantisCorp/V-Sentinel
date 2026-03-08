@@ -1,0 +1,30 @@
+# 🛡️ V-Sentinel [![Build Status](https://img.shields.io/github/actions/workflow/status/vantisCorp/V-Sentinel/ci.yml?style=for-the-badge&logo=github&labelColor=%23000000&color=%23FF0000)](https://github.com/vantisCorp/V-Sentinel/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/vantisCorp/V-Sentinel?style=for-the-badge&logo=mit&labelColor=%23000000&color=%23FF0000)](https://github.com/vantisCorp/V-Sentinel/blob/main/LICENSE) [![Version](https://img.shields.io/github/v/release/vantisCorp/V-Sentinel?style=for-the-badge&logo=semantic-release&labelColor=%23000000&color=%23FF0000)](https://github.com/vantisCorp/V-Sentinel/releases) [![Stars](https://img.shields.io/github/stars/vantisCorp/V-Sentinel?style=for-the-badge&logo=github&labelColor=%23000000&color=%23FF0000)](https://github.com/vantisCorp/V-Sentinel/stargazers)
+
+[![V-Sentinel](https://img.shields.io/badge/V--Sentinel-8.0.0-FF0000?style=for-the-badge&logo=rust&logoColor=FFFFFF&labelColor=%23000000)](https://github.com/vantisCorp/V-Sentinel)
+
+---
+
+## 🌍 언어 / Languages / Sprachen / 语言 / Русский / Español / Français
+
+| 🇵🇱 Polski | 🇬🇧 English | 🇩🇪 Deutsch | 🇨🇳 中文 | 🇷🇺 Русский | 🇰🇷 한국어 | 🇪🇸 Español | 🇫🇷 Français |
+|-----------|-------------|-------------|----------|-------------|-------------|-------------|-------------|
+| [README.md](README.md) | [README_EN.md](README_EN.md) | [README_DE.md](README_DE.md) | [README_ZH.md](README_ZH.md) | [README_RU.md](README_RU.md) | **README_KO.md** | [README_ES.md](README_ES.md) | [README_FR.md](README_FR.md) |
+
+---
+
+<details>
+<summary>🎨 <strong>🔥 컬러 스킴: 블랙-레드 사이버펑크</strong></summary>
+
+### 색상 팔레트
+
+| 색상 | Hex | 사용처 |
+|------|-----|--------|
+| 🔴 기본 | `#FF0000` | 제목, 강조 |
+| ⚫ 보조 | `#000000` | 배경, 다크 엘리먼트 |
+| 🔴 액센트 | `#CC0000` | 그림자, 그라데이션 |
+| ⚪ 텍스트 | `#FFFFFF` | 텍스트, 레이블 |
+| 🔴 하이라이트 | `#FF3333` | 엘리먼트 강조 |
+
+### 그라데이션
+
+```css

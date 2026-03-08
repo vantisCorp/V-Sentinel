@@ -1,0 +1,20 @@
+            color: var(--netflix-text-secondary);
+            font-weight: 500;
+        }
+
+        /* Terminal */
+        .terminal-section {
+            background: var(--netflix-black);
+            padding: 8rem 2rem;
+        }
+
+        .terminal {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--netflix-dark-gray);
+            border: 1px solid var(--netflix-light-gray);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+

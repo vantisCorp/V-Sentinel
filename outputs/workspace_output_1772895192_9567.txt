@@ -1,0 +1,20 @@
+=== Identifying potential duplicates ===
+
+Files with 'FINAL' or 'SUMMARY' in name:
+-rw-r--r--  1 root root  8496 Mar  6 16:58 FINAL_SESSION_SUMMARY.md
+-rw-r--r--  1 root root 11267 Mar  6 16:58 SENTINEL_DEVELOPER_RESOURCES_SUMMARY.md
+-rw-r--r--  1 root root 12575 Mar  6 16:58 SENTINEL_FINAL_DELIVERABLES.md
+-rw-r--r--  1 root root  5013 Mar  6 16:58 SENTINEL_FINAL_PROJECT_SUMMARY_COMPLETE.md
+-rw-r--r--  1 root root 10634 Mar  6 16:58 SENTINEL_FINAL_SUMMARY.md
+-rw-r--r--  1 root root 10248 Mar  6 16:58 SENTINEL_MARKETING_ASSETS_SUMMARY.md
+-rw-r--r--  1 root root 27819 Mar  6 16:58 SENTINEL_PROJECT_FINAL_SUMMARY.md
+-rw-r--r--  1 root root 10426 Mar  6 16:58 SENTINEL_WORK_COMPLETE_SUMMARY.md
+-rw-r--r--  1 root root 10173 Mar  6 16:58 SESSION_COMPLETE_SUMMARY.md
+
+Files with 'INVESTOR' in name:
+-rw-r--r--  1 root root 18010 Mar  6 16:58 SENTINEL_INVESTOR_PITCH_DECK.md
+-rw-r--r--  1 root root 14858 Mar  6 16:58 SENTINEL_INVESTOR_PRESENTATION.md
+
+Files with 'MARKETING' in name:
+-rw-r--r--  1 root root 10248 Mar  6 16:58 SENTINEL_MARKETING_ASSETS_SUMMARY.md
+-rw-r--r--  1 root root  6330 Mar  6 16:58 SENTINEL_MARKETING_ONE_PAGER.md

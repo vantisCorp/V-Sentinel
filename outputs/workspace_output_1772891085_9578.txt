@@ -1,0 +1,14 @@
+On branch feature/zero-trust-architecture
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   Cargo.toml
+	new file:   src/zero_trust/Cargo.toml
+	new file:   src/zero_trust/src/auth.rs
+	new file:   src/zero_trust/src/enforcement.rs
+	new file:   src/zero_trust/src/identity.rs
+	new file:   src/zero_trust/src/lib.rs
+	new file:   src/zero_trust/src/policy.rs
+	new file:   src/zero_trust/src/segmentation.rs
+	new file:   src/zero_trust/src/trust.rs
+	modified:   todo.md
+

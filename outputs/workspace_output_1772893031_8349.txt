@@ -1,0 +1,22 @@
+From https://github.com/vantisCorp/V-Sentinel
+ * branch            main       -> FETCH_HEAD
+   d580077..41f9779  main       -> origin/main
+Updating d580077..41f9779
+Fast-forward
+ Cargo.toml                         |   1 +
+ src/deepfake/Cargo.toml            |  26 ++
+ src/deepfake/src/analysis.rs       | 568 +++++++++++++++++++++++++++++++++
+ src/deepfake/src/authentication.rs | 505 +++++++++++++++++++++++++++++
+ src/deepfake/src/detection.rs      | 536 +++++++++++++++++++++++++++++++
+ src/deepfake/src/lib.rs            | 347 ++++++++++++++++++++
+ src/deepfake/src/models.rs         | 462 +++++++++++++++++++++++++++
+ src/deepfake/src/threat_intel.rs   | 634 +++++++++++++++++++++++++++++++++++++
+ todo.md                            |  29 +-
+ 9 files changed, 3095 insertions(+), 13 deletions(-)
+ create mode 100644 src/deepfake/Cargo.toml
+ create mode 100644 src/deepfake/src/analysis.rs
+ create mode 100644 src/deepfake/src/authentication.rs
+ create mode 100644 src/deepfake/src/detection.rs
+ create mode 100644 src/deepfake/src/lib.rs
+ create mode 100644 src/deepfake/src/models.rs
+ create mode 100644 src/deepfake/src/threat_intel.rs

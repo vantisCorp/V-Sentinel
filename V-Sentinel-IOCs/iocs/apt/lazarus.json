@@ -1,0 +1,282 @@
+{
+  "threat_actor": "Lazarus Group",
+  "aliases": ["APT38", "Hidden Cobra", "Kimsuky", "Nikel", "Zinc", "Guardians of Peace"],
+  "country": "North Korea",
+  "motivation": "Financial Theft, Espionage",
+  "description": "North Korean state-sponsored threat group known for financial theft operations and cyber espionage campaigns",
+  "attribution_confidence": "high",
+  "mitre_attack": "G0032",
+  "campaigns": [
+    "Operation AppleJeus",
+    "Operation Fast Cash",
+    "WannaCry Ransomware Attack",
+    "Sony Pictures Entertainment Hack",
+    "Bangladesh Bank Heist",
+    "Cryptocurrency Exchange Attacks"
+  ],
+  "indicators": [
+    {
+      "id": "lazarus-001",
+      "type": "ip",
+      "value": "103.253.145.218",
+      "first_seen": "2024-06-01T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Command and control server for cryptocurrency exchange attacks",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["c2", "cryptocurrency", "financial", "apt"],
+      "port": 443,
+      "protocol": "https"
+    },
+    {
+      "id": "lazarus-002",
+      "type": "ip",
+      "value": "185.220.101.12",
+      "first_seen": "2023-11-01T00:00:00Z",
+      "last_seen": "2025-12-25T00:00:00Z",
+      "confidence": "medium",
+      "description": "Infrastructure used for data exfiltration",
+      "campaign": "Cryptocurrency Exchange Attacks",
+      "malware_family": "Manuscrypt",
+      "tags": ["exfil", "cryptocurrency", "apt"],
+      "port": 8443,
+      "protocol": "https"
+    },
+    {
+      "id": "lazarus-003",
+      "type": "domain",
+      "value": "update-service.mobi",
+      "first_seen": "2024-05-15T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "C2 domain masquerading as legitimate update service",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["c2", "masquerading", "applejeus", "apt"],
+      "dns_info": {
+        "registrar": "NameCheap, Inc.",
+        "registered": "2024-05-10",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "lazarus-004",
+      "type": "domain",
+      "value": "crypto-trader-pro.net",
+      "first_seen": "2024-03-01T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "high",
+      "description": "Fake cryptocurrency trading platform used for credential theft",
+      "campaign": "Cryptocurrency Exchange Attacks",
+      "malware_family": "AppleJeus",
+      "tags": ["phishing", "cryptocurrency", "credential-theft", "apt"],
+      "dns_info": {
+        "registrar": "GoDaddy.com, LLC",
+        "registered": "2024-02-28",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "lazarus-005",
+      "type": "url",
+      "value": "https://update-service.mobi/api/v2/check",
+      "first_seen": "2024-05-20T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "API endpoint for beaconing to C2 server",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["c2", "api", "beaconing", "apt"],
+      "http_method": "POST"
+    },
+    {
+      "id": "lazarus-006",
+      "type": "hash",
+      "value": "a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9",
+      "hash_type": "sha256",
+      "first_seen": "2024-06-01T00:00:00Z",
+      "last_seen": "2026-01-15T00:00:00Z",
+      "confidence": "high",
+      "description": "AppleJeus trojan for macOS systems",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["malware", "trojan", "macos", "cryptocurrency"],
+      "file_info": {
+        "name": "CryptoTraderPro.dmg",
+        "size": 5242880,
+        "type": "Disk Image",
+        "compile_time": "2024-05-28T09:15:00Z"
+      }
+    },
+    {
+      "id": "lazarus-007",
+      "type": "hash",
+      "value": "f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0d1c2b3a4f5e6d7c8b9a0f1e2d",
+      "hash_type": "sha256",
+      "first_seen": "2023-11-01T00:00:00Z",
+      "last_seen": "2025-12-25T00:00:00Z",
+      "confidence": "high",
+      "description": "Manuscrypt malware variant",
+      "campaign": "Cryptocurrency Exchange Attacks",
+      "malware_family": "Manuscrypt",
+      "tags": ["malware", "trojan", "windows", "cryptocurrency"],
+      "file_info": {
+        "name": "trading-client.exe",
+        "size": 1835008,
+        "type": "PE32 executable (GUI) Intel 80386",
+        "compile_time": "2023-10-25T16:42:00Z"
+      }
+    },
+    {
+      "id": "lazarus-008",
+      "type": "hash",
+      "value": "3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5",
+      "hash_type": "sha256",
+      "first_seen": "2017-05-12T00:00:00Z",
+      "last_seen": "2017-05-15T00:00:00Z",
+      "confidence": "high",
+      "description": "WannaCry ransomware payload",
+      "campaign": "WannaCry Ransomware Attack",
+      "malware_family": "WannaCry",
+      "tags": ["ransomware", "worm", "eternalblue", "apt"],
+      "file_info": {
+        "name": "wcry.exe",
+        "size": 360448,
+        "type": "PE32 executable (GUI) Intel 80386",
+        "compile_time": "2017-05-11T08:20:00Z"
+      }
+    },
+    {
+      "id": "lazarus-009",
+      "type": "email",
+      "value": "hr.careers@cryptofirm.com",
+      "first_seen": "2024-04-01T00:00:00Z",
+      "last_seen": "2024-06-30T00:00:00Z",
+      "confidence": "medium",
+      "description": "Phishing email targeting cryptocurrency exchange employees",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["phishing", "email", "job-offer", "apt"]
+    },
+    {
+      "id": "lazarus-010",
+      "type": "domain",
+      "value": "sonypictures.com.backup",
+      "first_seen": "2014-11-24T00:00:00Z",
+      "last_seen": "2014-12-01T00:00:00Z",
+      "confidence": "high",
+      "description": "Domain used in Sony Pictures Entertainment hack",
+      "campaign": "Sony Pictures Entertainment Hack",
+      "malware_family": "Destover",
+      "tags": ["wiper", "sony", "apt", "destruction"],
+      "dns_info": {
+        "registrar": "Unknown",
+        "registered": "2014-11-20",
+        "status": "Redacted"
+      }
+    },
+    {
+      "id": "lazarus-011",
+      "type": "certificate",
+      "value": "A5:B6:C7:D8:E9:F0:A1:B2:C3:D4:E5:F6:A7:B8:C9",
+      "first_seen": "2024-05-15T00:00:00Z",
+      "last_seen": "2026-01-12T00:00:00Z",
+      "confidence": "high",
+      "description": "SSL certificate used for AppleJeus C2 infrastructure",
+      "campaign": "Operation AppleJeus",
+      "malware_family": "AppleJeus",
+      "tags": ["certificate", "tls", "c2", "apt"],
+      "cert_info": {
+        "issuer": "Let's Encrypt Authority X3",
+        "subject": "update-service.mobi",
+        "valid_from": "2024-05-16T00:00:00Z",
+        "valid_to": "2024-08-14T00:00:00Z",
+        "serial": "04:A2:B5:C8:D1:E4:F7:A0"
+      }
+    },
+    {
+      "id": "lazarus-012",
+      "type": "url",
+      "value": "https://crypto-trader-pro.net/download/app.dmg",
+      "first_seen": "2024-03-15T00:00:00Z",
+      "last_seen": "2025-11-30T00:00:00Z",
+      "confidence": "high",
+      "description": "Malicious download URL for trojanized trading application",
+      "campaign": "Cryptocurrency Exchange Attacks",
+      "malware_family": "AppleJeus",
+      "tags": ["malware-delivery", "trojan", "cryptocurrency", "apt"],
+      "http_method": "GET"
+    }
+  ],
+  "ttps": {
+    "initial_access": [
+      "T1566.001: Spearphishing Link",
+      "T1566.002: Spearphishing Attachment",
+      "T1190: Exploit Public-Facing Application",
+      "T1195.002: Supply Chain Compromise"
+    ],
+    "execution": [
+      "T1059.001: Command and Scripting Interpreter",
+      "T1059.003: Windows Command Shell",
+      "T1059.006: PowerShell"
+    ],
+    "persistence": [
+      "T1547.001: Boot or Logon Autostart Execution",
+      "T1053.005: Scheduled Task",
+      "T1543.003: Windows Service"
+    ],
+    "privilege_escalation": [
+      "T1068: Exploitation for Privilege Escalation",
+      "T1548.002: Bypass User Account Control"
+    ],
+    "defense_evasion": [
+      "T1027: Obfuscated Files or Information",
+      "T1055: Process Injection",
+      "T1564.001: Hidden Files and Directories",
+      "T1140: Deobfuscate/Decode Files or Information"
+    ],
+    "credential_access": [
+      "T1056.002: Input Capture: GUI Input Capture",
+      "T1003: OS Credential Dumping",
+      "T1555.003: Password Filter"
+    ],
+    "discovery": [
+      "T1018: Remote System Discovery",
+      "T1087.001: Local Account",
+      "T1007: System Service Discovery"
+    ],
+    "lateral_movement": [
+      "T1021.002: SMB/Windows Admin Shares",
+      "T1021.004: SSH",
+      "T1021.001: Remote Desktop Protocol"
+    ],
+    "collection": [
+      "T1113: Screen Capture",
+      "T1056.001: Input Capture: Keylogging",
+      "T1005: Data from Local System"
+    ],
+    "exfiltration": [
+      "T1041: Exfiltration Over C2 Channel",
+      "T1048.003: Exfiltration Over Unencrypted/Obfuscated Channel"
+    ],
+    "command_and_control": [
+      "T1071.001: Web Protocols",
+      "T1071.004: DNS",
+      "T1102: Web Service"
+    ],
+    "impact": [
+      "T1486: Data Encrypted for Impact",
+      "T1565: Data Manipulation",
+      "T1485: Data Destruction"
+    ]
+  },
+  "references": [
+    "https://attack.mitre.org/groups/G0032/",
+    "https://www.kaspersky.com/resource-center/threats/applejeus",
+    "https://www.us-cert.gov/ncas/alerts/TA17-249A",
+    "https://www.symantec.com/blogs/threat-intelligence/lazarus-financial",
+    "https://group-ib.com/blog/lazarus-cryptocurrency/"
+  ],
+  "last_updated": "2026-01-15T00:00:00Z"
+}

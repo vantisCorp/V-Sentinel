@@ -1,0 +1,22 @@
+From https://github.com/vantisCorp/V-Sentinel
+ * branch            main       -> FETCH_HEAD
+   41f9779..48f77ef  main       -> origin/main
+Updating 41f9779..48f77ef
+Fast-forward
+ Cargo.toml                            |   1 +
+ src/ai_security/Cargo.toml            |  29 ++
+ src/ai_security/src/api_security.rs   | 838 ++++++++++++++++++++++++++++++++++
+ src/ai_security/src/data_security.rs  | 604 ++++++++++++++++++++++++
+ src/ai_security/src/lib.rs            | 548 ++++++++++++++++++++++
+ src/ai_security/src/mlops_security.rs | 739 ++++++++++++++++++++++++++++++
+ src/ai_security/src/model_security.rs | 570 +++++++++++++++++++++++
+ src/ai_security/src/models.rs         | 651 ++++++++++++++++++++++++++
+ todo.md                               |  28 +-
+ 9 files changed, 3995 insertions(+), 13 deletions(-)
+ create mode 100644 src/ai_security/Cargo.toml
+ create mode 100644 src/ai_security/src/api_security.rs
+ create mode 100644 src/ai_security/src/data_security.rs
+ create mode 100644 src/ai_security/src/lib.rs
+ create mode 100644 src/ai_security/src/mlops_security.rs
+ create mode 100644 src/ai_security/src/model_security.rs
+ create mode 100644 src/ai_security/src/models.rs

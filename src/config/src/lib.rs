@@ -14,6 +14,8 @@ use std::fs;
 use notify::{Watcher, RecursiveMode, watcher, DebouncedEvent, RecommendedWatcher};
 use std::time::Duration;
 
+pub mod pqc_validator;
+
 /// Configuration Manager
 pub struct ConfigManager {
     config: Arc<RwLock<Config>>,
@@ -144,6 +146,56 @@ pub struct NetworkConfig {
     pub enable_rate_limiting: bool,
     /// Rate limit requests per minute
     pub rate_limit_rpm: u64,
+    
+    // PQC-specific fields
+    /// Enable Post-Quantum Cryptography
+    pub enable_pqc: bool,
+    /// PQC KEM algorithm (e.g., "CrystalsKyber768", "CrystalsKyber512", "CrystalsKyber1024")
+    pub pqc_kem_algorithm: Option<String>,
+    /// PQC signature algorithm (e.g., "CrystalsDilithium2", "CrystalsDilithium3", "CrystalsDilithium5")
+    pub pqc_signature_algorithm: Option<String>,
+    /// Enable hybrid mode (PQC + classical algorithms)
+    pub pqc_hybrid_mode: bool,
+    /// Allow fallback to classical algorithms if PQC fails
+    pub pqc_fallback_to_classical: bool,
+    /// PQC certificate path (Dilithium/FALCON certificates)
+    pub pqc_cert_path: Option<PathBuf>,
+    /// PQC private key path
+    pub pqc_key_path: Option<PathBuf>,
+    /// Minimum PQC security level (1-5)
+    pub pqc_min_security_level: u8,
+}
+
+/// PQC KEM Algorithm Types
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PqcKemAlgorithm {
+    /// CRYSTALS-Kyber 512 (NIST Level 1)
+    CrystalsKyber512,
+    /// CRYSTALS-Kyber 768 (NIST Level 3)
+    CrystalsKyber768,
+    /// CRYSTALS-Kyber 1024 (NIST Level 5)
+    CrystalsKyber1024,
+}
+
+/// PQC Signature Algorithm Types
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PqcSignatureAlgorithm {
+    /// CRYSTALS-Dilithium 2 (NIST Level 1)
+    CrystalsDilithium2,
+    /// CRYSTALS-Dilithium 3 (NIST Level 3)
+    CrystalsDilithium3,
+    /// CRYSTALS-Dilithium 5 (NIST Level 5)
+    CrystalsDilithium5,
+    /// FALCON 512 (NIST Level 1)
+    Falcon512,
+    /// FALCON 1024 (NIST Level 5)
+    Falcon1024,
+    /// SPHINCS+ SHA2 128f
+    SphincsPlusSha2128f,
+    /// SPHINCS+ SHA2 192f
+    SphincsPlusSha2192f,
+    /// SPHINCS+ SHA2 256f
+    SphincsPlusSha2256f,
 }
 
 /// Logging Configuration
@@ -592,6 +644,15 @@ impl Default for NetworkConfig {
             connection_timeout_secs: 30,
             enable_rate_limiting: true,
             rate_limit_rpm: 60,
+            // PQC defaults
+            enable_pqc: true,
+            pqc_kem_algorithm: Some("CrystalsKyber768".to_string()),
+            pqc_signature_algorithm: Some("CrystalsDilithium3".to_string()),
+            pqc_hybrid_mode: true,
+            pqc_fallback_to_classical: true,
+            pqc_cert_path: None,
+            pqc_key_path: None,
+            pqc_min_security_level: 3,
         }
     }
 }
@@ -646,6 +707,16 @@ pub fn init() -> Result<()> {
     info!("Configuration Module initialized");
     Ok(())
 }
+
+// Re-export PQC validator types
+pub use pqc_validator::{
+    PqcConfigValidator,
+    PqcValidationResult,
+    VALID_KEM_ALGORITHMS,
+    VALID_SIGNATURE_ALGORITHMS,
+    KEM_SECURITY_LEVELS,
+    SIGNATURE_SECURITY_LEVELS,
+};
 
 #[cfg(test)]
 mod tests {

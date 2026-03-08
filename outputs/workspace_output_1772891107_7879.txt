@@ -1,0 +1,7 @@
+From https://github.com/vantisCorp/V-Sentinel
+ * branch            feature/zero-trust-architecture -> FETCH_HEAD
+8c777d3 feat: Implement Zero Trust Architecture (Issue #8)
+644357f Merge pull request #16 from vantisCorp/feature/community-tooling
+0abecaf feat: Add community tooling (VS Code extension and CLI)
+e674d63 Merge pull request #15 from vantisCorp/feature/multi-language-sdks
+74d4f17 feat: Add multi-language SDKs (Python, Go, TypeScript) and IOC repository

@@ -1,0 +1,6 @@
+=== Check for garbage/temp files ===
+
+=== Check for node_modules or build artifacts ===
+
+=== Check for large files over 1MB ===
+./.git/objects/pack/pack-9ae1967bd648d5272a76e3be5a1528698ec5aa79.pack

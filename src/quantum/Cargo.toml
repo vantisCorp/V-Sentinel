@@ -14,3 +14,10 @@ tracing = { workspace = true }
 serde = { workspace = true }
 sha2 = "0.10"
 rand = { workspace = true }
+
+# Post-Quantum Cryptography (PQC) implementations
+pqc_kyber = "0.7"
+pqcrypto-dilithium = "0.5"
+pqcrypto-falcon = "0.5"
+pqcrypto-sphincsplus = "0.5"
+pqcrypto-traits = "0.3"

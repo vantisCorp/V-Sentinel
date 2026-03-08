@@ -1,0 +1,50 @@
+                    <div class="terminal-line" style="animation-delay: 1.1s;">
+                        <span class="terminal-output">✓ Activating threat detection...</span>
+                    </div>
+                    <div class="terminal-line" style="animation-delay: 1.3s;">
+                        <span class="terminal-success">🛡️ V-Sentinel Status: ACTIVE</span>
+                    </div>
+                    <div class="terminal-line" style="animation-delay: 1.5s;">
+                        <span class="terminal-success">✓ All systems operational</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section class="quickstart-section" id="quickstart">
+        <div class="container">
+            <h2 class="section-title">Quick Start</h2>
+            <p class="section-subtitle">
+                Get up and running in under 5 minutes
+            </p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-lang">bash</span>
+                    <button class="code-copy" onclick="copyCode()">Copy</button>
+                </div>
+                <div class="code-content">
+                    <code># Clone the repository
+git clone https://github.com/vantisCorp/V-Sentinel.git
+cd V-Sentinel
+
+# Install dependencies
+cargo build --release
+
+# Initialize security framework
+./target/release/vsentinel init
+
+# Start the security daemon
+./target/release/vsentinel start --daemon</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">V-Sentinel</div>
+            <div class="footer-links">
