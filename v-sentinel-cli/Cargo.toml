@@ -1,0 +1,29 @@
+[package]
+name = "v-sentinel"
+version = "2.1.1"
+edition = "2021"
+authors = ["V-Sentinel Team"]
+description = "AI-Powered Security Sentinel System CLI"
+license = "MIT"
+repository = "https://github.com/sndrsmnk/V-Sentinel"
+readme = "../README.md"
+keywords = ["security", "ai", "threat-detection", "cli"]
+categories = ["command-line-utilities", "security"]
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.4", features = ["derive", "color", "suggestions"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
