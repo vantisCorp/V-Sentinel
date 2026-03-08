@@ -30,10 +30,6 @@ members = [
 ]
 resolver = "2"
 
-[[bin]]
-name = "sentinel"
-path = "src/main.rs"
-
 [workspace.package]
 version = "2.1.0"
 edition = "2021"
@@ -63,7 +59,6 @@ chacha20poly1305 = "0.10"
 
 # AI/ML
 tch = "0.13"
-ndarray = "0.15"
 ndarray-rand = "0.14"
 rand = "0.8"
 
@@ -74,8 +69,6 @@ notify = "6.0"
 
 # Monitoring
 prometheus = "0.13"
-uuid = { version = "1.0", features = ["v4"] }
-ndarray = "0.15"
 candle-core = "0.3"
 candle-nn = "0.3"
 
@@ -114,10 +107,3 @@ panic = "abort"
 [profile.dev]
 opt-level = 0
 debug = true
-
-[dependencies]
-sentinel-core = { path = "src/core" }
-tokio = { workspace = true }
-anyhow = { workspace = true }
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
