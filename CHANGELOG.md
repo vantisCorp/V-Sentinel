@@ -5,11 +5,32 @@ March 8, 2025
 
 ## Overview
 
-V-Sentinel v2.1.2 introduces comprehensive GUI installers for all major platforms, making deployment and distribution significantly easier. Users can now download and install V-Sentinel with a familiar graphical interface instead of command-line scripts.
+V-Sentinel v2.1.2 introduces comprehensive GUI installers for all major platforms, making deployment and distribution significantly easier. Users can now download and install V-Sentinel with a familiar graphical interface instead of command-line scripts. This release also includes a new standalone CLI crate for reliable multi-platform builds.
 
 ---
 
 ## What's New
+
+### 💻 Standalone CLI Crate
+
+The new `v-sentinel-cli` crate provides a standalone command-line interface that builds independently from the main workspace:
+
+- **Commands available:**
+  - `start` - Start the V-Sentinel security agent
+  - `stop` - Stop the V-Sentinel security agent
+  - `status` - Show current status of V-Sentinel
+  - `scan` - Run a security scan
+  - `threat-intel` - Threat intelligence operations
+  - `deepfake` - Deepfake detection operations
+  - `shadow-ai` - Shadow AI detection operations
+  - `zero-trust` - Zero trust network operations
+  - `config` - Configuration management
+  - `version` - Version information
+
+- **Features:**
+  - Self-contained binary (1.4MB)
+  - Cross-platform support (Linux, Windows, macOS)
+  - Clap-based CLI with help and completion support
 
 ### 🖥️ GUI Installers
 
