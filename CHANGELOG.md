@@ -1,3 +1,72 @@
+# V-Sentinel Security System v2.1.2 - Release Notes
+
+## Release Date
+March 8, 2025
+
+## Overview
+
+V-Sentinel v2.1.2 introduces comprehensive GUI installers for all major platforms, making deployment and distribution significantly easier. Users can now download and install V-Sentinel with a familiar graphical interface instead of command-line scripts.
+
+---
+
+## What's New
+
+### 🖥️ GUI Installers
+
+#### Windows Installer (NSIS)
+- Professional setup wizard with component selection
+- Multi-language support (English, Polish, German, French, Spanish, Russian, Chinese, Japanese, Korean)
+- Component selection:
+  - Core Engine (required)
+  - Security Modules (Zero Trust, Shadow AI Detection, Deepfake Detection)
+  - Post-Quantum Cryptography module
+  - SDK files for integrations
+  - Windows Service installation
+- Start Menu and Desktop shortcuts
+- Automatic uninstaller
+- Windows Service integration
+
+#### Linux AppImage
+- Portable executable (no installation required)
+- Works on all major Linux distributions
+- Desktop integration support
+- AppStream metadata for software centers
+
+#### macOS DMG
+- Drag-and-drop installation
+- Apple Silicon and Intel support
+- Code signing support
+- Notarization-ready
+
+### 📚 Documentation
+- Comprehensive installer documentation
+- CI/CD integration examples (GitHub Actions)
+- Platform-specific build instructions
+
+---
+
+## Installation
+
+### Windows
+```cmd
+Download V-Sentinel-2.1.2-Setup.exe
+Run the installer and follow the wizard
+```
+
+### Linux
+```bash
+chmod +x V-Sentinel-2.1.2-x86_64.AppImage
+./V-Sentinel-2.1.2-x86_64.AppImage
+```
+
+### macOS
+```bash
+Open V-Sentinel-2.1.2.dmg
+Drag V-Sentinel.app to Applications
+```
+
+---
+
 # SENTINEL Security System v1.1.0 - Release Notes
 
 ## Release Date
