@@ -16,10 +16,10 @@ env:
 
 jobs:
   # ============================================================================
-  # Build Release Artifacts
+  # Build CLI Release Artifacts
   # ============================================================================
-  build:
-    name: Build ${{ matrix.target }}
+  build-cli:
+    name: Build CLI ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -47,27 +47,192 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Build release
+        working-directory: v-sentinel-cli
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package (Linux/macOS)
         if: matrix.archive == 'tar.gz'
+        working-directory: v-sentinel-cli/target/${{ matrix.target }}/release
         run: |
-          cd target/${{ matrix.target }}/release
-          tar czf vsentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz sentinel
-          mv vsentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz ${{ github.workspace }}/
+          tar czf v-sentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz v-sentinel
+          mv v-sentinel-${{ github.ref_name }}-${{ matrix.target }}.tar.gz ${{ github.workspace }}/
 
       - name: Package (Windows)
         if: matrix.archive == 'zip'
+        working-directory: v-sentinel-cli/target/${{ matrix.target }}/release
         run: |
-          cd target/${{ matrix.target }}/release
-          7z a vsentinel-${{ github.ref_name }}-${{ matrix.target }}.zip sentinel.exe
-          mv vsentinel-${{ github.ref_name }}-${{ matrix.target }}.zip ${{ github.workspace }}/
+          7z a v-sentinel-${{ github.ref_name }}-${{ matrix.target }}.zip v-sentinel.exe
+          mv v-sentinel-${{ github.ref_name }}-${{ matrix.target }}.zip ${{ github.workspace }}/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: vsentinel-${{ matrix.target }}
-          path: vsentinel-${{ github.ref_name }}-${{ matrix.target }}.*
+          name: v-sentinel-${{ matrix.target }}
+          path: v-sentinel-${{ github.ref_name }}-${{ matrix.target }}.*
+
+  # ============================================================================
+  # Build Windows Installer (NSIS)
+  # ============================================================================
+  build-windows-installer:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    needs: build-cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Windows CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: v-sentinel-x86_64-pc-windows-msvc
+          path: installer/windows/bin
+
+      - name: Extract CLI binary
+        working-directory: installer/windows/bin
+        run: |
+          7z x v-sentinel-*.zip
+          mv v-sentinel.exe V-Sentinel.exe
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build Installer
+        working-directory: installer/windows
+        run: |
+          makensis v-sentinel-installer.nsi
+          mv V-Sentinel-Setup.exe ${{ github.workspace }}/V-Sentinel-${{ github.ref_name }}-windows-x86_64-setup.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v-sentinel-windows-installer
+          path: V-Sentinel-${{ github.ref_name }}-windows-x86_64-setup.exe
+
+  # ============================================================================
+  # Build Linux AppImage
+  # ============================================================================
+  build-linux-appimage:
+    name: Build Linux AppImage
+    runs-on: ubuntu-latest
+    needs: build-cli
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Linux CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: v-sentinel-x86_64-unknown-linux-gnu
+          path: build
+
+      - name: Extract CLI binary
+        working-directory: build
+        run: |
+          tar xzf v-sentinel-*.tar.gz
+          chmod +x v-sentinel
+
+      - name: Install appimagetool
+        run: |
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool
+
+      - name: Build AppImage
+        working-directory: installer/linux
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          # Create AppDir structure
+          mkdir -p AppDir/usr/bin
+          cp ../../build/v-sentinel AppDir/usr/bin/V-Sentinel
+          chmod +x AppDir/usr/bin/V-Sentinel
+          
+          # Create desktop file
+          cat > AppDir/v-sentinel.desktop << 'EOF'
+          [Desktop Entry]
+          Name=V-Sentinel
+          Exec=v-sentinel
+          Icon=v-sentinel
+          Type=Application
+          Categories=Security;System;
+          Comment=AI-Powered Security Sentinel
+          Terminal=true
+          EOF
+          
+          # Create AppRun
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          exec "${HERE}/usr/bin/V-Sentinel" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+          
+          # Build AppImage
+          ARCH=x86_64 appimagetool AppDir V-Sentinel-${{ github.ref_name }}-x86_64.AppImage
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v-sentinel-linux-appimage
+          path: installer/linux/V-Sentinel-${{ github.ref_name }}-x86_64.AppImage
+
+  # ============================================================================
+  # Build macOS DMG
+  # ============================================================================
+  build-macos-dmg:
+    name: Build macOS DMG
+    runs-on: macos-latest
+    needs: build-cli
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            arch: intel
+          - target: aarch64-apple-darwin
+            arch: apple-silicon
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download macOS CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: v-sentinel-${{ matrix.target }}
+          path: build
+
+      - name: Extract CLI binary
+        working-directory: build
+        run: |
+          tar xzf v-sentinel-*.tar.gz
+          chmod +x v-sentinel
+
+      - name: Build DMG
+        working-directory: installer/macos
+        env:
+          VERSION: ${{ github.ref_name }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          # Create DMG contents
+          mkdir -p dmg_contents
+          cp ../../build/v-sentinel dmg_contents/V-Sentinel
+          chmod +x dmg_contents/V-Sentinel
+          
+          # Create Applications symlink
+          ln -s /Applications dmg_contents/Applications
+          
+          # Create DMG
+          hdiutil create -volname "V-Sentinel" -srcfolder dmg_contents -ov -format UDZO \
+            V-Sentinel-${{ github.ref_name }}-${{ matrix.arch }}.dmg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v-sentinel-macos-${{ matrix.arch }}-dmg
+          path: installer/macos/V-Sentinel-${{ github.ref_name }}-${{ matrix.arch }}.dmg
 
   # ============================================================================
   # Create Release
@@ -75,16 +240,21 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build-cli, build-windows-installer, build-linux-appimage, build-macos-dmg]
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release_files
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" -o -name "*.exe" -o -name "*.AppImage" -o -name "*.dmg" \) -exec mv {} release_files/ \;
 
       - name: Generate changelog
         id: changelog
@@ -100,42 +270,69 @@ jobs:
             git log --pretty=format:"- %s (%h)" -20 > CHANGELOG.md
           fi
           
-          # Prepend title
-          echo "# V-Sentinel ${{ github.ref_name }}" > RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## 🛡️ What's New" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
+          # Build release notes
+          cat > RELEASE_NOTES.md << 'EOF'
+          # V-Sentinel ${{ github.ref_name }}
+
+          ## 🛡️ What's New
+
+          EOF
           cat CHANGELOG.md >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## 📦 Downloads" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "| Platform | Architecture | Download |" >> RELEASE_NOTES.md
-          echo "|----------|-------------|----------|" >> RELEASE_NOTES.md
-          echo "| Linux | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz |" >> RELEASE_NOTES.md
-          echo "| Windows | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-pc-windows-msvc.zip |" >> RELEASE_NOTES.md
-          echo "| macOS | x86_64 | vsentinel-${{ github.ref_name }}-x86_64-apple-darwin.tar.gz |" >> RELEASE_NOTES.md
-          echo "| macOS | Apple Silicon | vsentinel-${{ github.ref_name }}-aarch64-apple-darwin.tar.gz |" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## 🚀 Features" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "- ⚛️ Post-Quantum Cryptography (Crystals-Kyber, Crystals-Dilithium)" >> RELEASE_NOTES.md
-          echo "- 🧠 AI-Native Threat Detection (Deep Learning, Federated Learning)" >> RELEASE_NOTES.md
-          echo "- 🔐 Privacy-Preserving Technologies (Zero-Knowledge Proofs, Differential Privacy)" >> RELEASE_NOTES.md
-          echo "- 👆 Multi-Modal Biometrics (Fingerprint, Facial, Voice, Behavioral)" >> RELEASE_NOTES.md
-          echo "- 🤖 Autonomous Security Agents" >> RELEASE_NOTES.md
-          echo "- 🌐 Metaverse Security (VR/AR Protection)" >> RELEASE_NOTES.md
-          echo "- ⛓️ Blockchain-Based Threat Reputation" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## 📋 Requirements" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "- Rust 1.70+ (for building from source)" >> RELEASE_NOTES.md
-          echo "- OpenSSL 3.0+" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "## 📚 Documentation" >> RELEASE_NOTES.md
-          echo "" >> RELEASE_NOTES.md
-          echo "- [Developer Guide](https://github.com/vantisCorp/V-Sentinel/blob/main/docs/DEVELOPER_GUIDE.md)" >> RELEASE_NOTES.md
-          echo "- [API Documentation](https://vsentinel.com/docs)" >> RELEASE_NOTES.md
-          echo "- [Architecture](https://github.com/vantisCorp/V-Sentinel/blob/main/docs/architecture.html)" >> RELEASE_NOTES.md
+          cat >> RELEASE_NOTES.md << 'EOF'
+
+          ## 📦 Downloads
+
+          ### CLI Binaries
+          | Platform | Architecture | Download |
+          |----------|-------------|----------|
+          | Linux | x86_64 | v-sentinel-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz |
+          | Windows | x86_64 | v-sentinel-${{ github.ref_name }}-x86_64-pc-windows-msvc.zip |
+          | macOS | Intel | v-sentinel-${{ github.ref_name }}-x86_64-apple-darwin.tar.gz |
+          | macOS | Apple Silicon | v-sentinel-${{ github.ref_name }}-aarch64-apple-darwin.tar.gz |
+
+          ### GUI Installers
+          | Platform | Architecture | Download |
+          |----------|-------------|----------|
+          | Windows | x86_64 | V-Sentinel-${{ github.ref_name }}-windows-x86_64-setup.exe |
+          | Linux | x86_64 | V-Sentinel-${{ github.ref_name }}-x86_64.AppImage |
+          | macOS | Intel | V-Sentinel-${{ github.ref_name }}-intel.dmg |
+          | macOS | Apple Silicon | V-Sentinel-${{ github.ref_name }}-apple-silicon.dmg |
+
+          ## 🚀 Features
+
+          - ⚛️ Post-Quantum Cryptography (Crystals-Kyber, Crystals-Dilithium)
+          - 🧠 AI-Native Threat Detection (Deep Learning, Federated Learning)
+          - 🔐 Privacy-Preserving Technologies (Zero-Knowledge Proofs, Differential Privacy)
+          - 👆 Multi-Modal Biometrics (Fingerprint, Facial, Voice, Behavioral)
+          - 🤖 Autonomous Security Agents
+          - 🌐 Metaverse Security (VR/AR Protection)
+          - ⛓️ Blockchain-Based Threat Reputation
+
+          ## 📋 Requirements
+
+          - Windows 10/11 (for Windows installer)
+          - Linux x86_64 with glibc 2.31+ (for Linux)
+          - macOS 11+ (Big Sur) for Intel, macOS 12+ (Monterey) for Apple Silicon
+
+          ## 📚 Documentation
+
+          - [Installation Guide](https://github.com/sndrsmnk/V-Sentinel/blob/main/INSTALL.md)
+          - [Developer Guide](https://github.com/sndrsmnk/V-Sentinel/blob/main/docs/DEVELOPER_GUIDE.md)
+
+          ## 🔧 Installation
+
+          ### Windows
+          Download the `.exe` installer and run it. Follow the installation wizard.
+
+          ### Linux
+          ```bash
+          chmod +x V-Sentinel-*.AppImage
+          ./V-Sentinel-*.AppImage
+          ```
+
+          ### macOS
+          Open the `.dmg` file and drag V-Sentinel to Applications.
+          EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -143,28 +340,9 @@ jobs:
           body_path: RELEASE_NOTES.md
           draft: false
           prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
-          files: artifacts/**/*
+          files: release_files/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # ============================================================================
-  # Publish to Crates.io
-  # ============================================================================
-  publish-crates:
-    name: Publish to Crates.io
-    runs-on: ubuntu-latest
-    needs: release
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Publish to crates.io
-        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
-        continue-on-error: true
 
   # ============================================================================
   # Notify Discord
@@ -185,7 +363,7 @@ jobs:
             
             Version: ${{ github.ref_name }}
             
-            📦 Download: https://github.com/vantisCorp/V-Sentinel/releases/tag/${{ github.ref_name }}
+            📦 Download: https://github.com/sndrsmnk/V-Sentinel/releases/tag/${{ github.ref_name }}
             
             🛡️ Features:
             • Post-Quantum Cryptography
@@ -194,3 +372,5 @@ jobs:
             • Multi-Modal Biometrics
             • Autonomous Security Agents
             • Metaverse Security
+            
+            💻 Installers available for Windows, Linux, and macOS!
