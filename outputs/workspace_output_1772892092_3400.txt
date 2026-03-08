@@ -1,0 +1,2 @@
+To https://github.com/vantisCorp/V-Sentinel.git
+ + 8a97ce9...1e8b94c feature/shadow-ai-detection -> feature/shadow-ai-detection (forced update)

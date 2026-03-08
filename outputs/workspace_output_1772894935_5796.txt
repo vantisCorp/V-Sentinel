@@ -1,0 +1,40 @@
+=== Main quantum lib.rs line count ===
+650 src/quantum/src/lib.rs
+
+=== PR #10 quantum lib.rs line count ===
+702
+
+=== PR #10 quantum config.rs line count ===
+335
+
+=== Compare first 30 lines of main lib.rs ===
+//! SENTINEL Quantum Cryptography Module
+//! 
+//! This module provides quantum-resistant cryptographic algorithms
+//! including post-quantum KEM, signatures, and hybrid cryptography.
+
+use anyhow::{Result, anyhow};
+use tracing::{info, debug, warn, error};
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use serde::{Serialize, Deserialize};
+use sha2::{Sha256, Sha512, Digest};
+use rand::{RngCore, rngs::OsRng};
+
+/// Quantum Cryptography Manager
+pub struct QuantumCryptoManager {
+    kem: Arc<RwLock<Option<Box<dyn KEM>>>>,
+    signature: Arc<RwLock<Option<Box<dyn Signature>>>>,
+    hybrid: Arc<RwLock<Option<HybridCrypto>>>>,
+    statistics: Arc<RwLock<CryptoStatistics>>,
+}
+
+/// Key Encapsulation Mechanism trait
+pub trait KEM: Send + Sync {
+    fn keypair(&self) -> Result<(Keypair, KemAlgorithm)>;
+    fn encapsulate(&self, public_key: &[u8]) -> Result<(Vec<u8>, Vec<u8>)>;
+    fn decapsulate(&self, private_key: &[u8], ciphertext: &[u8]) -> Result<Vec<u8>>;
+    fn algorithm(&self) -> KemAlgorithm;
+}
+
+/// Signature trait

@@ -1,0 +1,15 @@
+# V-Sentinel - Tworzenie Instalatora i Release
+
+## Instalator
+- [ ] Utworzyć skrypt instalacyjny (install.sh)
+- [ ] Utworzyć skrypt instalacyjny Windows (install.ps1)
+- [ ] Utworzyć plik konfiguracyjny instalatora
+- [ ] Dodać dokumentację instalacji
+
+## Build
+- [ ] Zweryfikować budowę projektu
+- [ ] Przygotować binaria
+
+## Release
+- [ ] Zaktualizować CHANGELOG
+- [ ] Utworzyć nowy release v2.1.1 z instalatorem

@@ -1,0 +1,9 @@
+[feature/deepfake-detection-v2 76e45b1] feat(deepfake): Implement Deepfake Detection and Content Authentication module
+ 9 files changed, 3095 insertions(+), 13 deletions(-)
+ create mode 100644 src/deepfake/Cargo.toml
+ create mode 100644 src/deepfake/src/analysis.rs
+ create mode 100644 src/deepfake/src/authentication.rs
+ create mode 100644 src/deepfake/src/detection.rs
+ create mode 100644 src/deepfake/src/lib.rs
+ create mode 100644 src/deepfake/src/models.rs
+ create mode 100644 src/deepfake/src/threat_intel.rs

@@ -1,0 +1,4 @@
+=== Check core Cargo.toml ===
+
+=== Check if there's a root package ===
+No package section in root Cargo.toml (workspace only)

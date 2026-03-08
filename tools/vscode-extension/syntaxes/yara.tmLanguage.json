@@ -1,0 +1,253 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "YARA",
+  "scopeName": "source.yara",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#rule"
+    },
+    {
+      "include": "#import"
+    },
+    {
+      "include": "#strings"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "match": "//.*$",
+          "name": "comment.line.double-slash.yara"
+        },
+        {
+          "begin": "/\\*",
+          "end": "\\*/",
+          "name": "comment.block.yara"
+        }
+      ]
+    },
+    "rule": {
+      "begin": "\\b(rule)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.yara"
+        },
+        "2": {
+          "name": "entity.name.function.yara"
+        }
+      },
+      "end": "\\}",
+      "patterns": [
+        {
+          "match": "\\b(global|private)\\b",
+          "name": "storage.modifier.yara"
+        },
+        {
+          "include": "#meta"
+        },
+        {
+          "include": "#strings-section"
+        },
+        {
+          "include": "#condition"
+        }
+      ]
+    },
+    "meta": {
+      "begin": "\\b(meta)\\s*:",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.yara"
+        }
+      },
+      "end": "(?=strings|condition|\\})",
+      "patterns": [
+        {
+          "match": "([a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*(.+?)$",
+          "captures": {
+            "1": {
+              "name": "variable.parameter.yara"
+            },
+            "2": {
+              "patterns": [
+                {
+                  "include": "#string"
+                },
+                {
+                  "include": "#number"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "strings-section": {
+      "begin": "\\b(strings)\\s*:",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.yara"
+        }
+      },
+      "end": "(?=condition|\\})",
+      "patterns": [
+        {
+          "include": "#string-definitions"
+        }
+      ]
+    },
+    "string-definitions": {
+      "patterns": [
+        {
+          "match": "(\\$[a-zA-Z_][a-zA-Z0-9_]*)\\s*=\\s*",
+          "captures": {
+            "1": {
+              "name": "variable.other.yara"
+            }
+          }
+        },
+        {
+          "include": "#text-string"
+        },
+        {
+          "include": "#hex-string"
+        },
+        {
+          "include": "#regex-string"
+        }
+      ]
+    },
+    "text-string": {
+      "begin": "&quot;",
+      "end": "&quot;",
+      "name": "string.quoted.double.yara",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.yara"
+        }
+      ]
+    },
+    "hex-string": {
+      "begin": "\\{",
+      "end": "\\}",
+      "name": "string.unquoted.hex.yara",
+      "patterns": [
+        {
+          "match": "[0-9a-fA-F]{2}",
+          "name": "constant.numeric.hex.yara"
+        },
+        {
+          "match": "\\?",
+          "name": "constant.character.wildcard.yara"
+        },
+        {
+          "match": "\\[([0-9]+(-[0-9]+)?)?\\]",
+          "name": "constant.character.jump.yara"
+        },
+        {
+          "match": "\\|",
+          "name": "keyword.operator.alternation.yara"
+        }
+      ]
+    },
+    "regex-string": {
+      "begin": "/",
+      "end": "/",
+      "name": "string.regexp.yara",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.yara"
+        }
+      ]
+    },
+    "condition": {
+      "begin": "\\b(condition)\\s*:",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.other.yara"
+        }
+      },
+      "end": "(?=\\})",
+      "patterns": [
+        {
+          "include": "#condition-expr"
+        }
+      ]
+    },
+    "condition-expr": {
+      "patterns": [
+        {
+          "match": "\\b(and|or|not)\\b",
+          "name": "keyword.operator.logical.yara"
+        },
+        {
+          "match": "\\b(any|all|them)\\b",
+          "name": "keyword.other.quantifier.yara"
+        },
+        {
+          "match": "(==|!=|<|>|<=|>=)",
+          "name": "keyword.operator.comparison.yara"
+        },
+        {
+          "match": "\\b(contains|matches|icontains|startswith|endswith)\\b",
+          "name": "keyword.operator.string.yara"
+        },
+        {
+          "match": "\\b(for|of)\\b",
+          "name": "keyword.control.yara"
+        },
+        {
+          "match": "\\b(true|false)\\b",
+          "name": "constant.language.yara"
+        },
+        {
+          "match": "\\b(entrypoint|filesize)\\b",
+          "name": "support.variable.yara"
+        },
+        {
+          "match": "\\b(int8|int16|int32|uint8|uint16|uint32|int8be|int16be|int32be|uint8be|uint16be|uint32be)\\b",
+          "name": "support.function.yara"
+        },
+        {
+          "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*",
+          "name": "variable.other.yara"
+        },
+        {
+          "include": "#number"
+        }
+      ]
+    },
+    "import": {
+      "match": "\\b(import)\\s+&quot;([^&quot;]+)&quot;",
+      "captures": {
+        "1": {
+          "name": "keyword.other.yara"
+        },
+        "2": {
+          "name": "string.quoted.double.yara"
+        }
+      }
+    },
+    "number": {
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b",
+      "name": "constant.numeric.yara"
+    },
+    "string": {
+      "begin": "&quot;",
+      "end": "&quot;",
+      "name": "string.quoted.double.yara",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.yara"
+        }
+      ]
+    }
+  }
+}

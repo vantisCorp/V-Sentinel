@@ -1,0 +1,23 @@
+=== 10. DOKUMENTACJA ===
+-rw-r--r-- 1 root root 10636 Mar  7 14:52 CHANGELOG.md
+-rw-r--r-- 1 root root  7674 Mar  6 16:58 CONTRIBUTING.md
+-rw-r--r-- 1 root root 12692 Mar  7 14:51 README.md
+-rw-r--r-- 1 root root 10011 Mar  6 16:58 README_DE.md
+-rw-r--r-- 1 root root  9672 Mar  6 16:58 README_EN.md
+-rw-r--r-- 1 root root 14730 Mar  6 16:58 README_ES.md
+-rw-r--r-- 1 root root 14979 Mar  6 16:58 README_FR.md
+-rw-r--r-- 1 root root 14432 Mar  6 16:58 README_KO.md
+-rw-r--r-- 1 root root 18417 Mar  6 16:58 README_RU.md
+-rw-r--r-- 1 root root  9307 Mar  6 16:58 README_ZH.md
+-rw-r--r-- 1 root root  3123 Mar  7 14:37 todo.md
+
+=== 11. PLIKI ŚMIECI ===
+
+=== 12. WERSJE W PLIKACH ===
+version = "2.1.0"
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+uuid = { version = "1.0", features = ["v4"] }
+reqwest = { version = "0.11", features = ["json"] }
+
+![Version](https://img.shields.io/badge/version-2.1.0-red?style=for-the-badge&logo=github&logoColor=black)

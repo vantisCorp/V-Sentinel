@@ -1,32 +1,25 @@
 [package]
 name = "sentinel-zero-trust"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-description = "SENTINEL Zero Trust Architecture implementation"
+version = "0.1.0"
+edition = "2021"
+description = "Zero Trust Architecture implementation for V-Sentinel"
+authors = ["Vantis Corporation"]
+license = "MIT"
 
 [dependencies]
-tokio = { workspace = true }
 anyhow = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
+tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-chrono = { workspace = true }
-uuid = { workspace = true }
-regex = "1.10"
-async-trait = { workspace = true }
-
-# Cryptography
-ring = { workspace = true }
+tracing = { workspace = true }
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
 sha2 = "0.10"
-base64 = "0.22"
+base64 = "0.21"
+jsonwebtoken = "9.0"
 rand = "0.8"
-
-# Security
-sentinel-security = { path = "../security" }
+thiserror = "1.0"
 
 [dev-dependencies]
 tokio-test = "0.4"

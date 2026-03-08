@@ -1,0 +1,60 @@
+# V-Sentinel Dual License
+
+Copyright (c) 2026 VantisCorp
+
+## Open Source License (AGPL-3.0)
+
+For open source use, this software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+### AGPL-3.0 Key Requirements:
+- Source code must be made available when the software is used over a network
+- Modifications must be released under the same license
+- A copy of the license and copyright notice must be included
+- Changes to the source code must be documented
+
+---
+
+## Commercial License
+
+For commercial use, including but not limited to:
+- Integration into proprietary software
+- Use in products without disclosing source code
+- Custom modifications without sharing changes
+- Enterprise deployment with dedicated support
+
+Please contact VantisCorp for commercial licensing options:
+
+**Email:** licensing@vantiscorp.com  
+**Website:** https://vantiscorp.com/licensing
+
+### Commercial License Benefits:
+- No obligation to disclose source code
+- Priority support and maintenance
+- Custom feature development
+- SLA guarantees
+- Indemnification provisions
+
+---
+
+## License Selection
+
+When using V-Sentinel:
+1. **Open Source Projects**: Use under AGPL-3.0 terms
+2. **Commercial/Proprietary Projects**: Purchase a commercial license
+3. **Enterprise Deployments**: Contact us for enterprise licensing
+
+## Third-Party Components
+
+This software includes third-party components with their own licenses. See THIRD_PARTY_LICENSES file for details.
+
+---
+
+For questions about licensing, please contact:
+- Email: legal@vantiscorp.com
+- GitHub: https://github.com/vantisCorp/V-Sentinel/issues

@@ -1,0 +1,7 @@
+From https://github.com/vantisCorp/V-Sentinel
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	todo.md
+Please commit your changes or stash them before you merge.
+Aborting
+Merge with strategy ort failed.

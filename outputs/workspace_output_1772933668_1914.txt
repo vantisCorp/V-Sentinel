@@ -1,0 +1,19 @@
+[feature/ai-security-protection 03b5066] docs: Update CHANGELOG with GUI installer release v2.1.2
+ Committer: root <root@172.30.90.152>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 69 insertions(+)
+03b5066 docs: Update CHANGELOG with GUI installer release v2.1.2
+2319da3 feat: Add GUI installers for Windows, Linux, and macOS
+7e2e502 feat: Add advanced sections to Netflix-style README
+1b4991e feat: Create ultra-premium elegant README with Netflix-style design
+a9b22b4 chore: Final cleanup of temporary workspace files

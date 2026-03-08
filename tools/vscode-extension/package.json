@@ -1,0 +1,226 @@
+{
+  "name": "vsentinel",
+  "displayName": "V-Sentinel Security",
+  "description": "VS Code extension for V-Sentinel threat intelligence and security operations",
+  "version": "1.0.0",
+  "publisher": "vantis-ai",
+  "license": "BSD-2-Clause",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "threat intelligence",
+    "IOC",
+    "malware",
+    "cybersecurity",
+    "V-Sentinel"
+  ],
+  "activationEvents": [
+    "onCommand:vsentinel.lookupIOC",
+    "onCommand:vsentinel.scanFile",
+    "onView:vsentinelExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vsentinel.lookupIOC",
+        "title": "V-Sentinel: Lookup IOC",
+        "icon": "$(search)"
+      },
+      {
+        "command": "vsentinel.scanFile",
+        "title": "V-Sentinel: Scan File for IOCs",
+        "icon": "$(file-search)"
+      },
+      {
+        "command": "vsentinel.addIOC",
+        "title": "V-Sentinel: Add IOC to Repository",
+        "icon": "$(add)"
+      },
+      {
+        "command": "vsentinel.refreshExplorer",
+        "title": "V-Sentinel: Refresh Explorer",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "vsentinel.checkHash",
+        "title": "V-Sentinel: Check File Hash",
+        "icon": "$(fingerprint)"
+      },
+      {
+        "command": "vsentinel.searchThreatActor",
+        "title": "V-Sentinel: Search Threat Actor",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "vsentinel.getMITRETechniques",
+        "title": "V-Sentinel: Get MITRE ATT&CK Techniques",
+        "icon": "$(list-tree)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vsentinel",
+          "title": "V-Sentinel",
+          "icon": "resources/shield.svg"
+        }
+      ]
+    },
+    "views": {
+      "vsentinel": [
+        {
+          "id": "vsentinelExplorer",
+          "name": "Threat Intelligence"
+        },
+        {
+          "id": "vsentinelIOCs",
+          "name": "Recent IOCs"
+        },
+        {
+          "id": "vsentinelDetections",
+          "name": "Active Detections"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vsentinel.lookupIOC",
+          "when": "editorHasSelection",
+          "group": "vsentinel@1"
+        },
+        {
+          "command": "vsentinel.scanFile",
+          "when": "editorTextFocus",
+          "group": "vsentinel@2"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "vsentinel.scanFile",
+          "group": "vsentinel@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "V-Sentinel",
+      "properties": {
+        "vsentinel.apiUrl": {
+          "type": "string",
+          "default": "https://api.vantis.ai/v1",
+          "description": "V-Sentinel API base URL"
+        },
+        "vsentinel.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "V-Sentinel API key for authentication"
+        },
+        "vsentinel.autoScan": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically scan files for IOCs when opened"
+        },
+        "vsentinel.highlightIOCs": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight detected IOCs in the editor"
+        },
+        "vsentinel.iocColors": {
+          "type": "object",
+          "default": {
+            "ip": "#ff6b6b",
+            "domain": "#4ecdc4",
+            "url": "#ffe66d",
+            "hash": "#95e1d3",
+            "email": "#dfe6e9"
+          },
+          "description": "Colors for different IOC types"
+        },
+        "vsentinel.maxResults": {
+          "type": "number",
+          "default": 100,
+          "description": "Maximum number of results to display"
+        },
+        "vsentinel.timeout": {
+          "type": "number",
+          "default": 30,
+          "description": "API request timeout in seconds"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "ioc-json",
+        "aliases": ["IOC JSON", "ioc-json"],
+        "extensions": [".ioc.json", ".ioc"],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "yara",
+        "aliases": ["YARA", "yara"],
+        "extensions": [".yar", ".yara"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ioc-json",
+        "scopeName": "source.iocjson",
+        "path": "./syntaxes/ioc-json.tmLanguage.json"
+      },
+      {
+        "language": "yara",
+        "scopeName": "source.yara",
+        "path": "./syntaxes/yara.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ioc-json",
+        "path": "./snippets/ioc-snippets.json"
+      },
+      {
+        "language": "yara",
+        "path": "./snippets/yara-snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vantis-ai/v-sentinel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vantis-ai/v-sentinel/issues"
+  },
+  "homepage": "https://github.com/vantis-ai/v-sentinel#readme"
+}

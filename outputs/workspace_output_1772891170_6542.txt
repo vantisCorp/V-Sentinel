@@ -1,0 +1,8 @@
+On branch feature/zero-trust-architecture
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   pr_body.md
+
+Dropped refs/stash@{0} (2060ead9ccd012e90d23eedea22b7f3510e7fc86)
+a pull request for branch "feature/zero-trust-architecture" into branch "main" already exists:
+https://github.com/vantisCorp/V-Sentinel/pull/11

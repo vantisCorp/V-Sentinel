@@ -1,0 +1,24 @@
+From https://github.com/vantisCorp/V-Sentinel
+ * branch            main       -> FETCH_HEAD
+   644357f..bf50fa5  main       -> origin/main
+Updating 644357f..bf50fa5
+Fast-forward
+ Cargo.toml                         |   1 +
+ src/zero_trust/Cargo.toml          |  25 ++
+ src/zero_trust/src/auth.rs         | 674 ++++++++++++++++++++++++++++++++++
+ src/zero_trust/src/enforcement.rs  | 479 ++++++++++++++++++++++++
+ src/zero_trust/src/identity.rs     | 643 ++++++++++++++++++++++++++++++++
+ src/zero_trust/src/lib.rs          | 516 ++++++++++++++++++++++++++
+ src/zero_trust/src/policy.rs       | 727 +++++++++++++++++++++++++++++++++++++
+ src/zero_trust/src/segmentation.rs | 627 ++++++++++++++++++++++++++++++++
+ src/zero_trust/src/trust.rs        | 609 +++++++++++++++++++++++++++++++
+ todo.md                            |  75 ++--
+ 10 files changed, 4349 insertions(+), 27 deletions(-)
+ create mode 100644 src/zero_trust/Cargo.toml
+ create mode 100644 src/zero_trust/src/auth.rs
+ create mode 100644 src/zero_trust/src/enforcement.rs
+ create mode 100644 src/zero_trust/src/identity.rs
+ create mode 100644 src/zero_trust/src/lib.rs
+ create mode 100644 src/zero_trust/src/policy.rs
+ create mode 100644 src/zero_trust/src/segmentation.rs
+ create mode 100644 src/zero_trust/src/trust.rs

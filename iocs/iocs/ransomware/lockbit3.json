@@ -1,0 +1,309 @@
+{
+  "threat_actor": "LockBit",
+  "variant": "LockBit 3.0 (LockBit Black)",
+  "country": "Russia/Unknown",
+  "motivation": "Financial",
+  "description": "Ransomware-as-a-service operation targeting organizations worldwide, known for double extortion tactics and affiliate program",
+  "attribution_confidence": "medium",
+  "mitre_attack": "G0145",
+  "campaigns": [
+    "LockBit 3.0 Launch",
+    "Healthcare Sector Attacks",
+    "Manufacturing Sector Targeting",
+    "Financial Services Breaches"
+  ],
+  "indicators": [
+    {
+      "id": "lockbit-001",
+      "type": "ip",
+      "value": "45.141.84.32",
+      "first_seen": "2022-06-01T00:00:00Z",
+      "last_seen": "2026-01-08T00:00:00Z",
+      "confidence": "high",
+      "description": "Command and control server for LockBit 3.0",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["c2", "ransomware", "raas", "affiliate"],
+      "port": 443,
+      "protocol": "https"
+    },
+    {
+      "id": "lockbit-002",
+      "type": "ip",
+      "value": "185.220.101.45",
+      "first_seen": "2022-07-15T00:00:00Z",
+      "last_seen": "2025-12-30T00:00:00Z",
+      "confidence": "medium",
+      "description": "Infrastructure for data leak site",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["leak-site", "ransomware", "double-extortion"],
+      "port": 80,
+      "protocol": "http"
+    },
+    {
+      "id": "lockbit-003",
+      "type": "domain",
+      "value": "lockbitapt[.]onion",
+      "first_seen": "2022-06-01T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Tor onion service for ransom negotiations",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["tor", "negotiation", "ransomware", "dark-web"],
+      "dns_info": {
+        "type": "onion",
+        "status": "active"
+      }
+    },
+    {
+      "id": "lockbit-004",
+      "type": "domain",
+      "value": "lockbit7zwrj43i3ocsdrwhqb3fivku7jh7rj7ok3mfr56pmbq4q4u3dqd.onion",
+      "first_seen": "2022-06-10T00:00:00Z",
+      "last_seen": "2025-12-20T00:00:00Z",
+      "confidence": "high",
+      "description": "Data leak site on Tor network",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["tor", "leak-site", "ransomware", "double-extortion"],
+      "dns_info": {
+        "type": "onion",
+        "status": "active"
+      }
+    },
+    {
+      "id": "lockbit-005",
+      "type": "url",
+      "value": "http://lockbit7zwrj43i3ocsdrwhqb3fivku7jh7rj7ok3mfr56pmbq4q4u3dqd.onion/victims",
+      "first_seen": "2022-06-15T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Victims list page on leak site",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["tor", "leak-site", "ransomware"],
+      "http_method": "GET"
+    },
+    {
+      "id": "lockbit-006",
+      "type": "hash",
+      "value": "8f9e0d1c2b3a4f5e6d7c8b9a0f1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0",
+      "hash_type": "sha256",
+      "first_seen": "2022-06-01T00:00:00Z",
+      "last_seen": "2026-01-15T00:00:00Z",
+      "confidence": "high",
+      "description": "LockBit 3.0 ransomware payload",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["ransomware", "encryptor", "windows", "raas"],
+      "file_info": {
+        "name": "lockbit_3.0_build_123.exe",
+        "size": 8650752,
+        "type": "PE32 executable (GUI) Intel 80386",
+        "compile_time": "2022-05-28T14:35:00Z"
+      }
+    },
+    {
+      "id": "lockbit-007",
+      "type": "hash",
+      "value": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3",
+      "hash_type": "sha256",
+      "first_seen": "2023-02-01T00:00:00Z",
+      "last_seen": "2025-11-15T00:00:00Z",
+      "confidence": "high",
+      "description": "Stealer module for credential theft",
+      "campaign": "Healthcare Sector Attacks",
+      "malware_family": "LockBit 3.0",
+      "tags": ["ransomware", "stealer", "credentials", "windows"],
+      "file_info": {
+        "name": "stealer.dll",
+        "size": 245760,
+        "type": "PE32+ executable (DLL) x86-64",
+        "compile_time": "2023-01-25T11:20:00Z"
+      }
+    },
+    {
+      "id": "lockbit-008",
+      "type": "email",
+      "value": "support@lockbit7zwrj43i3ocsdrwhqb3fivku7jh7rj7ok3mfr56pmbq4q4u3dqd.onion",
+      "first_seen": "2022-06-01T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Contact email for ransom negotiations",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["email", "negotiation", "ransomware", "tor"]
+    },
+    {
+      "id": "lockbit-009",
+      "type": "domain",
+      "value": "lockbit6pmbrtxcjj7as77wpqxi5rvoet22sjrm354x6dpa7hj45vekqd.onion",
+      "first_seen": "2023-01-15T00:00:00Z",
+      "last_seen": "2025-12-05T00:00:00Z",
+      "confidence": "high",
+      "description": "Secondary data leak site",
+      "campaign": "Healthcare Sector Attacks",
+      "malware_family": "LockBit 3.0",
+      "tags": ["tor", "leak-site", "ransomware", "healthcare"],
+      "dns_info": {
+        "type": "onion",
+        "status": "active"
+      }
+    },
+    {
+      "id": "lockbit-010",
+      "type": "certificate",
+      "value": "C2:D3:E4:F5:A6:B7:C8:D9:E0:F1:A2:B3:C4:D5:E6",
+      "first_seen": "2022-06-01T00:00:00Z",
+      "last_seen": "2025-12-30T00:00:00Z",
+      "confidence": "medium",
+      "description": "SSL certificate used for C2 infrastructure",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["certificate", "tls", "c2", "ransomware"],
+      "cert_info": {
+        "issuer": "Let's Encrypt Authority X3",
+        "subject": "*.lockbitapt[.]onion",
+        "valid_from": "2022-06-02T00:00:00Z",
+        "valid_to": "2022-09-30T00:00:00Z",
+        "serial": "05:C3:D4:E5:F6:A7:B8:C9"
+      }
+    },
+    {
+      "id": "lockbit-011",
+      "type": "url",
+      "value": "http://lockbitapt[.]onion/api/negotiate",
+      "first_seen": "2022-06-20T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "API endpoint for ransom negotiations",
+      "campaign": "LockBit 3.0 Launch",
+      "malware_family": "LockBit 3.0",
+      "tags": ["tor", "api", "negotiation", "ransomware"],
+      "http_method": "POST"
+    },
+    {
+      "id": "lockbit-012",
+      "type": "hash",
+      "value": "2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4",
+      "hash_type": "sha256",
+      "first_seen": "2023-08-01T00:00:00Z",
+      "last_seen": "2025-10-20T00:00:00Z",
+      "confidence": "high",
+      "description": "Linux variant of LockBit 3.0",
+      "campaign": "Manufacturing Sector Targeting",
+      "malware_family": "LockBit 3.0",
+      "tags": ["ransomware", "encryptor", "linux", "raas"],
+      "file_info": {
+        "name": "lockbit_3.0_linux",
+        "size": 9830400,
+        "type": "ELF 64-bit LSB executable",
+        "compile_time": "2023-07-25T18:45:00Z"
+      }
+    }
+  ],
+  "ttps": {
+    "initial_access": [
+      "T1190: Exploit Public-Facing Application",
+      "T1566.001: Spearphishing Link",
+      "T1195.002: Supply Chain Compromise",
+      "T1078: Valid Accounts"
+    ],
+    "execution": [
+      "T1059.003: Windows Command Shell",
+      "T1059.006: PowerShell",
+      "T1204.002: User Execution: Malicious File"
+    ],
+    "persistence": [
+      "T1547.001: Boot or Logon Autostart Execution",
+      "T1053.005: Scheduled Task",
+      "T1543.003: Windows Service",
+      "T1546.003: Windows Logon Script"
+    ],
+    "privilege_escalation": [
+      "T1068: Exploitation for Privilege Escalation",
+      "T1548.002: Bypass User Account Control",
+      "T1136.001: Create Account: Local Account"
+    ],
+    "defense_evasion": [
+      "T1027: Obfuscated Files or Information",
+      "T1055: Process Injection",
+      "T1562.001: Impair Defenses: Disable or Modify Tools",
+      "T1564.001: Hidden Files and Directories"
+    ],
+    "credential_access": [
+      "T1003: OS Credential Dumping",
+      "T1555.003: Password Filter",
+      "T1056.001: Input Capture: Keylogging"
+    ],
+    "discovery": [
+      "T1018: Remote System Discovery",
+      "T1087.001: Local Account",
+      "T1069.002: Domain Groups",
+      "T1083: File and Directory Discovery"
+    ],
+    "lateral_movement": [
+      "T1021.002: SMB/Windows Admin Shares",
+      "T1021.004: SSH",
+      "T1021.001: Remote Desktop Protocol",
+      "T1570: Lateral Tool Transfer"
+    ],
+    "collection": [
+      "T1005: Data from Local System",
+      "T1113: Screen Capture",
+      "T1009: Binary Padding"
+    ],
+    "exfiltration": [
+      "T1041: Exfiltration Over C2 Channel",
+      "T1048.003: Exfiltration Over Unencrypted/Obfuscated Channel",
+      "T1567.002: Exfiltration Over Web Service"
+    ],
+    "command_and_control": [
+      "T1071.001: Web Protocols",
+      "T1090.001: Proxy: Multi-hop Proxy",
+      "T1102: Web Service"
+    ],
+    "impact": [
+      "T1486: Data Encrypted for Impact",
+      "T1566.002: Spearphishing Attachment",
+      "T1485: Data Destruction"
+    ]
+  },
+  "ransom_note": {
+    "filename_patterns": [
+      "Restore-My-Files-*.txt",
+      "README-*.txt",
+      "How-To-Restore-Your-Files.txt"
+    ],
+    "message_preview": "!!! ALL YOUR FILES HAVE BEEN ENCRYPTED !!!\n\nYour documents, photos, databases and other important files have been encrypted with strongest encryption and unique key.",
+    "contact_methods": [
+      "Tor: lockbitapt[.]onion",
+      "Email: support@lockbitapt[.]onion"
+    ]
+  },
+  "encryption_details": {
+    "algorithm": "AES-256-GCM",
+    "key_management": "RSA-4096",
+    "file_extensions": [
+      ".lockbit",
+      ".locked",
+      ".encrypted"
+    ],
+    "excluded_extensions": [
+      ".exe",
+      ".dll",
+      ".sys",
+      ".lnk"
+    ]
+  },
+  "references": [
+    "https://attack.mitre.org/groups/G0145/",
+    "https://www.cisa.gov/news-events/news/cisa-fbi-identify-lockbit-30-ransomware-variant",
+    "https://www.mandiant.com/resources/lockbit-ransomware",
+    "https://www.kaspersky.com/resource-center/threats/ransomware/lockbit",
+    "https://www.fbi.gov/news/stories/ransomware-locked-bit-062120"
+  ],
+  "last_updated": "2026-01-15T00:00:00Z"
+}

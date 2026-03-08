@@ -1,0 +1,2 @@
+To https://github.com/vantisCorp/V-Sentinel.git
+ + 2374e17...8c777d3 feature/zero-trust-architecture -> feature/zero-trust-architecture (forced update)

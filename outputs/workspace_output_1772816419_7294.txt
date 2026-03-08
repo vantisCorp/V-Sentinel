@@ -1,0 +1,4 @@
+./scripts/generate_performance_report.py
+./.agent_hooks/run_all_hooks.py
+./.agent_hooks/shutdown/00_track_processes_on_ports.py
+./examples/web_app_protection/app.py

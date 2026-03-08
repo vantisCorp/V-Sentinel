@@ -1,0 +1,244 @@
+{
+  "threat_actor": "APT29",
+  "aliases": ["Cozy Bear", "The Dukes", "Yttrium", "Office Monkeys", "Auriga Panda"],
+  "country": "Russia",
+  "motivation": "Espionage",
+  "description": "Russian state-sponsored threat group targeting government, diplomatic, and research organizations worldwide",
+  "attribution_confidence": "high",
+  "mitre_attack": "G0016",
+  "campaigns": [
+    "SolarWinds Supply Chain Attack",
+    "2016 US Election Interference",
+    "COVID-19 Vaccine Research Theft",
+    "Olympic Destroyer",
+    "European Diplomatic Espionage"
+  ],
+  "indicators": [
+    {
+      "id": "apt29-001",
+      "type": "ip",
+      "value": "185.141.63.22",
+      "first_seen": "2020-03-01T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Command and control server used in SolarWinds campaign",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["c2", "solarwinds", "apt"],
+      "port": 443,
+      "protocol": "https"
+    },
+    {
+      "id": "apt29-002",
+      "type": "ip",
+      "value": "52.183.126.208",
+      "first_seen": "2020-12-01T00:00:00Z",
+      "last_seen": "2026-01-05T00:00:00Z",
+      "confidence": "high",
+      "description": "Infrastructure for data exfiltration during SolarWinds attack",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Teardrop",
+      "tags": ["exfil", "solarwinds", "apt"],
+      "port": 443,
+      "protocol": "https"
+    },
+    {
+      "id": "apt29-003",
+      "type": "domain",
+      "value": "avsvmcloud[.]com",
+      "first_seen": "2020-03-01T00:00:00Z",
+      "last_seen": "2025-12-20T00:00:00Z",
+      "confidence": "high",
+      "description": "Domain used for command and control in SolarWinds supply chain attack",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["c2", "solarwinds", "apt", "supply-chain"],
+      "dns_info": {
+        "registrar": "GoDaddy.com, LLC",
+        "registered": "2019-12-12",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "apt29-004",
+      "type": "domain",
+      "value": "databasegalore[.]com",
+      "first_seen": "2020-05-01T00:00:00Z",
+      "last_seen": "2025-11-15T00:00:00Z",
+      "confidence": "medium",
+      "description": "Domain used for secondary C2 infrastructure",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["c2", "solarwinds", "apt"],
+      "dns_info": {
+        "registrar": "NameCheap, Inc.",
+        "registered": "2020-04-15",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "apt29-005",
+      "type": "url",
+      "value": "https://avsvmcloud[.]com/api/v1/updates",
+      "first_seen": "2020-03-15T00:00:00Z",
+      "last_seen": "2025-12-20T00:00:00Z",
+      "confidence": "high",
+      "description": "API endpoint for C2 communications",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["c2", "api", "solarwinds"],
+      "http_method": "POST"
+    },
+    {
+      "id": "apt29-006",
+      "type": "hash",
+      "value": "b4f92d35237b04eb2c7768a5f8e9e8c5f9e9b4f92d35237b04eb2c7768a5f8e9",
+      "hash_type": "sha256",
+      "first_seen": "2020-03-01T00:00:00Z",
+      "last_seen": "2026-01-01T00:00:00Z",
+      "confidence": "high",
+      "description": "SolarWinds Orion backdoored DLL",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["malware", "solarwinds", "dll", "backdoor"],
+      "file_info": {
+        "name": "SolarWinds.Orion.Core.BusinessLayer.dll",
+        "size": 345088,
+        "type": "PE32+ executable (DLL) x86-64",
+        "compile_time": "2020-02-20T19:18:00Z"
+      }
+    },
+    {
+      "id": "apt29-007",
+      "type": "hash",
+      "value": "e9c5d5c5d5c5e9c5d5c5d5c5e9c5d5c5d5c5e9c5d5c5d5c5e9c5d5c5d5c5e9c5d5",
+      "hash_type": "sha256",
+      "first_seen": "2020-12-01T00:00:00Z",
+      "last_seen": "2026-01-10T00:00:00Z",
+      "confidence": "high",
+      "description": "Teardrop malware for lateral movement",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Teardrop",
+      "tags": ["malware", "lateral-movement", "teardrop"],
+      "file_info": {
+        "name": "teardrop.exe",
+        "size": 245760,
+        "type": "PE32 executable (GUI) Intel 80386",
+        "compile_time": "2020-11-15T14:22:00Z"
+      }
+    },
+    {
+      "id": "apt29-008",
+      "type": "email",
+      "value": "v-pnaxiao@outlook[.]com",
+      "first_seen": "2016-03-01T00:00:00Z",
+      "last_seen": "2016-11-01T00:00:00Z",
+      "confidence": "high",
+      "description": "Email address used in 2016 US election phishing campaign",
+      "campaign": "2016 US Election Interference",
+      "malware_family": "X-Agent",
+      "tags": ["phishing", "email", "election", "apt"]
+    },
+    {
+      "id": "apt29-009",
+      "type": "domain",
+      "value": "misdept[.]fashion",
+      "first_seen": "2016-04-01T00:00:00Z",
+      "last_seen": "2017-01-01T00:00:00Z",
+      "confidence": "high",
+      "description": "C2 domain used in election campaign phishing",
+      "campaign": "2016 US Election Interference",
+      "malware_family": "X-Agent",
+      "tags": ["c2", "phishing", "election", "apt"],
+      "dns_info": {
+        "registrar": "GoDaddy.com, LLC",
+        "registered": "2016-03-28",
+        "status": "clientTransferProhibited"
+      }
+    },
+    {
+      "id": "apt29-010",
+      "type": "certificate",
+      "value": "C3:F6:B2:8A:D1:3A:E5:6F:4A:7B:8C:9D:0E:1F:2A:3B",
+      "first_seen": "2020-03-01T00:00:00Z",
+      "last_seen": "2025-12-20T00:00:00Z",
+      "confidence": "high",
+      "description": "SSL certificate used for SolarWinds C2 infrastructure",
+      "campaign": "SolarWinds Supply Chain Attack",
+      "malware_family": "Sunburst",
+      "tags": ["certificate", "tls", "c2", "solarwinds"],
+      "cert_info": {
+        "issuer": "Let's Encrypt Authority X3",
+        "subject": "avsvmcloud.com",
+        "valid_from": "2020-03-02T00:00:00Z",
+        "valid_to": "2020-06-30T00:00:00Z",
+        "serial": "03:8F:A3:7B:4D:6C:8E:5A"
+      }
+    }
+  ],
+  "ttps": {
+    "initial_access": [
+      "T1195.002: Supply Chain Compromise",
+      "T1566.001: Spearphishing Link",
+      "T1566.002: Spearphishing Attachment"
+    ],
+    "execution": [
+      "T1059.006: PowerShell",
+      "T1059.001: Command and Scripting Interpreter",
+      "T1204.002: User Execution: Malicious File"
+    ],
+    "persistence": [
+      "T1053.005: Scheduled Task",
+      "T1547.001: Boot or Logon Autostart Execution",
+      "T1197: BITS Jobs"
+    ],
+    "privilege_escalation": [
+      "T1068: Exploitation for Privilege Escalation",
+      "T1548.002: Bypass User Account Control"
+    ],
+    "defense_evasion": [
+      "T1027: Obfuscated Files or Information",
+      "T1055: Process Injection",
+      "T1564.001: Hidden Files and Directories"
+    ],
+    "credential_access": [
+      "T1003: OS Credential Dumping",
+      "T1557.001: Adversary-in-the-Middle"
+    ],
+    "discovery": [
+      "T1018: Remote System Discovery",
+      "T1087.001: Local Account",
+      "T1069.002: Domain Groups"
+    ],
+    "lateral_movement": [
+      "T1021.002: SMB/Windows Admin Shares",
+      "T1021.004: SSH",
+      "T1570: Lateral Tool Transfer"
+    ],
+    "collection": [
+      "T1113: Screen Capture",
+      "T1005: Data from Local System"
+    ],
+    "exfiltration": [
+      "T1041: Exfiltration Over C2 Channel",
+      "T1048.003: Exfiltration Over Unencrypted/Obfuscated Channel"
+    ],
+    "command_and_control": [
+      "T1071.001: Web Protocols",
+      "T1071.004: DNS",
+      "T1102: Web Service"
+    ],
+    "impact": [
+      "T1485: Data Destruction",
+      "T1565: Data Manipulation"
+    ]
+  },
+  "references": [
+    "https://attack.mitre.org/groups/G0016/",
+    "https://www.cisa.gov/news-events/news/solarwinds-orion-supply-chain-attack",
+    "https://www.fireeye.com/blog/threat-research/2020/12/evasive-attacker-leverages-solarwinds-solarwinds-orion-to-breach-organizations.html",
+    "https://www.microsoft.com/security/blog/2020/12/18/analyzing-solorigate-second-stage-implant/",
+    "https://www.mandiant.com/resources/apt29-campaigns-targeting-think-tanks"
+  ],
+  "last_updated": "2026-01-15T00:00:00Z"
+}

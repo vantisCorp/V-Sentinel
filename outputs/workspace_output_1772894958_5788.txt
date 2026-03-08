@@ -1,0 +1,43 @@
+=== Check key features in main quantum lib.rs ===
+4://! including post-quantum KEM, signatures, and hybrid cryptography.
+16:    kem: Arc<RwLock<Option<Box<dyn KEM>>>>,
+18:    hybrid: Arc<RwLock<Option<HybridCrypto>>>>,
+23:pub trait KEM: Send + Sync {
+38:/// KEM Algorithms
+41:    CrystalsKyber512,
+42:    CrystalsKyber768,
+43:    CrystalsKyber1024,
+56:    CrystalsDilithium2,
+57:    CrystalsDilithium3,
+58:    CrystalsDilithium5,
+69:    kem: Box<dyn KEM>,
+126:            hybrid: Arc::new(RwLock::new(None)),
+135:        // Initialize Crystals-Kyber KEM
+136:        let kem = Box::new(CrystalsKyber::new(KemAlgorithm::CrystalsKyber768)) as Box<dyn KEM>;
+139:        // Initialize Crystals-Dilithium Signature
+140:        let signature = Box::new(CrystalsDilithium::new(SigAlgorithm::CrystalsDilithium3)) as Box<dyn Signature>;
+143:        // Initialize hybrid crypto
+148:            let hybrid = HybridCrypto::new(kem.clone(), sig.clone());
+149:            *self.hybrid.write().await = Some(hybrid);
+
+=== Check if PR #10 has unique features ===
+4://! including post-quantum KEM, signatures, and hybrid cryptography.
+21:    kem: Arc<RwLock<Option<Box<dyn KEM>>>>,
+23:    hybrid: Arc<RwLock<Option<HybridCrypto>>>>,
+28:pub trait KEM: Send + Sync {
+43:/// KEM Algorithms
+46:    CrystalsKyber512,
+47:    CrystalsKyber768,
+48:    CrystalsKyber1024,
+61:    CrystalsDilithium2,
+62:    CrystalsDilithium3,
+63:    CrystalsDilithium5,
+74:    kem: Box<dyn KEM>,
+131:            hybrid: Arc::new(RwLock::new(None)),
+140:        // Initialize Crystals-Kyber KEM
+141:        let kem = Box::new(CrystalsKyber::new(KemAlgorithm::CrystalsKyber768)) as Box<dyn KEM>;
+144:        // Initialize Crystals-Dilithium Signature
+145:        let signature = Box::new(CrystalsDilithium::new(SigAlgorithm::CrystalsDilithium3)) as Box<dyn Signature>;
+148:        // Initialize hybrid crypto
+153:            let hybrid = HybridCrypto::new(kem.clone(), sig.clone());
+154:            *self.hybrid.write().await = Some(hybrid);
