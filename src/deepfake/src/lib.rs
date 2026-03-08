@@ -13,13 +13,12 @@ pub mod models;
 pub mod threat_intel;
 
 use anyhow::Result;
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{info, warn};
 use uuid::Uuid;
 
 pub use analysis::{AnalysisResult, AnalysisType, MediaAnalyzer};

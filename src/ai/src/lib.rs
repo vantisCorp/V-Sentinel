@@ -4,13 +4,13 @@
 //! with real ML implementations using ndarray and custom neural networks.
 
 use anyhow::Result;
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2, Ix1, Ix2};
-use ndarray_rand::rand_distr::{Normal, Uniform};
+use ndarray::{Array1, Array2, ArrayView1, ArrayView2};
+use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// AI Prediction Engine for threat detection with real ML models
 pub struct PredictionEngine {
@@ -49,6 +49,7 @@ pub struct FeatureExtractor {
 
 /// Normalization parameters
 #[derive(Debug, Clone)]
+#[derive(Default)]
 struct NormalizationParams {
     means: Vec<f32>,
     stds: Vec<f32>,
@@ -86,15 +87,6 @@ impl Default for EngineStatistics {
     }
 }
 
-impl Default for NormalizationParams {
-    fn default() -> Self {
-        Self {
-            means: vec![],
-            stds: vec![],
-            fitted: false,
-        }
-    }
-}
 
 impl PredictionEngine {
     /// Create a new prediction engine
@@ -286,7 +278,7 @@ impl PredictionEngine {
             .ok_or_else(|| anyhow::anyhow!("Model not loaded"))?;
 
         // Update normalization parameters
-        let mut extractor = self.feature_extractor.write().await;
+        let extractor = self.feature_extractor.write().await;
         extractor.fit(&data.features).await;
 
         model.train(&data)
@@ -354,6 +346,12 @@ impl PredictionEngine {
             12 => Ok(ThreatType::ZeroDay),
             _ => Err(anyhow::anyhow!("Invalid threat index: {}", index)),
         }
+    }
+}
+
+impl Default for FeatureExtractor {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

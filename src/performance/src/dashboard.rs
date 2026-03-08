@@ -5,7 +5,6 @@ use prometheus::{Counter, Encoder, Gauge, Histogram, Registry, TextEncoder};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 
 /// Performance metrics
@@ -299,7 +298,7 @@ impl PerformanceDashboard {
         for metric in metrics.iter() {
             components
                 .entry(metric.component.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(metric);
         }
 

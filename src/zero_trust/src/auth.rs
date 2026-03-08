@@ -4,11 +4,10 @@
 //! and risk-based authentication following Zero Trust principles.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 use super::Subject;
 
@@ -566,6 +565,12 @@ impl Default for Authenticator {
 // Password Authentication Method
 pub struct PasswordAuthMethod;
 
+impl Default for PasswordAuthMethod {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PasswordAuthMethod {
     pub fn new() -> Self {
         Self
@@ -595,6 +600,12 @@ impl AuthenticationMethod for PasswordAuthMethod {
 // TOTP Authentication Method
 pub struct TOTPAuthMethod;
 
+impl Default for TOTPAuthMethod {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TOTPAuthMethod {
     pub fn new() -> Self {
         Self
@@ -612,7 +623,7 @@ impl AuthenticationMethod for TOTPAuthMethod {
     }
 
     async fn authenticate(&self, credentials: &AuthCredentials) -> Result<AuthResult> {
-        if let Some(code) = credentials.credentials.get("totp_code") {
+        if let Some(_code) = credentials.credentials.get("totp_code") {
             // In real implementation, verify TOTP code
             Ok(AuthResult::Success)
         } else {

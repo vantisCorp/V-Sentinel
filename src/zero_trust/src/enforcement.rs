@@ -7,7 +7,7 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use super::{AccessDecision, Decision, Obligation, ObligationType};
 
@@ -406,7 +406,7 @@ impl EnforcementPoint {
             action,
             timestamp: Utc::now(),
             details: serde_json::to_value(details)
-                .and_then(|v| serde_json::from_value(v))
+                .and_then(serde_json::from_value)
                 .unwrap_or_default(),
             result: EnforcementResult::Success,
         };
@@ -444,6 +444,12 @@ impl Default for EnforcementPoint {
 /// MFA Obligation Handler
 pub struct MFAObligationHandler;
 
+impl Default for MFAObligationHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MFAObligationHandler {
     pub fn new() -> Self {
         Self
@@ -472,6 +478,12 @@ impl ObligationHandler for MFAObligationHandler {
 
 /// Reauthentication Obligation Handler
 pub struct ReauthObligationHandler;
+
+impl Default for ReauthObligationHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ReauthObligationHandler {
     pub fn new() -> Self {

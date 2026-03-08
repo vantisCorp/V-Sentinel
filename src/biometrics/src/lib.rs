@@ -5,14 +5,14 @@
 //! and multi-modal biometric fusion.
 
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256, Sha512};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Biometrics Manager
 pub struct BiometricsManager {
@@ -577,7 +577,7 @@ impl BiometricsManager {
         user_id: &str,
         samples: Vec<BiometricSample>,
     ) -> Result<AuthenticationResult> {
-        let start = std::time::Instant::now();
+        let _start = std::time::Instant::now();
 
         let mut results = Vec::new();
         for sample in samples {
@@ -617,11 +617,10 @@ impl BiometricsManager {
         for template in matching_templates {
             let score = self.calculate_matching_score(&sample, template).await?;
 
-            if score >= threshold {
-                if best_match.is_none() || score > best_match.as_ref().unwrap().1 {
+            if score >= threshold
+                && (best_match.is_none() || score > best_match.as_ref().unwrap().1) {
                     best_match = Some((template.user_id.clone(), score));
                 }
-            }
         }
 
         Ok(best_match.map(|(user_id, _)| user_id))
@@ -673,7 +672,7 @@ impl BiometricsManager {
     ) -> Result<(f64, bool, Vec<String>)> {
         let mut best_score: f64 = 0.0;
         let mut liveness_detected = false;
-        let mut fraud_indicators = Vec::new();
+        let fraud_indicators = Vec::new();
 
         match sample.biometric_type {
             BiometricType::Fingerprint => {
@@ -746,8 +745,14 @@ impl BiometricsManager {
     async fn generate_template_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        let hash = Sha256::digest(&bytes);
+        let hash = Sha256::digest(bytes);
         format!("BIO-{}", hex::encode(&hash[..8]))
+    }
+}
+
+impl Default for FingerprintEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -797,6 +802,12 @@ impl FingerprintEngine {
     }
 }
 
+impl Default for MinutiaeExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MinutiaeExtractor {
     pub fn new() -> Self {
         Self {
@@ -827,6 +838,12 @@ impl MinutiaeExtractor {
     }
 }
 
+impl Default for MinutiaeMatcher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MinutiaeMatcher {
     pub fn new() -> Self {
         Self {
@@ -837,12 +854,24 @@ impl MinutiaeMatcher {
     }
 }
 
+impl Default for FingerprintLivenessDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FingerprintLivenessDetector {
     pub fn new() -> Self {
         Self {
             model: None,
             threshold: 0.5,
         }
+    }
+}
+
+impl Default for FacialRecognitionEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -911,6 +940,12 @@ impl FacialRecognitionEngine {
     }
 }
 
+impl Default for FaceDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FaceDetector {
     pub fn new() -> Self {
         Self {
@@ -957,6 +992,12 @@ impl FaceDetector {
     }
 }
 
+impl Default for FaceFeatureExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FaceFeatureExtractor {
     pub fn new() -> Self {
         Self {
@@ -966,12 +1007,24 @@ impl FaceFeatureExtractor {
     }
 }
 
+impl Default for FacialLivenessDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FacialLivenessDetector {
     pub fn new() -> Self {
         Self {
             methods: vec![LivenessMethod::EyeBlink, LivenessMethod::TextureAnalysis],
             threshold: 0.5,
         }
+    }
+}
+
+impl Default for VoiceRecognitionEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1018,6 +1071,12 @@ impl VoiceRecognitionEngine {
     }
 }
 
+impl Default for VoiceFeatureExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VoiceFeatureExtractor {
     pub fn new() -> Self {
         Self {
@@ -1027,7 +1086,7 @@ impl VoiceFeatureExtractor {
         }
     }
 
-    pub fn extract(&self, sample_data: &[u8]) -> Result<Vec<f32>> {
+    pub fn extract(&self, _sample_data: &[u8]) -> Result<Vec<f32>> {
         // Simplified MFCC extraction
         let mut features = vec![0.0f32; 128];
         let mut rng = OsRng;
@@ -1040,12 +1099,24 @@ impl VoiceFeatureExtractor {
     }
 }
 
+impl Default for SpeakerModel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SpeakerModel {
     pub fn new() -> Self {
         Self {
             model_type: SpeakerModelType::ECAPA,
             embedding_size: 192,
         }
+    }
+}
+
+impl Default for VoiceLivenessDetector {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1056,6 +1127,12 @@ impl VoiceLivenessDetector {
             synthesis_detection: true,
             threshold: 0.5,
         }
+    }
+}
+
+impl Default for BehavioralBiometricsEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1074,6 +1151,12 @@ impl BehavioralBiometricsEngine {
     }
 }
 
+impl Default for KeystrokeDynamicsEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KeystrokeDynamicsEngine {
     pub fn new() -> Self {
         Self {
@@ -1081,6 +1164,12 @@ impl KeystrokeDynamicsEngine {
             trigraph_model: None,
             threshold: 0.7,
         }
+    }
+}
+
+impl Default for MouseDynamicsEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -1094,6 +1183,12 @@ impl MouseDynamicsEngine {
     }
 }
 
+impl Default for GaitAnalysisEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GaitAnalysisEngine {
     pub fn new() -> Self {
         Self {
@@ -1104,6 +1199,12 @@ impl GaitAnalysisEngine {
     }
 }
 
+impl Default for TouchDynamicsEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TouchDynamicsEngine {
     pub fn new() -> Self {
         Self {
@@ -1111,6 +1212,12 @@ impl TouchDynamicsEngine {
             velocity_model: None,
             threshold: 0.7,
         }
+    }
+}
+
+impl Default for MultiModalFusion {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

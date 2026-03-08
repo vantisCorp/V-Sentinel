@@ -4,13 +4,11 @@
 //! with support for multiple formats, validation, and hot-reloading.
 
 use anyhow::{anyhow, Result};
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
@@ -26,6 +24,7 @@ pub struct ConfigManager {
 
 /// Main Configuration Structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct Config {
     /// Core configuration
     pub core: CoreConfig,
@@ -561,20 +560,6 @@ impl Clone for ConfigManager {
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            core: CoreConfig::default(),
-            ai: AIConfig::default(),
-            gaming: GamingConfig::default(),
-            quantum: QuantumConfig::default(),
-            network: NetworkConfig::default(),
-            logging: LoggingConfig::default(),
-            security: SecurityConfig::default(),
-            performance: PerformanceConfig::default(),
-        }
-    }
-}
 
 impl Default for CoreConfig {
     fn default() -> Self {

@@ -1,11 +1,11 @@
 //! MCP server implementation
 
-use crate::error::{MCPError, MCPResult};
-use crate::tools::{ToolManager, ToolTrait};
+use crate::error::MCPResult;
+use crate::tools::ToolManager;
 use crate::types::{MCPRequest, MCPResponse, Resource};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info};
+use tracing::info;
 
 /// MCP Server
 pub struct MCPServer {
@@ -28,7 +28,7 @@ pub struct MCPServer {
 impl MCPServer {
     /// Create a new MCP server
     pub async fn new(name: &str) -> MCPResult<Self> {
-        let mut server = Self {
+        let server = Self {
             name: name.to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
             tool_manager: Arc::new(ToolManager::new()),

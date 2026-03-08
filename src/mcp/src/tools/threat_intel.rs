@@ -113,7 +113,7 @@ impl ToolTrait for ThreatIntelTool {
 impl ThreatIntelTool {
     async fn mock_query_threat_intel(
         &self,
-        params: &ThreatIntelParams,
+        _params: &ThreatIntelParams,
     ) -> Result<Vec<ThreatIntel>, crate::error::MCPError> {
         let threat_intel = vec![
             ThreatIntel {

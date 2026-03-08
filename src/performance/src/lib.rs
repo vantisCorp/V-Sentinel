@@ -16,7 +16,7 @@ use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 // Re-export benchmarking and profiling modules
 pub use bottleneck_analyzer::{
@@ -94,6 +94,7 @@ pub struct PoolConfig {
 
 /// Pool Statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct PoolStatistics {
     pub total_connections: usize,
     pub active_connections: usize,
@@ -434,15 +435,10 @@ impl Default for PoolConfig {
     }
 }
 
-impl Default for PoolStatistics {
+
+impl Default for RateLimiter {
     fn default() -> Self {
-        Self {
-            total_connections: 0,
-            active_connections: 0,
-            idle_connections: 0,
-            wait_count: 0,
-            wait_duration_ms: 0,
-        }
+        Self::new()
     }
 }
 
@@ -478,7 +474,7 @@ impl RateLimiter {
 
         // Refill tokens
         let elapsed = limit.last_refill.elapsed();
-        let tokens_to_add = (elapsed.as_secs() as u64) * limit.refill_rate;
+        let tokens_to_add = elapsed.as_secs() * limit.refill_rate;
         limit.tokens = (limit.tokens + tokens_to_add).min(limit.max_tokens);
         limit.last_refill = Instant::now();
 
@@ -489,6 +485,12 @@ impl RateLimiter {
         } else {
             false
         }
+    }
+}
+
+impl Default for QueryOptimizer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

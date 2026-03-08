@@ -301,18 +301,18 @@ pub struct SecurityInfo {
 
 impl std::fmt::Display for SecurityInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PQC Security Configuration:\n")?;
-        write!(
+        writeln!(f, "PQC Security Configuration:")?;
+        writeln!(
             f,
-            "  KEM Algorithm: {:?} ({}-bit security)\n",
+            "  KEM Algorithm: {:?} ({}-bit security)",
             self.kem_algorithm, self.kem_security_bits
         )?;
-        write!(
+        writeln!(
             f,
-            "  Signature Algorithm: {:?} ({}-bit security)\n",
+            "  Signature Algorithm: {:?} ({}-bit security)",
             self.signature_algorithm, self.signature_security_bits
         )?;
-        write!(f, "  Hybrid Mode: {}\n", self.hybrid_mode)?;
+        writeln!(f, "  Hybrid Mode: {}", self.hybrid_mode)?;
         Ok(())
     }
 }

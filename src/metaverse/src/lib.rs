@@ -3,9 +3,7 @@
 // metaverse platforms, and immersive computing systems.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-use tokio::sync::RwLock;
+use std::time::SystemTime;
 use uuid::Uuid;
 
 /// Metaverse security manager
@@ -262,7 +260,7 @@ impl MetaverseManager {
         user_id: Uuid,
         avatar_id: Uuid,
         virtual_world: String,
-        security_level: VrSecurityLevel,
+        _security_level: VrSecurityLevel,
     ) -> Result<Uuid, String> {
         let session_id = Uuid::new_v4();
 
@@ -504,7 +502,7 @@ impl ArSecurityEngine {
         Ok(())
     }
 
-    async fn terminate_session(&mut self, session_id: Uuid) -> Result<(), String> {
+    async fn terminate_session(&mut self, _session_id: Uuid) -> Result<(), String> {
         Ok(())
     }
 }

@@ -104,7 +104,7 @@ impl ToolTrait for HostsTool {
 impl HostsTool {
     async fn mock_list_hosts(
         &self,
-        params: &HostsParams,
+        _params: &HostsParams,
     ) -> Result<Vec<Host>, crate::error::MCPError> {
         let hosts = vec![
             Host {

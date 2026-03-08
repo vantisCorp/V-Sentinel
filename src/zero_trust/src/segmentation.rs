@@ -7,7 +7,7 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Datelike, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use super::{Resource, SensitivityLevel, Subject};
 
@@ -390,7 +390,7 @@ impl SegmentationEngine {
 
         self.subject_memberships
             .entry(subject_id.to_string())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(segment_id.to_string());
 
         // Also add to segment's member list
@@ -410,7 +410,7 @@ impl SegmentationEngine {
 
         self.resource_memberships
             .entry(resource_id.to_string())
-            .or_insert_with(HashSet::new)
+            .or_default()
             .insert(segment_id.to_string());
 
         // Also add to segment's member list
@@ -524,7 +524,7 @@ impl SegmentationEngine {
                     });
 
                     if !within_time && rule.allowed {
-                        warnings.push(format!("Access allowed only during restricted hours"));
+                        warnings.push("Access allowed only during restricted hours".to_string());
                     }
                 }
 

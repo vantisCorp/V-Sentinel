@@ -8,11 +8,11 @@ use anyhow::{anyhow, Result};
 use chrono::Utc;
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Autonomous Security Manager
 pub struct AutonomousManager {
@@ -626,7 +626,7 @@ impl AutonomousManager {
         threat: ThreatInfo,
     ) -> Result<Vec<RemediationAction>> {
         let mut remediation = self.remediation.write().await;
-        let start = std::time::Instant::now();
+        let _start = std::time::Instant::now();
 
         let actions = remediation.generate_response(&threat)?;
 
@@ -649,7 +649,7 @@ impl AutonomousManager {
     /// Trigger learning cycle
     pub async fn trigger_learning_cycle(&self) -> Result<LearningCycleResult> {
         let mut learning = self.learning_system.write().await;
-        let start = std::time::Instant::now();
+        let _start = std::time::Instant::now();
 
         let result = learning.perform_learning_cycle().await?;
 
@@ -677,8 +677,14 @@ impl AutonomousManager {
     async fn generate_agent_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        let hash = sha2::Sha256::digest(&bytes);
+        let hash = sha2::Sha256::digest(bytes);
         format!("AGENT-{}", hex::encode(&hash[..8]))
+    }
+}
+
+impl Default for KnowledgeBase {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -694,6 +700,12 @@ impl KnowledgeBase {
     }
 }
 
+impl Default for AgentOrchestrator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AgentOrchestrator {
     pub fn new() -> Self {
         Self {
@@ -704,7 +716,7 @@ impl AgentOrchestrator {
         }
     }
 
-    pub async fn assign_task(&mut self, task: Task) -> Result<String> {
+    pub async fn assign_task(&mut self, _task: Task) -> Result<String> {
         // Simplified task assignment
         if let Some(agent_id) = self.active_agents.first() {
             Ok(agent_id.clone())
@@ -714,12 +726,24 @@ impl AgentOrchestrator {
     }
 }
 
+impl Default for LoadBalancer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LoadBalancer {
     pub fn new() -> Self {
         Self {
             agent_loads: HashMap::new(),
             max_concurrent_tasks: 10,
         }
+    }
+}
+
+impl Default for ContinuousLearningSystem {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -760,15 +784,21 @@ impl ContinuousLearningSystem {
         })
     }
 
-    pub async fn record_experience(&mut self, threat: &ThreatInfo, actions: &[RemediationAction]) {
+    pub async fn record_experience(&mut self, _threat: &ThreatInfo, _actions: &[RemediationAction]) {
         // Record experience for learning
     }
 
     fn generate_update_id(&self) -> String {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
-        let hash = sha2::Sha256::digest(&bytes);
+        let hash = sha2::Sha256::digest(bytes);
         format!("UPDATE-{}", hex::encode(&hash[..8]))
+    }
+}
+
+impl Default for PolicyEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -796,6 +826,12 @@ impl PolicyEnforcement {
 impl ViolationHandler {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for AutomatedRemediation {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -9,7 +9,6 @@
 use crate::models::*;
 use crate::Watermark;
 use anyhow::Result;
-use async_trait::async_trait;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{DateTime, Utc};
 use hmac::{Hmac, Mac};
@@ -430,7 +429,7 @@ impl BlockchainAnchor {
 
         // Simulate blockchain transaction
         let tx = BlockchainTransaction {
-            tx_hash: format!("0x{}", hex::encode(&content_hash[..16].as_bytes())),
+            tx_hash: format!("0x{}", hex::encode(content_hash[..16].as_bytes())),
             block_number: 1_234_567,
             content_hash: content_hash.to_string(),
             timestamp: Utc::now(),

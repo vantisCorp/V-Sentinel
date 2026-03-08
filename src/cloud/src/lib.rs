@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Cloud-Native Security Manager
 pub struct CloudSecurityManager {
@@ -247,6 +247,12 @@ pub struct ContainerScanner {
     scans_completed: u64,
 }
 
+impl Default for ContainerScanner {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ContainerScanner {
     pub fn new() -> Self {
         Self { scans_completed: 0 }
@@ -322,6 +328,12 @@ pub struct KubernetesSecurityPolicy {
     policies: Vec<K8sPolicy>,
 }
 
+impl Default for KubernetesSecurityPolicy {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KubernetesSecurityPolicy {
     pub fn new() -> Self {
         Self {
@@ -381,6 +393,12 @@ pub enum EnforcementMode {
 #[derive(Debug, Clone)]
 pub struct ServerlessScanner {
     scans_completed: u64,
+}
+
+impl Default for ServerlessScanner {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ServerlessScanner {

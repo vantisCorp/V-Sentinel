@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// IoT Security Manager
 pub struct IotSecurityManager {
@@ -227,6 +227,12 @@ pub struct LightweightAgent {
     scans_completed: u64,
 }
 
+impl Default for LightweightAgent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LightweightAgent {
     pub fn new() -> Self {
         Self {
@@ -263,6 +269,12 @@ impl LightweightAgent {
 #[derive(Debug, Clone)]
 pub struct EdgeSecurityProcessor {
     inference_latency: std::time::Duration,
+}
+
+impl Default for EdgeSecurityProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl EdgeSecurityProcessor {

@@ -49,7 +49,9 @@ pub struct AIModel {
 
 /// AI Model types
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum AIModelType {
+    #[default]
     LLM,            // Large Language Models (GPT, Claude, LLaMA)
     Embedding,      // Embedding models
     Image,          // Image generation (DALL-E, Midjourney, Stable Diffusion)
@@ -67,9 +69,11 @@ pub enum AIModelType {
 
 /// AI Model status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub enum AIModelStatus {
     Active,
     Inactive,
+    #[default]
     Pending,
     Approved,
     Blocked,
@@ -177,17 +181,7 @@ impl AIModel {
     }
 }
 
-impl Default for AIModelType {
-    fn default() -> Self {
-        AIModelType::LLM
-    }
-}
 
-impl Default for AIModelStatus {
-    fn default() -> Self {
-        AIModelStatus::Pending
-    }
-}
 
 #[cfg(test)]
 mod tests {

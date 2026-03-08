@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Behavioral Analysis Engine
 pub struct BehavioralAnalysisEngine {
@@ -117,11 +117,11 @@ impl BehavioralAnalysisEngine {
             .ok_or_else(|| anyhow::anyhow!("Process {} not found", process_id))?;
 
         // Pattern matching
-        let mut pattern_matcher = self.pattern_matcher.write().await;
+        let pattern_matcher = self.pattern_matcher.write().await;
         let pattern_matches = pattern_matcher.match_patterns(process_behavior)?;
 
         // Anomaly detection
-        let mut anomaly_detector = self.anomaly_detector.write().await;
+        let anomaly_detector = self.anomaly_detector.write().await;
         let anomalies = anomaly_detector.detect_anomalies(process_behavior)?;
 
         // Calculate risk score
@@ -242,6 +242,12 @@ pub enum BehaviorEventType {
 #[derive(Debug, Clone)]
 pub struct PatternMatcher {
     patterns: Vec<BehaviorPattern>,
+}
+
+impl Default for PatternMatcher {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl PatternMatcher {
@@ -382,6 +388,12 @@ pub struct PatternMatch {
 #[derive(Debug, Clone)]
 pub struct AnomalyDetector {
     baseline: HashMap<BehaviorEventType, f64>,
+}
+
+impl Default for AnomalyDetector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AnomalyDetector {

@@ -4,10 +4,9 @@
 //! following XACML and NIST SP 800-207 guidelines.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use super::{AccessRequest, Action, RequestContext, Resource, Subject};
 
@@ -520,7 +519,7 @@ impl PolicyEngine {
 
         matches.iter().all(|m| {
             let value = match m.attribute.as_str() {
-                "sensitivity" => Some(serde_json::to_value(&resource.sensitivity).unwrap()),
+                "sensitivity" => Some(serde_json::to_value(resource.sensitivity).unwrap()),
                 "resource_type" => Some(serde_json::to_value(&resource.resource_type).unwrap()),
                 "owner" => resource.owner.as_ref().map(|v| serde_json::json!(v)),
                 _ => resource.attributes.get(&m.attribute).cloned(),
@@ -544,7 +543,7 @@ impl PolicyEngine {
     }
 
     /// Check environment matches
-    fn matches_environments(&self, matches: &[EnvironmentMatch], context: &RequestContext) -> bool {
+    fn matches_environments(&self, matches: &[EnvironmentMatch], _context: &RequestContext) -> bool {
         if matches.is_empty() {
             return true;
         }
@@ -669,7 +668,7 @@ impl PolicyEngine {
                     Ok(false)
                 }
                 Expression::Not(expr) => Ok(!self.evaluate_condition(expr, request).await?),
-                Expression::Equals(left, right) => {
+                Expression::Equals(_left, _right) => {
                     // Simplified equality check
                     Ok(false)
                 }
@@ -679,7 +678,7 @@ impl PolicyEngine {
     }
 
     /// Resolve an attribute path from the request
-    fn resolve_attribute(&self, path: &str, request: &AccessRequest) -> bool {
+    fn resolve_attribute(&self, _path: &str, _request: &AccessRequest) -> bool {
         // Simplified attribute resolution
         false
     }

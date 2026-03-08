@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Security Audit Manager
 pub struct SecurityAuditManager {
@@ -286,7 +286,7 @@ impl SecurityAuditManager {
         let start = SystemTime::now();
         let scanner = self.vulnerability_scanner.read().await;
         let result = scanner.scan(target, scan_type).await?;
-        let duration = start.elapsed().unwrap_or(Duration::from_secs(0));
+        let _duration = start.elapsed().unwrap_or(Duration::from_secs(0));
 
         // Log audit entry
         let mut log = self.audit_log.write().await;
@@ -774,6 +774,12 @@ impl SecurityAssessor {
     }
 }
 
+impl Default for AuditLog {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AuditLog {
     pub fn new() -> Self {
         Self {
@@ -791,6 +797,12 @@ impl AuditLog {
             Some(l) => entries.into_iter().rev().take(l).collect(),
             None => entries.into_iter().rev().collect(),
         }
+    }
+}
+
+impl Default for CVEDatabase {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -927,7 +939,7 @@ mod tests {
             .await
             .unwrap();
 
-        let entries = manager.get_audit_log(Some(10));
+        let entries = manager.get_audit_log(Some(10)).await;
         assert!(!entries.is_empty());
     }
 }

@@ -411,7 +411,7 @@ impl RiskAssessment {
     pub fn record_score(&mut self, score: &RiskScore) {
         self.risk_history
             .entry(score.model_id.clone())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(score.clone());
     }
 

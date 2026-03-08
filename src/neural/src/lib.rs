@@ -5,13 +5,13 @@
 // reinforcement learning, and neural explainability.
 
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Neural Network Manager
 pub struct NeuralManager {
@@ -490,7 +490,7 @@ impl NeuralManager {
             .ok_or_else(|| anyhow!("Model not found"))?;
 
         let start = std::time::Instant::now();
-        let output = self.forward_pass(&model, input)?;
+        let output = self.forward_pass(model, input)?;
         let duration = start.elapsed();
 
         self.update_statistics(duration).await;
@@ -534,7 +534,7 @@ impl NeuralManager {
 
         let accuracy = fl.perform_aggregation_round()?;
 
-        let duration = start.elapsed();
+        let _duration = start.elapsed();
 
         {
             let mut stats = self.statistics.write().await;
@@ -582,7 +582,7 @@ impl NeuralManager {
 
         let explainability = self.explainability.read().await;
 
-        let explanation = explainability.generate_explanation(&model, input)?;
+        let explanation = explainability.generate_explanation(model, input)?;
 
         Ok(explanation)
     }
@@ -619,7 +619,7 @@ impl NeuralManager {
         let mut current = input.to_vec();
 
         for layer in &model.architecture.layers {
-            current = self.apply_layer(&layer, &current)?;
+            current = self.apply_layer(layer, &current)?;
         }
 
         Ok(current)
@@ -651,7 +651,7 @@ impl NeuralManager {
         Ok(output)
     }
 
-    fn apply_dropout(&self, layer: &Layer, input: &[f32]) -> Result<Vec<f32>> {
+    fn apply_dropout(&self, _layer: &Layer, input: &[f32]) -> Result<Vec<f32>> {
         // Dropout is applied during training only
         Ok(input.to_vec())
     }
@@ -701,8 +701,8 @@ impl NeuralManager {
         labels: &[Vec<f32>],
     ) -> Result<()> {
         // Simplified training
-        for (input, label) in training_data.iter().zip(labels.iter()) {
-            let output = self.forward_pass(model, input)?;
+        for (input, _label) in training_data.iter().zip(labels.iter()) {
+            let _output = self.forward_pass(model, input)?;
 
             // Update weights (simplified gradient descent)
             for weight in model.weights.iter_mut() {
@@ -717,7 +717,7 @@ impl NeuralManager {
         let mut bytes = [0u8; 16];
         OsRng.fill_bytes(&mut bytes);
         use sha2::{Digest, Sha256};
-        let hash = Sha256::digest(&bytes);
+        let hash = Sha256::digest(bytes);
         format!("MODEL-{}", hex::encode(&hash[..8]))
     }
 
@@ -728,6 +728,12 @@ impl NeuralManager {
         stats.average_inference_time_ms =
             (stats.average_inference_time_ms * (stats.total_inferences - 1) as f64 + time_ms)
                 / stats.total_inferences as f64;
+    }
+}
+
+impl Default for FederatedLearningEngine {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -762,6 +768,12 @@ impl FederatedLearningEngine {
     }
 }
 
+impl Default for GraphNeuralNetwork {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GraphNeuralNetwork {
     pub fn new() -> Self {
         Self {
@@ -785,7 +797,7 @@ impl GraphNeuralNetwork {
         let mut predictions = Vec::new();
 
         for node in &graph.nodes {
-            let mut feature_sum = node.features.iter().sum::<f32>();
+            let feature_sum = node.features.iter().sum::<f32>();
             let neighbors = graph.adj_list.get(&node.id).map(|v| v.len()).unwrap_or(0);
             let mut neighbor_sum = 0.0;
 
@@ -833,6 +845,12 @@ impl GraphNeuralNetwork {
     }
 }
 
+impl Default for ReinforcementLearningAgent {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReinforcementLearningAgent {
     pub fn new() -> Self {
         Self {
@@ -862,6 +880,12 @@ impl ReinforcementLearningAgent {
     }
 }
 
+impl Default for ExplainabilityEngine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ExplainabilityEngine {
     pub fn new() -> Self {
         Self {
@@ -871,7 +895,7 @@ impl ExplainabilityEngine {
         }
     }
 
-    pub fn generate_explanation(&self, model: &NeuralModel, input: &[f32]) -> Result<Explanation> {
+    pub fn generate_explanation(&self, _model: &NeuralModel, input: &[f32]) -> Result<Explanation> {
         // Simplified SHAP-like explanation
         let mut attributions = Vec::new();
         for (i, &val) in input.iter().enumerate() {

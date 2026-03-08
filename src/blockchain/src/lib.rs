@@ -5,14 +5,14 @@
 //! and decentralized consensus for threat intelligence sharing.
 
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256, Sha512};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Blockchain Manager
 pub struct BlockchainManager {
@@ -338,7 +338,7 @@ impl BlockchainManager {
             recipient: "THREAT_REGISTRY".to_string(),
             payload: serde_json::to_vec(&threat)?,
             timestamp: Utc::now().timestamp(),
-            signature: wallet.sign(&threat.threat_id.as_bytes())?,
+            signature: wallet.sign(threat.threat_id.as_bytes())?,
             gas: 100_000,
             gas_price: 1,
         };
@@ -439,7 +439,7 @@ impl BlockchainManager {
             .ok_or_else(|| anyhow!("Contract not found"))?;
 
         // Find function in ABI
-        let func = contract
+        let _func = contract
             .abi
             .functions
             .iter()
@@ -627,7 +627,7 @@ impl BlockchainManager {
     async fn generate_id(&self) -> String {
         let mut bytes = [0u8; 32];
         OsRng.fill_bytes(&mut bytes);
-        format!("{:x}", Sha256::digest(&bytes))
+        format!("{:x}", Sha256::digest(bytes))
     }
 
     async fn generate_contract_address(&self) -> String {
@@ -636,17 +636,14 @@ impl BlockchainManager {
 
     async fn process_transactions(&self, transactions: &[Transaction]) -> Result<()> {
         for tx in transactions {
-            match tx.transaction_type {
-                TransactionType::ThreatSubmission => {
-                    let threat: ThreatEntry = serde_json::from_slice(&tx.payload)?;
-                    let mut registry = self.threat_registry.write().await;
-                    registry.threats.insert(threat.threat_id.clone(), threat);
-                    registry
-                        .reputation_scores
-                        .entry(tx.sender.clone())
-                        .or_insert(50.0);
-                }
-                _ => {}
+            if tx.transaction_type == TransactionType::ThreatSubmission {
+                let threat: ThreatEntry = serde_json::from_slice(&tx.payload)?;
+                let mut registry = self.threat_registry.write().await;
+                registry.threats.insert(threat.threat_id.clone(), threat);
+                registry
+                    .reputation_scores
+                    .entry(tx.sender.clone())
+                    .or_insert(50.0);
             }
         }
         Ok(())
@@ -716,6 +713,12 @@ impl ConsensusEngine {
     }
 }
 
+impl Default for Wallet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Wallet {
     pub fn new() -> Self {
         Self {
@@ -749,6 +752,12 @@ impl Wallet {
     pub fn verify(&self, message: &[u8], signature: &str) -> bool {
         let expected = self.sign(message).unwrap_or_default();
         signature == expected
+    }
+}
+
+impl Default for ThreatRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

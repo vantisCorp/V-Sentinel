@@ -9,19 +9,15 @@
 
 use crate::models::*;
 use crate::{ModelEncryptionResult, ModelIntegrityResult};
-use aes_gcm::{
-    aead::{Aead, KeyInit},
-    Aes256Gcm, Nonce,
-};
+use aes_gcm::aead::KeyInit;
 use anyhow::Result;
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::info;
 
 /// Model Security Manager
 pub struct ModelSecurityManager {

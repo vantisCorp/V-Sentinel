@@ -378,7 +378,7 @@ impl DeepfakeDetector {
     fn aggregate_results(
         &self,
         model_results: &[ModelDetectionResult],
-        analysis: &AnalysisResult,
+        _analysis: &AnalysisResult,
     ) -> (bool, f32, Vec<DeepfakeType>, String) {
         if model_results.is_empty() {
             return (

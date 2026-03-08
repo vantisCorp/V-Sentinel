@@ -9,7 +9,7 @@
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::info;
 
 /// Hardware Security Manager
 pub struct HardwareSecurity {

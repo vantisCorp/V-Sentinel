@@ -3,7 +3,7 @@
 use crate::error::MCPError;
 use crate::server::MCPServer;
 use crate::transport::Transport;
-use crate::types::{MCPRequest, MCPResponse};
+use crate::types::MCPRequest;
 use async_trait::async_trait;
 use std::io::{self, BufRead, Write};
 use tokio::sync::RwLock;
@@ -47,10 +47,10 @@ impl StdioTransport {
 
                             // Send response
                             let response_json = serde_json::to_string(&response)
-                                .map_err(|e| MCPError::SerializationError(e))?;
+                                .map_err(MCPError::SerializationError)?;
 
                             writeln!(stdout_lock, "{}", response_json)
-                                .map_err(|e| MCPError::IoError(e))?;
+                                .map_err(MCPError::IoError)?;
 
                             debug!("Sent response");
                         }

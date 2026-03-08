@@ -7,7 +7,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Mobile Security Manager
 pub struct MobileSecurityManager {
@@ -207,6 +207,12 @@ pub struct BatteryOptimizer {
     battery_saved_percent: f64,
 }
 
+impl Default for BatteryOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BatteryOptimizer {
     pub fn new() -> Self {
         Self {
@@ -248,6 +254,12 @@ pub struct MobileThreatDetector {
     threat_count: u64,
 }
 
+impl Default for MobileThreatDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MobileThreatDetector {
     pub fn new() -> Self {
         Self { threat_count: 0 }
@@ -264,6 +276,12 @@ pub struct AppScanner {
     apps_scanned: usize,
     threat_count: u64,
     last_scan_time: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+impl Default for AppScanner {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AppScanner {
@@ -327,6 +345,12 @@ impl AppScanner {
 pub struct NetworkMonitor {
     connections_monitored: usize,
     threat_count: u64,
+}
+
+impl Default for NetworkMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl NetworkMonitor {

@@ -5,12 +5,12 @@
 
 use anyhow::{anyhow, Result};
 use pqc_kyber::{decapsulate, encapsulate, keypair, KyberError};
-use rand::{rngs::OsRng, RngCore};
+use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256, Sha512};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info};
+use tracing::info;
 
 pub mod config;
 pub use config::{KemAlgorithm, PqcConfig, SigAlgorithm};

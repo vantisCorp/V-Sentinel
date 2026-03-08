@@ -7,10 +7,8 @@
 
 use crate::models::*;
 use anyhow::Result;
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use tracing::{debug, info};
 
 /// Media analyzer for content analysis

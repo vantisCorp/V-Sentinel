@@ -7,9 +7,9 @@ use anyhow::{anyhow, Result};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
-use super::models::{AIModel, AIModelStatus, AIModelType};
+use super::models::{AIModelStatus, AIModelType};
 
 /// Discovery Engine
 ///

@@ -4,7 +4,6 @@
 //! Provides single source of truth for all identity-related operations.
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -553,12 +552,12 @@ impl IdentityFabric {
 
         self.identity_links
             .entry(identity1.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(identity2.to_string());
 
         self.identity_links
             .entry(identity2.to_string())
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(identity1.to_string());
 
         info!("Linked identities {} and {}", identity1, identity2);

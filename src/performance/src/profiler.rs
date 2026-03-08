@@ -2,9 +2,8 @@
 // Provides detailed performance profiling and analysis capabilities
 
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::thread;
 use std::time::{Duration, Instant};
 
 /// Profiling event type
@@ -227,7 +226,7 @@ impl PerformanceProfiler {
             let key = (event.component.clone(), event.operation.clone());
             call_map
                 .entry(key)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(event.duration_ns);
         }
 
@@ -273,7 +272,7 @@ impl PerformanceProfiler {
                 if let Ok(allocated) = allocated_str.parse::<u64>() {
                     allocation_map
                         .entry(key)
-                        .or_insert_with(Vec::new)
+                        .or_default()
                         .push(allocated);
                 }
             }
@@ -305,7 +304,7 @@ impl PerformanceProfiler {
         let mut flamegraph = String::new();
 
         // Group events by component and operation
-        let mut call_stack: Vec<(String, String, u64)> = Vec::new();
+        let _call_stack: Vec<(String, String, u64)> = Vec::new();
         let mut sorted_events = events.clone();
         sorted_events.sort_by_key(|e| e.start_time);
 

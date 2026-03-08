@@ -10,14 +10,12 @@
 use crate::models::*;
 use crate::InputValidationResult;
 use anyhow::Result;
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
 
 /// API Security Manager
 pub struct APISecurityManager {
@@ -290,7 +288,7 @@ impl PromptInjectionDetector {
                     indicators.push(pattern.name.clone());
 
                     if pattern.severity > max_severity {
-                        max_severity = pattern.severity.clone();
+                        max_severity = pattern.severity;
                     }
 
                     // Update stats

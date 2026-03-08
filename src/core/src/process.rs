@@ -5,7 +5,7 @@
 use anyhow::Result;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 /// Process Manager for isolation and control
 pub struct ProcessManager {

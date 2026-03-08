@@ -17,7 +17,7 @@ pub use memory::MemoryManager;
 pub use process::ProcessManager;
 
 use anyhow::Result;
-use tracing::{error, info};
+use tracing::info;
 
 /// SENTINEL Core - Main entry point for core security functionality
 pub struct SentinelCore {
@@ -126,8 +126,8 @@ mod tests {
 
         // Verify all components are initialized
         assert!(core.hypervisor().is_initialized().await);
-        assert!(core.memory_manager().is_initialized().await);
-        assert!(core.process_manager().is_initialized().await);
-        assert!(core.hardware_security().is_initialized().await);
+        assert!(core.memory_manager().is_initialized());
+        assert!(core.process_manager().is_initialized());
+        assert!(core.hardware_security().is_initialized());
     }
 }

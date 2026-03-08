@@ -22,10 +22,9 @@ pub use risk::{RiskAssessment, RiskFactor, RiskLevel};
 pub use traffic::{AITrafficPattern, TrafficAnalyzer, TrafficSignature};
 
 use anyhow::Result;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info};
+use tracing::info;
 
 /// Shadow AI Manager
 ///

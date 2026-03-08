@@ -7,12 +7,12 @@
 //! - Risk indicators
 
 use anyhow::Result;
-use chrono::{DateTime, Datelike, Duration, Timelike, Utc};
+use chrono::{DateTime, Datelike, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug, info};
 
-use super::{AccessRequest, DeviceInfo, RiskIndicator, Subject};
+use super::{AccessRequest, RiskIndicator};
 
 /// Trust Engine
 ///
@@ -283,6 +283,12 @@ impl Default for TrustEngine {
 }
 
 // Device Trust Factor Implementation
+impl Default for DeviceTrustFactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DeviceTrustFactor {
     pub fn new() -> Self {
         Self { weight: 0.25 }
@@ -353,6 +359,12 @@ impl TrustFactorEvaluator for DeviceTrustFactor {
 }
 
 // Behavior Trust Factor Implementation
+impl Default for BehaviorTrustFactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BehaviorTrustFactor {
     pub fn new() -> Self {
         Self {
@@ -419,6 +431,12 @@ impl TrustFactorEvaluator for BehaviorTrustFactor {
 }
 
 // Location Trust Factor Implementation
+impl Default for LocationTrustFactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LocationTrustFactor {
     pub fn new() -> Self {
         Self {
@@ -487,6 +505,12 @@ impl TrustFactorEvaluator for LocationTrustFactor {
 }
 
 // Time Trust Factor Implementation
+impl Default for TimeTrustFactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TimeTrustFactor {
     pub fn new() -> Self {
         Self {
@@ -540,6 +564,12 @@ impl TrustFactorEvaluator for TimeTrustFactor {
 }
 
 // Session Trust Factor Implementation
+impl Default for SessionTrustFactor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SessionTrustFactor {
     pub fn new() -> Self {
         Self { weight: 0.25 }

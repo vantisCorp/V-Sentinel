@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info};
 
 /// Threat Intelligence Network
 pub struct ThreatIntelNetwork {
@@ -212,6 +212,12 @@ pub struct ThreatDatabase {
     threats: HashMap<String, ThreatIntel>,
 }
 
+impl Default for ThreatDatabase {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ThreatDatabase {
     pub fn new() -> Self {
         Self {
@@ -239,18 +245,17 @@ impl ThreatDatabase {
                 ThreatQueryType::ByHash => query
                     .hash
                     .as_ref()
-                    .map_or(false, |h| threat.hashes.contains(h)),
+                    .is_some_and(|h| threat.hashes.contains(h)),
                 ThreatQueryType::ByDomain => query
                     .domain
                     .as_ref()
-                    .map_or(false, |d| threat.domains.contains(d)),
+                    .is_some_and(|d| threat.domains.contains(d)),
                 ThreatQueryType::ByIp => {
-                    query.ip.as_ref().map_or(false, |i| threat.ips.contains(i))
+                    query.ip.as_ref().is_some_and(|i| threat.ips.contains(i))
                 }
                 ThreatQueryType::ByThreatType => query
                     .threat_type
-                    .as_ref()
-                    .map_or(false, |t| &threat.threat_type == t),
+                    .as_ref() == Some(&threat.threat_type),
                 ThreatQueryType::All => true,
             };
 

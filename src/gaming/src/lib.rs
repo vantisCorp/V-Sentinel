@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 /// Trusted Handshake Protocol for anti-cheat compatibility
 pub struct TrustedHandshake {
@@ -364,6 +364,12 @@ pub struct TrafficMonitor {
     bytes_processed: u64,
 }
 
+impl Default for TrafficMonitor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TrafficMonitor {
     pub fn new() -> Self {
         Self {
@@ -396,6 +402,12 @@ impl TrafficMonitor {
 #[derive(Debug, Clone)]
 pub struct AttackDetector {
     attack_count: u64,
+}
+
+impl Default for AttackDetector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AttackDetector {
@@ -435,6 +447,12 @@ impl AttackDetector {
 #[derive(Debug, Clone)]
 pub struct MitigationEngine {
     mitigation_count: u64,
+}
+
+impl Default for MitigationEngine {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MitigationEngine {

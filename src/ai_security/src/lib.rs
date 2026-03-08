@@ -13,13 +13,12 @@ pub mod model_security;
 pub mod models;
 
 use anyhow::Result;
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 use uuid::Uuid;
 
 pub use api_security::{APISecurityManager, InputValidator, PromptInjectionDetector};

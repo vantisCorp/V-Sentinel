@@ -3,14 +3,14 @@
 //! This module provides comprehensive logging, metrics collection,
 //! and monitoring capabilities for the SENTINEL system.
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use prometheus::{Counter, Encoder, Gauge, Histogram, Registry, TextEncoder};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
@@ -317,7 +317,7 @@ impl MonitoringManager {
     pub async fn evaluate_alerts(&self) -> Result<Vec<Alert>> {
         let mut alerts = self.alerts.write().await;
         let metrics = self.metrics.read().await;
-        alerts.evaluate_rules(&*metrics)
+        alerts.evaluate_rules(&metrics)
     }
 
     /// Get active alerts
@@ -373,7 +373,7 @@ impl MonitoringManager {
                 tokio::time::sleep(Duration::from_secs(60)).await;
                 let mut alerts_guard = alerts.write().await;
                 let metrics_guard = metrics.read().await;
-                if let Err(e) = alerts_guard.evaluate_rules(&*metrics_guard) {
+                if let Err(e) = alerts_guard.evaluate_rules(&metrics_guard) {
                     error!("Alert evaluation failed: {}", e);
                 }
             }
@@ -382,6 +382,12 @@ impl MonitoringManager {
         info!("Monitoring background tasks started");
 
         Ok(())
+    }
+}
+
+impl Default for Logger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -453,6 +459,12 @@ impl MetricsCollector {
     }
 }
 
+impl Default for AlertManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AlertManager {
     pub fn new() -> Self {
         Self {
@@ -508,33 +520,30 @@ impl AlertManager {
         _metrics: &MetricsCollector,
     ) -> Result<Option<Alert>> {
         // Simplified evaluation - in production, implement actual metric checking
-        match &rule.condition {
-            AlertCondition::Threshold {
+        if let AlertCondition::Threshold {
                 metric,
                 operator,
                 value,
-            } => {
-                // Check if threshold is exceeded
-                let triggered = match operator {
-                    ComparisonOperator::GreaterThan => true, // Simplified
-                    ComparisonOperator::LessThan => false,
-                    ComparisonOperator::Equal => false,
-                    ComparisonOperator::GreaterThanOrEqual => true,
-                    ComparisonOperator::LessThanOrEqual => false,
-                };
+            } = &rule.condition {
+            // Check if threshold is exceeded
+            let triggered = match operator {
+                ComparisonOperator::GreaterThan => true, // Simplified
+                ComparisonOperator::LessThan => false,
+                ComparisonOperator::Equal => false,
+                ComparisonOperator::GreaterThanOrEqual => true,
+                ComparisonOperator::LessThanOrEqual => false,
+            };
 
-                if triggered {
-                    return Ok(Some(Alert {
-                        id: uuid::Uuid::new_v4().to_string(),
-                        severity: rule.severity,
-                        title: format!("Threshold exceeded: {}", metric),
-                        description: format!("Metric {} exceeded threshold {}", metric, value),
-                        timestamp: std::time::SystemTime::now(),
-                        resolved: false,
-                    }));
-                }
+            if triggered {
+                return Ok(Some(Alert {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    severity: rule.severity,
+                    title: format!("Threshold exceeded: {}", metric),
+                    description: format!("Metric {} exceeded threshold {}", metric, value),
+                    timestamp: std::time::SystemTime::now(),
+                    resolved: false,
+                }));
             }
-            _ => {}
         }
 
         Ok(None)
@@ -546,6 +555,12 @@ impl AlertManager {
             .filter(|a| !a.resolved)
             .cloned()
             .collect()
+    }
+}
+
+impl Default for HealthChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

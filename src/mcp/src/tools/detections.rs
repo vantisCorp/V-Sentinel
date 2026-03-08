@@ -119,7 +119,7 @@ impl DetectionsTool {
     /// Mock detection search (to be replaced with real implementation)
     async fn mock_search_detections(
         &self,
-        params: &DetectionsParams,
+        _params: &DetectionsParams,
     ) -> Result<Vec<Detection>, crate::error::MCPError> {
         // Simulate detection data
         let detections = vec![

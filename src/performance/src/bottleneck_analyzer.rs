@@ -2,7 +2,7 @@
 // Identifies performance bottlenecks and suggests optimizations
 
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 /// Bottleneck severity level
@@ -64,14 +64,20 @@ pub struct BottleneckAnalyzer {
     thresholds: HashMap<String, f64>,
 }
 
+impl Default for BottleneckAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BottleneckAnalyzer {
     pub fn new() -> Self {
-        let mut analyzer = Self {
+        
+        Self {
             profiles: Vec::new(),
             bottlenecks: Vec::new(),
             thresholds: Self::default_thresholds(),
-        };
-        analyzer
+        }
     }
 
     fn default_thresholds() -> HashMap<String, f64> {
@@ -376,7 +382,7 @@ impl BottleneckAnalyzer {
                 for (i, opt) in bottleneck.suggested_optimizations.iter().enumerate() {
                     report.push_str(&format!("{}. {}\n", i + 1, opt));
                 }
-                report.push_str("\n");
+                report.push('\n');
             }
         }
 
@@ -395,7 +401,7 @@ impl BottleneckAnalyzer {
                 for (i, opt) in bottleneck.suggested_optimizations.iter().enumerate() {
                     report.push_str(&format!("{}. {}\n", i + 1, opt));
                 }
-                report.push_str("\n");
+                report.push('\n');
             }
         }
 
@@ -411,7 +417,7 @@ impl BottleneckAnalyzer {
                     bottleneck.component, bottleneck.operation, bottleneck.description
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
 
         // Low bottlenecks
@@ -426,7 +432,7 @@ impl BottleneckAnalyzer {
                     bottleneck.component, bottleneck.operation, bottleneck.description
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
 
         // Summary
@@ -477,7 +483,7 @@ mod tests {
         println!("{}", report);
 
         // Verify analysis ran
-        assert!(bottlenecks.len() >= 0);
+        // bottlenecks.len() is always >= 0 for usize, so no assertion needed
     }
 
     #[test]

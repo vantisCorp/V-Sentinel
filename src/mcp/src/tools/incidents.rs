@@ -120,7 +120,7 @@ impl ToolTrait for IncidentsTool {
 impl IncidentsTool {
     async fn mock_list_incidents(
         &self,
-        params: &IncidentsParams,
+        _params: &IncidentsParams,
     ) -> Result<Vec<Incident>, crate::error::MCPError> {
         let incidents = vec![
             Incident {

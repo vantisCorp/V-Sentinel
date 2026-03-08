@@ -13,15 +13,14 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use anyhow::Result;
-use async_trait::async_trait;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use tracing::info;
 
 /// Data Security Manager
 pub struct DataSecurityManager {
@@ -320,14 +319,13 @@ impl AccessControlManager {
                 continue;
             }
 
-            if rule.principal == principal && rule.resource == resource {
-                if self.permission_matches(rule.permission, permission) {
+            if rule.principal == principal && rule.resource == resource
+                && self.permission_matches(rule.permission, permission) {
                     // Check conditions
                     if self.evaluate_conditions(&rule.conditions) {
                         return Ok(true);
                     }
                 }
-            }
         }
 
         // Check role-based access
@@ -335,11 +333,10 @@ impl AccessControlManager {
         if let Some(user_roles) = roles.get(principal) {
             for role in user_roles {
                 for rule in rules.iter() {
-                    if rule.principal == *role && rule.resource == resource {
-                        if self.permission_matches(rule.permission, permission) {
+                    if rule.principal == *role && rule.resource == resource
+                        && self.permission_matches(rule.permission, permission) {
                             return Ok(true);
                         }
-                    }
                 }
             }
         }
@@ -484,11 +481,10 @@ impl DataClassifier {
         use regex::Regex;
         for pattern in &self.patterns {
             if let Ok(re) = Regex::new(&pattern.pattern) {
-                if re.is_match(&data_str) {
-                    if pattern.classification > max_classification {
-                        max_classification = pattern.classification.clone();
+                if re.is_match(&data_str)
+                    && pattern.classification > max_classification {
+                        max_classification = pattern.classification;
                     }
-                }
             }
         }
 

@@ -6,11 +6,10 @@
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::future::Future;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{info, warn};
 
 /// Error Handler
 pub struct ErrorHandler {
@@ -326,6 +325,12 @@ impl ErrorHandler {
     }
 }
 
+impl Default for RetryManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RetryManager {
     pub fn new() -> Self {
         Self {
@@ -342,7 +347,7 @@ impl RetryManager {
         self.retry_policies
             .get(name)
             .cloned()
-            .unwrap_or_else(|| RetryPolicy::default())
+            .unwrap_or_else(RetryPolicy::default)
     }
 
     pub fn get_stats(&self) -> RetryStatistics {
@@ -380,6 +385,12 @@ impl Default for RetryStatistics {
             failed_retries: 0,
             average_retry_count: 0.0,
         }
+    }
+}
+
+impl Default for CircuitBreakerManager {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -512,6 +523,12 @@ impl CircuitBreaker {
     }
 }
 
+impl Default for RecoveryManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RecoveryManager {
     pub fn new() -> Self {
         Self {
@@ -550,6 +567,12 @@ impl Default for RecoveryStatistics {
             failed_recoveries: 0,
             recovery_rate: 0.0,
         }
+    }
+}
+
+impl Default for ErrorLog {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -594,14 +617,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_retry_logic() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
         let handler = ErrorHandler::new().unwrap();
-        let mut attempt_count = 0;
+        let attempt_count = std::sync::Arc::new(AtomicUsize::new(0));
+        let attempt_count_clone = attempt_count.clone();
 
         let result = handler
-            .execute_with_retry("test_operation", || {
-                attempt_count += 1;
-                if attempt_count < 3 {
-                    Err(anyhow::anyhow!("Temporary error"))
+            .execute_with_retry("test_operation", move || {
+                let count = attempt_count_clone.fetch_add(1, Ordering::SeqCst) + 1;
+                if count < 3 {
+                    Err(std::io::Error::new(std::io::ErrorKind::Other, "Temporary error"))
                 } else {
                     Ok("success")
                 }
@@ -610,7 +635,7 @@ mod tests {
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
-        assert_eq!(attempt_count, 3);
+        assert_eq!(attempt_count.load(Ordering::SeqCst), 3);
     }
 
     #[tokio::test]
@@ -625,7 +650,7 @@ mod tests {
         for _ in 0..3 {
             let result = handler
                 .execute_with_circuit_breaker("test_circuit", || {
-                    Err::<(), _>(anyhow::anyhow!("Error"))
+                    Err::<(), _>(std::io::Error::new(std::io::ErrorKind::Other, "Error"))
                 })
                 .await;
             assert!(result.is_err());
@@ -633,7 +658,7 @@ mod tests {
 
         // Circuit should be open now
         let result = handler
-            .execute_with_circuit_breaker("test_circuit", || Ok::<(), _>(()))
+            .execute_with_circuit_breaker("test_circuit", || Ok::<(), std::io::Error>(()))
             .await;
         assert!(result.is_err());
 
@@ -649,21 +674,23 @@ mod tests {
             .await
             .unwrap();
 
-        let entries = handler.get_error_log(Some(10));
+        let entries = handler.get_error_log(Some(10)).await;
         assert!(!entries.is_empty());
         assert_eq!(entries[0].error_message, "test error");
     }
 
     #[tokio::test]
     async fn test_retry_statistics() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
         let handler = ErrorHandler::new().unwrap();
-        let mut attempt_count = 0;
+        let attempt_count = std::sync::Arc::new(AtomicUsize::new(0));
+        let attempt_count_clone = attempt_count.clone();
 
         handler
-            .execute_with_retry("test_operation", || {
-                attempt_count += 1;
-                if attempt_count < 2 {
-                    Err(anyhow::anyhow!("Temporary error"))
+            .execute_with_retry("test_operation", move || {
+                let count = attempt_count_clone.fetch_add(1, Ordering::SeqCst) + 1;
+                if count < 2 {
+                    Err(std::io::Error::new(std::io::ErrorKind::Other, "Temporary error"))
                 } else {
                     Ok("success")
                 }
