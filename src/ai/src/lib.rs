@@ -654,7 +654,6 @@ mod tests {
         };
 
         let prediction = engine.predict(&features).await.unwrap();
-        assert!(prediction.confidence >= 0.0 && prediction.confidence <= 1.0);
         // prediction_time_ms can be 0 if prediction is very fast (< 1ms)
         assert!(prediction.confidence >= 0.0 && prediction.confidence <= 1.0);
     }
