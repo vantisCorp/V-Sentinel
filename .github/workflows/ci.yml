@@ -46,6 +46,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
+          rustflags: ""
 
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -95,6 +96,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Run cargo-audit
         uses: rustsec/audit-check@v1
@@ -120,6 +123,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
@@ -151,6 +156,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Run benchmarks
         run: cargo bench --all-features --no-fail-fast -- --save-baseline main
@@ -180,6 +187,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Run integration tests
         run: cargo test --test integration_tests --all-features --verbose
@@ -198,6 +207,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Build documentation
         run: |
@@ -225,6 +236,8 @@ jobs:
 
       - name: Install Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          rustflags: ""
 
       - name: Build release
         run: cargo build --release --all-features
