@@ -72,7 +72,6 @@ jobs:
       - name: Run clippy
         run: cargo clippy --all-targets --all-features
         continue-on-error: true
-        continue-on-error: ${{ matrix.rust != 'stable' }}
 
       - name: Build
         run: cargo build --verbose --all-features
