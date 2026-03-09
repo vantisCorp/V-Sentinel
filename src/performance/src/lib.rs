@@ -93,8 +93,7 @@ pub struct PoolConfig {
 }
 
 /// Pool Statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PoolStatistics {
     pub total_connections: usize,
     pub active_connections: usize,
@@ -434,7 +433,6 @@ impl Default for PoolConfig {
         }
     }
 }
-
 
 impl Default for RateLimiter {
     fn default() -> Self {

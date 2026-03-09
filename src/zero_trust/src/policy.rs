@@ -543,7 +543,11 @@ impl PolicyEngine {
     }
 
     /// Check environment matches
-    fn matches_environments(&self, matches: &[EnvironmentMatch], _context: &RequestContext) -> bool {
+    fn matches_environments(
+        &self,
+        matches: &[EnvironmentMatch],
+        _context: &RequestContext,
+    ) -> bool {
         if matches.is_empty() {
             return true;
         }

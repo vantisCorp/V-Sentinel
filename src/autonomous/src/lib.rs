@@ -784,7 +784,11 @@ impl ContinuousLearningSystem {
         })
     }
 
-    pub async fn record_experience(&mut self, _threat: &ThreatInfo, _actions: &[RemediationAction]) {
+    pub async fn record_experience(
+        &mut self,
+        _threat: &ThreatInfo,
+        _actions: &[RemediationAction],
+    ) {
         // Record experience for learning
     }
 

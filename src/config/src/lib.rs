@@ -23,8 +23,7 @@ pub struct ConfigManager {
 }
 
 /// Main Configuration Structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     /// Core configuration
     pub core: CoreConfig,
@@ -559,7 +558,6 @@ impl Clone for ConfigManager {
         }
     }
 }
-
 
 impl Default for CoreConfig {
     fn default() -> Self {

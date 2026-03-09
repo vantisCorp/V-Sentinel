@@ -319,13 +319,15 @@ impl AccessControlManager {
                 continue;
             }
 
-            if rule.principal == principal && rule.resource == resource
-                && self.permission_matches(rule.permission, permission) {
-                    // Check conditions
-                    if self.evaluate_conditions(&rule.conditions) {
-                        return Ok(true);
-                    }
+            if rule.principal == principal
+                && rule.resource == resource
+                && self.permission_matches(rule.permission, permission)
+            {
+                // Check conditions
+                if self.evaluate_conditions(&rule.conditions) {
+                    return Ok(true);
                 }
+            }
         }
 
         // Check role-based access
@@ -333,10 +335,12 @@ impl AccessControlManager {
         if let Some(user_roles) = roles.get(principal) {
             for role in user_roles {
                 for rule in rules.iter() {
-                    if rule.principal == *role && rule.resource == resource
-                        && self.permission_matches(rule.permission, permission) {
-                            return Ok(true);
-                        }
+                    if rule.principal == *role
+                        && rule.resource == resource
+                        && self.permission_matches(rule.permission, permission)
+                    {
+                        return Ok(true);
+                    }
                 }
             }
         }
@@ -481,10 +485,9 @@ impl DataClassifier {
         use regex::Regex;
         for pattern in &self.patterns {
             if let Ok(re) = Regex::new(&pattern.pattern) {
-                if re.is_match(&data_str)
-                    && pattern.classification > max_classification {
-                        max_classification = pattern.classification;
-                    }
+                if re.is_match(&data_str) && pattern.classification > max_classification {
+                    max_classification = pattern.classification;
+                }
             }
         }
 

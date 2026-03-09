@@ -224,10 +224,7 @@ impl PerformanceProfiler {
 
         for event in &function_events {
             let key = (event.component.clone(), event.operation.clone());
-            call_map
-                .entry(key)
-                .or_default()
-                .push(event.duration_ns);
+            call_map.entry(key).or_default().push(event.duration_ns);
         }
 
         let mut stats = Vec::new();
@@ -270,10 +267,7 @@ impl PerformanceProfiler {
             let key = (event.component.clone(), event.operation.clone());
             if let Some(allocated_str) = event.metadata.get("allocated_bytes") {
                 if let Ok(allocated) = allocated_str.parse::<u64>() {
-                    allocation_map
-                        .entry(key)
-                        .or_default()
-                        .push(allocated);
+                    allocation_map.entry(key).or_default().push(allocated);
                 }
             }
         }

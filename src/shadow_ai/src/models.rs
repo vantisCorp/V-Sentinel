@@ -48,11 +48,10 @@ pub struct AIModel {
 }
 
 /// AI Model types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum AIModelType {
     #[default]
-    LLM,            // Large Language Models (GPT, Claude, LLaMA)
+    LLM, // Large Language Models (GPT, Claude, LLaMA)
     Embedding,      // Embedding models
     Image,          // Image generation (DALL-E, Midjourney, Stable Diffusion)
     Audio,          // Audio processing (Whisper, TTS)
@@ -68,8 +67,7 @@ pub enum AIModelType {
 }
 
 /// AI Model status
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum AIModelStatus {
     Active,
     Inactive,
@@ -180,8 +178,6 @@ impl AIModel {
         matches!(self.status, AIModelStatus::Approved)
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {

@@ -72,7 +72,6 @@ impl Default for BottleneckAnalyzer {
 
 impl BottleneckAnalyzer {
     pub fn new() -> Self {
-        
         Self {
             profiles: Vec::new(),
             bottlenecks: Vec::new(),

@@ -618,9 +618,10 @@ impl BiometricsManager {
             let score = self.calculate_matching_score(&sample, template).await?;
 
             if score >= threshold
-                && (best_match.is_none() || score > best_match.as_ref().unwrap().1) {
-                    best_match = Some((template.user_id.clone(), score));
-                }
+                && (best_match.is_none() || score > best_match.as_ref().unwrap().1)
+            {
+                best_match = Some((template.user_id.clone(), score));
+            }
         }
 
         Ok(best_match.map(|(user_id, _)| user_id))

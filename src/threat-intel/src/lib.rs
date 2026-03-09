@@ -250,12 +250,10 @@ impl ThreatDatabase {
                     .domain
                     .as_ref()
                     .is_some_and(|d| threat.domains.contains(d)),
-                ThreatQueryType::ByIp => {
-                    query.ip.as_ref().is_some_and(|i| threat.ips.contains(i))
+                ThreatQueryType::ByIp => query.ip.as_ref().is_some_and(|i| threat.ips.contains(i)),
+                ThreatQueryType::ByThreatType => {
+                    query.threat_type.as_ref() == Some(&threat.threat_type)
                 }
-                ThreatQueryType::ByThreatType => query
-                    .threat_type
-                    .as_ref() == Some(&threat.threat_type),
                 ThreatQueryType::All => true,
             };
 

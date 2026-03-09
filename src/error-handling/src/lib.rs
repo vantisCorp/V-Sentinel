@@ -626,7 +626,10 @@ mod tests {
             .execute_with_retry("test_operation", move || {
                 let count = attempt_count_clone.fetch_add(1, Ordering::SeqCst) + 1;
                 if count < 3 {
-                    Err(std::io::Error::new(std::io::ErrorKind::Other, "Temporary error"))
+                    Err(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Temporary error",
+                    ))
                 } else {
                     Ok("success")
                 }
@@ -690,7 +693,10 @@ mod tests {
             .execute_with_retry("test_operation", move || {
                 let count = attempt_count_clone.fetch_add(1, Ordering::SeqCst) + 1;
                 if count < 2 {
-                    Err(std::io::Error::new(std::io::ErrorKind::Other, "Temporary error"))
+                    Err(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Temporary error",
+                    ))
                 } else {
                     Ok("success")
                 }

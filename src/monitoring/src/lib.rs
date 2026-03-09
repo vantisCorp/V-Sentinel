@@ -13,7 +13,6 @@ use tokio::sync::RwLock;
 use tracing::{error, info};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::Layer;
 
 /// Monitoring Manager
 pub struct MonitoringManager {
@@ -521,10 +520,11 @@ impl AlertManager {
     ) -> Result<Option<Alert>> {
         // Simplified evaluation - in production, implement actual metric checking
         if let AlertCondition::Threshold {
-                metric,
-                operator,
-                value,
-            } = &rule.condition {
+            metric,
+            operator,
+            value,
+        } = &rule.condition
+        {
             // Check if threshold is exceeded
             let triggered = match operator {
                 ComparisonOperator::GreaterThan => true, // Simplified

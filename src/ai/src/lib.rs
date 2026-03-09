@@ -48,8 +48,7 @@ pub struct FeatureExtractor {
 }
 
 /// Normalization parameters
-#[derive(Debug, Clone)]
-#[derive(Default)]
+#[derive(Debug, Clone, Default)]
 struct NormalizationParams {
     means: Vec<f32>,
     stds: Vec<f32>,
@@ -86,7 +85,6 @@ impl Default for EngineStatistics {
         }
     }
 }
-
 
 impl PredictionEngine {
     /// Create a new prediction engine
