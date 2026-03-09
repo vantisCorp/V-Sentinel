@@ -1,5 +1,0 @@
-14	AI Security and Protection Implementation	feature/ai-security-protection	OPEN	2026-03-06T03:02:17Z
-13	Deepfake Detection and Media Forensics Implementation	feature/deepfake-detection	OPEN	2026-03-06T02:48:04Z
-12	Shadow AI Detection and Governance Implementation	feature/shadow-ai-detection	OPEN	2026-03-05T23:00:22Z
-11	feat: Implement Zero Trust Architecture (NIST SP 800-207)	feature/zero-trust-architecture	OPEN	2026-03-05T22:12:31Z
-10	feat(quantum): Post-Quantum Cryptography Implementation - PRODUCTION READY	feature/post-quantum-cryptography	OPEN	2026-03-04T23:20:44Z

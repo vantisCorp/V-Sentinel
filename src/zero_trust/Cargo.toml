@@ -1,7 +1,7 @@
 [package]
 name = "sentinel-zero-trust"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 description = "Zero Trust Architecture implementation for V-Sentinel"
 authors = ["Vantis Corporation"]
 license = "MIT"

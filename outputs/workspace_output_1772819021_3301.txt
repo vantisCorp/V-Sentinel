@@ -1,8 +1,0 @@
-8:    <!-- Fonts -->
-666:    <!-- Navigation -->
-679:    <!-- Hero Section -->
-717:    <!-- Features Section -->
-801:    <!-- Stats Section -->
-834:    <!-- Terminal Section -->
-879:    <!-- Quick Start Section -->
-910:    <!-- Footer -->

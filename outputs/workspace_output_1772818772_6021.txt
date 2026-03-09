@@ -1,2 +1,0 @@
-origin	https://x-access-token:ghs_tnVnFuYUzG56U0r2F37jVElXEYYkGs4RZ7ex@github.com/vantisCorp/V-Sentinel.git (fetch)
-origin	https://x-access-token:ghs_tnVnFuYUzG56U0r2F37jVElXEYYkGs4RZ7ex@github.com/vantisCorp/V-Sentinel.git (push)

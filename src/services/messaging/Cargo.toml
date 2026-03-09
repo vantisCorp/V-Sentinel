@@ -1,7 +1,7 @@
 [package]
 name = "sentinel-messaging"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 authors = ["VantisCorp <dev@vantiscorp.com>"]
 description = "Secure Messaging Service with Post-Quantum Cryptography support for V-Sentinel"
 

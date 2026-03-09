@@ -1,7 +1,7 @@
 [package]
 name = "sentinel-deepfake"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 description = "Deepfake Detection and Content Authentication module for V-Sentinel"
 authors = ["Vantis Corporation"]
 license = "MIT"

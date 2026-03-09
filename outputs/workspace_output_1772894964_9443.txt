@@ -1,1 +1,0 @@
-✓ Closed pull request vantisCorp/V-Sentinel#10 (feat(quantum): Post-Quantum Cryptography Implementation - PRODUCTION READY)

@@ -1,3 +1,0 @@
-=== Istniejące pliki ===
--rw-r--r-- 1 root root 6493 Mar  6 16:58 docker-compose.yml
-Brak folderu config

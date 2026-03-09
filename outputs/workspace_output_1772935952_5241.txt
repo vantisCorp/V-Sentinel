@@ -1,1 +1,0 @@
-19	feat: Add GUI installers for Windows, Linux, and macOS	feature/ai-security-protection	OPEN	2026-03-08T02:09:12Z

@@ -1,7 +1,7 @@
 [package]
 name = "v-sentinel"
-version = "2.1.1"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 authors = ["V-Sentinel Team"]
 description = "AI-Powered Security Sentinel System CLI"
 license = "MIT"

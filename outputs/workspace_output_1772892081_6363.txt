@@ -1,2 +1,0 @@
-origin	https://github.com/vantisCorp/V-Sentinel.git (fetch)
-origin	https://github.com/vantisCorp/V-Sentinel.git (push)

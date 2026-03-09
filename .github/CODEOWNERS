@@ -1,0 +1,38 @@
+# V-Sentinel Code Owners
+* @vantisCorp/core-team
+
+# Core framework
+/src/core/ @vantisCorp/core-team
+/src/config/ @vantisCorp/core-team
+/src/error-handling/ @vantisCorp/core-team
+
+# AI & ML modules
+/src/ai/ @vantisCorp/ai-team
+/src/ai_security/ @vantisCorp/ai-team
+/src/neural/ @vantisCorp/ai-team
+/src/shadow_ai/ @vantisCorp/ai-team
+/src/deepfake/ @vantisCorp/ai-team
+
+# Security modules
+/src/security/ @vantisCorp/security-team
+/src/quantum/ @vantisCorp/security-team
+/src/privacy/ @vantisCorp/security-team
+/src/zero_trust/ @vantisCorp/security-team
+
+# Infrastructure
+/src/cloud/ @vantisCorp/infra-team
+/src/network/ @vantisCorp/infra-team
+/src/monitoring/ @vantisCorp/infra-team
+/src/services/ @vantisCorp/infra-team
+
+# CI/CD & DevOps
+/.github/ @vantisCorp/devops-team
+/deploy/ @vantisCorp/devops-team
+/scripts/ @vantisCorp/devops-team
+
+# SDKs
+/sdks/ @vantisCorp/sdk-team
+
+# Documentation
+/docs/ @vantisCorp/docs-team
+/*.md @vantisCorp/core-team

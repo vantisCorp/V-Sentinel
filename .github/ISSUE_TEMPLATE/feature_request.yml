@@ -1,0 +1,56 @@
+name: Feature Request
+description: Suggest a new feature for V-Sentinel
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: Related Module
+      options:
+        - Core
+        - AI Engine
+        - AI Security
+        - Quantum/PQC
+        - Zero Trust
+        - Shadow AI
+        - Deepfake Detection
+        - Network/PQC-TLS
+        - CLI
+        - SDKs
+        - New Module
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      placeholder: "A clear description of what the problem is."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      placeholder: "A clear description of what you want to happen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflow
+        - High - Blocking or critical need
+    validations:
+      required: true

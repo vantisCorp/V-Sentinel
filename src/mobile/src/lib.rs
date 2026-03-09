@@ -536,7 +536,7 @@ mod tests {
         manager.start().await.unwrap();
 
         let analysis = manager.monitor_network().await.unwrap();
-        assert!(analysis.total_connections >= 0);
+        assert!(analysis.total_connections >= 1); // usize always >= 0
     }
 
     #[tokio::test]

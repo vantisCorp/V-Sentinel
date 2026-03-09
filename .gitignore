@@ -1,6 +1,5 @@
 # Rust
 /target/
-Cargo.lock
 **/*.rs.bk
 
 # IDE
@@ -46,3 +45,7 @@ __pycache__/
 # Test coverage
 coverage/
 *.lcov
+
+# Sandbox artifacts (should never be committed)
+outputs/
+summarized_conversations/
