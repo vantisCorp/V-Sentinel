@@ -9,7 +9,6 @@
 
 use crate::models::*;
 use crate::{ModelEncryptionResult, ModelIntegrityResult};
-use aes_gcm::aead::KeyInit;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
