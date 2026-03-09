@@ -1,9 +1,0 @@
-On branch main
-Your branch is up to date with 'origin/main'.
-
-nothing to commit, working tree clean
-644357f Merge pull request #16 from vantisCorp/feature/community-tooling
-0abecaf feat: Add community tooling (VS Code extension and CLI)
-e674d63 Merge pull request #15 from vantisCorp/feature/multi-language-sdks
-74d4f17 feat: Add multi-language SDKs (Python, Go, TypeScript) and IOC repository
-1aca54a docs: Add 2025 planning session summary

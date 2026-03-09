@@ -1,3 +1,0 @@
-  remotes/origin/feature/post-quantum-cryptography
-  remotes/origin/main
-  remotes/origin/master

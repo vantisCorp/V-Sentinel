@@ -1,2 +1,0 @@
-fatal: destination path 'V-Sentinel' already exists and is not an empty directory.
-failed to run git: exit status 128

@@ -1,2 +1,0 @@
-Saved working directory and index state WIP on feature/zero-trust-architecture: 8c777d3 feat: Implement Zero Trust Architecture (Issue #8)
-open pr_body.md: no such file or directory

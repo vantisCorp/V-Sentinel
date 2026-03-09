@@ -1,5 +1,0 @@
-/workspace/V-Sentinel/docs/COMPETITIVE_ANALYSIS_STRATEGY.md
-/workspace/V-Sentinel/docs/INTEGRATION_TESTING_STRATEGY.md
-/workspace/COMPETITIVE_ANALYSIS_REPORT.md
-/workspace/COMPETITIVE_ANALYSIS_PLAN.md
-/workspace/docs/INTEGRATION_TESTING_STRATEGY.md

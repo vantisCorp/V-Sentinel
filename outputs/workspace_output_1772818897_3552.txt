@@ -1,2 +1,0 @@
-                        Designed for cloud environments with microservices architecture support and seamless Kubernetes integration
-                    <div class="feature-title">Zero Trust Architecture</div>

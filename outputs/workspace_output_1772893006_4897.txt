@@ -1,6 +1,0 @@
-remote: 
-remote: Create a pull request for 'feature/deepfake-detection-v2' on GitHub by visiting:        
-remote:      https://github.com/vantisCorp/V-Sentinel/pull/new/feature/deepfake-detection-v2        
-remote: 
-To https://github.com/vantisCorp/V-Sentinel.git
- * [new branch]      feature/deepfake-detection-v2 -> feature/deepfake-detection-v2

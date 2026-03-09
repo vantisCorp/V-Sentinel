@@ -1,2 +1,0 @@
-To https://github.com/vantisCorp/V-Sentinel.git
- - [deleted]         master

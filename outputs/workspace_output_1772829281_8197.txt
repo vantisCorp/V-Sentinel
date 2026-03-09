@@ -1,1 +1,0 @@
-83:#### Priorytet 1.1: Implementacja MCP (Model Context Protocol)

@@ -1,6 +1,0 @@
-remote: 
-remote: Create a pull request for 'feature/ai-security-v2' on GitHub by visiting:        
-remote:      https://github.com/vantisCorp/V-Sentinel/pull/new/feature/ai-security-v2        
-remote: 
-To https://github.com/vantisCorp/V-Sentinel.git
- * [new branch]      feature/ai-security-v2 -> feature/ai-security-v2

@@ -1,7 +1,7 @@
 [package]
 name = "sentinel-plugins"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 description = "V-Sentinel Plugin System for third-party integrations"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/vantisCorp/V-Sentinel"

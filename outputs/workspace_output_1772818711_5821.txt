@@ -1,2 +1,0 @@
-origin	https://oauth2:ghs_lGIfuTU5YtmhzreUp4uVOQmc7eiXCE3NLLzx@github.com/vantisCorp/V-Sentinel.git (fetch)
-origin	https://oauth2:ghs_lGIfuTU5YtmhzreUp4uVOQmc7eiXCE3NLLzx@github.com/vantisCorp/V-Sentinel.git (push)

@@ -1,4 +1,0 @@
-523:        /* Quick Start */
-982:                <a href="#quickstart" class="nav-link">Quick Start</a>
-1188:    <!-- Quick Start Section -->
-1191:            <h2 class="section-title">Quick Start</h2>
